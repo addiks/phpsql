@@ -9,7 +9,7 @@
  * @package Addiks
  */
 
-namespace Addiks\Database\Service\TestCase\BareSQL;
+namespace Addiks\PHPSQL\Service\TestCase\BareSQL;
 
 /**
  * Tests if the USE statement works as intended.

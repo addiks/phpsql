@@ -9,57 +9,58 @@
  * @package Addiks
  */
 
-namespace Addiks\Database\Service\SqlParser\Part\Specifier;
+namespace Addiks\PHPSQL\Service\SqlParser\Part\Specifier;
 
-use Addiks\Database\Value\Specifier\ColumnSpecifier as ColumnSpecifier;
+use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier as ColumnSpecifier;
 
-use Addiks\Database\Service\SqlParser\Part;
+use Addiks\PHPSQL\Service\SqlParser\Part;
 
 use Addiks\Protocol\Entity\Exception\Error;
 
 use Addiks\Analyser\Tool\TokenIterator;
-use Addiks\Database\Value\Enum\Sql\SqlToken;
-use Addiks\Database\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
+use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 
-use Addiks\Database\Tool\SQLTokenIterator;
+use Addiks\PHPSQL\Tool\SQLTokenIterator;
 
-class ColumnParser extends Part{
-	
-	public function canParseTokens(SQLTokenIterator $tokens){
-		return is_int($tokens->isTokens([T_STRING, T_CONSTANT_ENCAPSED_STRING, T_VARIABLE]));
-	}
-	
-	public function convertSqlToJob(SQLTokenIterator $tokens){
-		
-		$parts = array();
-		
-		do{
-			
-			if($tokens->seekTokenNum(T_VARIABLE)){
-				$part = \Addiks\Database\Variable::factory($tokens->getCurrentTokenString());
-				
-			}elseif($tokens->seekTokens([T_STRING, T_CONSTANT_ENCAPSED_STRING])){
-				
-				$part = $tokens->getCurrentTokenString();
-					
-				if($part[0]==='`' && $part[strlen($part)-1]==='`'){
-					$part = substr($part, 1, strlen($part)-2);
-				}else if($part[0]==='"' && $part[strlen($part)-1]==='"'){
-					$part = substr($part, 1, strlen($part)-2);
-				}else if($part[0]==="'" && $part[strlen($part)-1]==="'"){
-					$part = substr($part, 1, strlen($part)-2);
-				}
-					
-			}else{
-				throw new Error("Tried to convert sql-column-specifier when token-iterator does not point to T_STRING!");
-			}
-			
-			$parts[] = $part;
-			
-		}while($tokens->seekTokenText("."));
-		
-		$specifier = ColumnSpecifier::factory(implode(".", $parts));
-		
-		return $specifier;
-	}
+class ColumnParser extends Part
+{
+    
+    public function canParseTokens(SQLTokenIterator $tokens)
+    {
+        return is_int($tokens->isTokens([T_STRING, T_CONSTANT_ENCAPSED_STRING, T_VARIABLE]));
+    }
+    
+    public function convertSqlToJob(SQLTokenIterator $tokens)
+    {
+        
+        $parts = array();
+        
+        do {
+            if ($tokens->seekTokenNum(T_VARIABLE)) {
+                $part = \Addiks\PHPSQL\Variable::factory($tokens->getCurrentTokenString());
+                
+            } elseif ($tokens->seekTokens([T_STRING, T_CONSTANT_ENCAPSED_STRING])) {
+                $part = $tokens->getCurrentTokenString();
+                    
+                if ($part[0]==='`' && $part[strlen($part)-1]==='`') {
+                    $part = substr($part, 1, strlen($part)-2);
+                } elseif ($part[0]==='"' && $part[strlen($part)-1]==='"') {
+                    $part = substr($part, 1, strlen($part)-2);
+                } elseif ($part[0]==="'" && $part[strlen($part)-1]==="'") {
+                    $part = substr($part, 1, strlen($part)-2);
+                }
+                    
+            } else {
+                throw new Error("Tried to convert sql-column-specifier when token-iterator does not point to T_STRING!");
+            }
+            
+            $parts[] = $part;
+            
+        } while ($tokens->seekTokenText("."));
+        
+        $specifier = ColumnSpecifier::factory(implode(".", $parts));
+        
+        return $specifier;
+    }
 }

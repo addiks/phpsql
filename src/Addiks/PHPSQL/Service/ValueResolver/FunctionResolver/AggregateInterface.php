@@ -1,12 +1,13 @@
-<?php 
+<?php
 
-namespace Addiks\Database\Service\ValueResolver\FunctionResolver;
+namespace Addiks\PHPSQL\Service\ValueResolver\FunctionResolver;
 
-use Addiks\Database\Entity\Result\ResultInterface;
-interface AggregateInterface{
-	
-	function setRowIdsInCurrentGroup(array $rowIds);
+use Addiks\PHPSQL\Entity\Result\ResultInterface;
 
-	function setResultSet(ResultInterface $result);
-	
+interface AggregateInterface
+{
+    
+    function setRowIdsInCurrentGroup(array $rowIds);
+
+    function setResultSet(ResultInterface $result);
 }

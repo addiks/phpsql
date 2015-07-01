@@ -1,56 +1,59 @@
-<?php 
+<?php
 
-namespace Addiks\Database\Service\ValueResolver\FunctionResolver;
+namespace Addiks\PHPSQL\Service\ValueResolver\FunctionResolver;
 
-use Addiks\Database\Service\ValueResolver\FunctionResolver;
-use Addiks\Database\Entity\Result\ResultInterface;
-use Addiks\Database\Entity\Job\FunctionJob;
+use Addiks\PHPSQL\Service\ValueResolver\FunctionResolver;
+use Addiks\PHPSQL\Entity\Result\ResultInterface;
+use Addiks\PHPSQL\Entity\Job\FunctionJob;
 
-class SumFunction extends FunctionResolver implements AggregateInterface{
-	
-	public function getExpectedParameterCount(){
-		return 1;
-	}
-	
-	private $rowIdsInGrouping = array();
-	
-	public function setRowIdsInCurrentGroup(array $rowIds){
-		$this->rowIdsInGrouping = $rowIds;
-	}
-	
-	private $resultSet;
-	
-	public function setResultSet(ResultInterface $result){
-		$this->resultSet = $result;
-	}
-	
-	public function executeFunction(FunctionJob $function){
-		
-		/* @var $result SelectResult */
-		$result = $this->resultSet;
-		
-		/* @var $argumentValue Value */
-		$argumentValue = current($function->getArguments());
-		
-		/* @var $valueResolver ValueResolver */
-		$this->factorize($valueResolver);
-		
-		$sum = 0;
-		
-		foreach($this->rowIdsInGrouping as $rowId){
-			
-			$row = $result->getRowUnresolved($rowId);
-			
-			$valueResolver->setSourceRow($row);
-			
-			$value = $valueResolver->resolveValue($argumentValue);
-			
-			if(is_numeric($value)){
-				$sum += $value;
-			}
-		}
-		
-		return $sum;
-	}
-	
+class SumFunction extends FunctionResolver implements AggregateInterface
+{
+    
+    public function getExpectedParameterCount()
+    {
+        return 1;
+    }
+    
+    private $rowIdsInGrouping = array();
+    
+    public function setRowIdsInCurrentGroup(array $rowIds)
+    {
+        $this->rowIdsInGrouping = $rowIds;
+    }
+    
+    private $resultSet;
+    
+    public function setResultSet(ResultInterface $result)
+    {
+        $this->resultSet = $result;
+    }
+    
+    public function executeFunction(FunctionJob $function)
+    {
+        
+        /* @var $result SelectResult */
+        $result = $this->resultSet;
+        
+        /* @var $argumentValue Value */
+        $argumentValue = current($function->getArguments());
+        
+        /* @var $valueResolver ValueResolver */
+        $this->factorize($valueResolver);
+        
+        $sum = 0;
+        
+        foreach ($this->rowIdsInGrouping as $rowId) {
+            $row = $result->getRowUnresolved($rowId);
+            
+            $valueResolver->setSourceRow($row);
+            
+            $value = $valueResolver->resolveValue($argumentValue);
+            
+            if (is_numeric($value)) {
+                $sum += $value;
+            }
+        }
+        
+        return $sum;
+    }
 }

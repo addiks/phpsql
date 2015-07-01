@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (C) 2013  Gerrit Addiks.
- * This package (including this file) was released under the terms of the GPL-3.0.    
+ * This package (including this file) was released under the terms of the GPL-3.0.
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <http://www.gnu.org/licenses/> or send me a mail so i can send you a copy.
  * @license GPL-3.0
@@ -9,7 +9,7 @@
  * @package Addiks
  */
 
-namespace Addiks\Database\Entity\Result;
+namespace Addiks\PHPSQL\Entity\Result;
 
 use Addiks\Common\Entity;
 
@@ -20,172 +20,192 @@ use Addiks\Common\Entity;
  * @author gerrit
  *
  */
-class Temporary extends Entity implements ResultInterface, \IteratorAggregate{
+class Temporary extends Entity implements ResultInterface, \IteratorAggregate
+{
 
-	public function __construct(array $columnNames = array()){
-		$this->columnNames = $columnNames;
-	}
+    public function __construct(array $columnNames = array())
+    {
+        $this->columnNames = $columnNames;
+    }
 
-	private $isSuccess = true;
+    private $isSuccess = true;
 
-	public function setIsSuccess($bool){
-		$this->isSuccess = (bool)$bool;
-	}
+    public function setIsSuccess($bool)
+    {
+        $this->isSuccess = (bool)$bool;
+    }
 
-	public function getIsSuccess(){
-		return $this->isSuccess;
-	}
+    public function getIsSuccess()
+    {
+        return $this->isSuccess;
+    }
 
-	public function getHeaders(){
-		return $this->getColumnNames();
-	}
+    public function getHeaders()
+    {
+        return $this->getColumnNames();
+    }
 
-	/**
-	 * @return bool
-	 */
-	function getHasResultRows(){
-		return count($this->rows)>0;
-	}
-	
-	private $lastInsertId = array();
-	
-	/**
-	 * @return array
-	 */
-	public function getLastInsertId(){
-		return $this->lastInsertId;
-	}
-	
-	public function setLastInsertId(array $row){
-		$this->lastInsertId = $row;
-	}
-	
-	public function seek($rowId){
+    /**
+     * @return bool
+     */
+    function getHasResultRows()
+    {
+        return count($this->rows)>0;
+    }
+    
+    private $lastInsertId = array();
+    
+    /**
+     * @return array
+     */
+    public function getLastInsertId()
+    {
+        return $this->lastInsertId;
+    }
+    
+    public function setLastInsertId(array $row)
+    {
+        $this->lastInsertId = $row;
+    }
+    
+    public function seek($rowId)
+    {
 
-		/* @var $iterator \ArrayIterator */
-		$iterator = $this->getIterator();
+        /* @var $iterator \ArrayIterator */
+        $iterator = $this->getIterator();
 
-		$iterator->seek($rowId);
-	}
+        $iterator->seek($rowId);
+    }
 
-	private $columnNames;
+    private $columnNames;
 
-	public function getColumnNames(){
-		return $this->columnNames;
-	}
+    public function getColumnNames()
+    {
+        return $this->columnNames;
+    }
 
-	private $rows = array();
+    private $rows = array();
 
-	public function getRows(){
-		return $this->rows;
-	}
+    public function getRows()
+    {
+        return $this->rows;
+    }
 
-	private $iterator;
+    private $iterator;
 
-	public function getIterator(){
-		if(is_null($this->iterator)){
-			$this->iterator = new \ArrayIterator($this->getRows());
-		}
-		return $this->iterator;
-	}
+    public function getIterator()
+    {
+        if (is_null($this->iterator)) {
+            $this->iterator = new \ArrayIterator($this->getRows());
+        }
+        return $this->iterator;
+    }
 
-	public function count(){
-		return count($this->rows);
-	}
-	
-	public function addRow(array $row){
+    public function count()
+    {
+        return count($this->rows);
+    }
+    
+    public function addRow(array $row)
+    {
 
-		if(count($row) !== count($this->getColumnNames())){
-			throw new \ErrorException("Tried to insert row into temporary-result which does not comply with result-schema!");
-		}
+        if (count($row) !== count($this->getColumnNames())) {
+            throw new \ErrorException("Tried to insert row into temporary-result which does not comply with result-schema!");
+        }
 
-		$newRow = array();
+        $newRow = array();
 
-		foreach($row as $index => $value){
-			if(is_int($index)){
-				$index = $this->getColumnNames()[$index];
-			}
-			$newRow[$index] = $value;
-		}
+        foreach ($row as $index => $value) {
+            if (is_int($index)) {
+                $index = $this->getColumnNames()[$index];
+            }
+            $newRow[$index] = $value;
+        }
 
-		$this->rows[] = $newRow;
-	}
-	
-	/**
-	 * Alias of fetchArray
-	 * @return array
-	 */
-	public function fetch(){
-		return $this->fetchArray();
-	}
-	
-	/**
-	 * @return array
-	 */
-	public function fetchArray(){
-	
-		$iterator = $this->getIterator();
-		
-		$row = $iterator->current();
-		$iterator->next();
-	
-		if(!is_array($row)){
-			return $row;
-		}
-		
-		$number = 0;
-		foreach($row as $value){
-			$row[$number] = $value;
-			$number++;
-		}
-	
-		return $row;
-	}
-	
-	/**
-	 * @return array
-	 */
-	public function fetchAssoc(){
-		
-		$iterator = $this->getIterator();
-		
-		$row = $iterator->current();
-		$iterator->next();
-		
-		return $row;
-	}
-	
-	/**
-	 * @return array
-	 */
-	public function fetchRow(){
+        $this->rows[] = $newRow;
+    }
+    
+    /**
+     * Alias of fetchArray
+     * @return array
+     */
+    public function fetch()
+    {
+        return $this->fetchArray();
+    }
+    
+    /**
+     * @return array
+     */
+    public function fetchArray()
+    {
+    
+        $iterator = $this->getIterator();
+        
+        $row = $iterator->current();
+        $iterator->next();
+    
+        if (!is_array($row)) {
+            return $row;
+        }
+        
+        $number = 0;
+        foreach ($row as $value) {
+            $row[$number] = $value;
+            $number++;
+        }
+    
+        return $row;
+    }
+    
+    /**
+     * @return array
+     */
+    public function fetchAssoc()
+    {
+        
+        $iterator = $this->getIterator();
+        
+        $row = $iterator->current();
+        $iterator->next();
+        
+        return $row;
+    }
+    
+    /**
+     * @return array
+     */
+    public function fetchRow()
+    {
 
-		$iterator = $this->getIterator();
-		
-		$row = $iterator->current();
-		$iterator->next();
-		
-		if(!is_array($row)){
-			return $row;
-		}
-		
-		$returnRow = array();
-		$number = 0;
-		foreach($row as $value){
-			$returnRow[$number] = $value;
-			$number++;
-		}
-	
-		return $returnRow;
-	}
-	
-	private $columnMetaData = array();
-	
-	public function setColumnMetaData($columnName, array $data){
-		$this->columnMetaData[$columnName] = $data;
-	}
-	
-	public function getColumnMetaData($columnName){
-		return $this->columnMetaData[$columnName];
-	}
+        $iterator = $this->getIterator();
+        
+        $row = $iterator->current();
+        $iterator->next();
+        
+        if (!is_array($row)) {
+            return $row;
+        }
+        
+        $returnRow = array();
+        $number = 0;
+        foreach ($row as $value) {
+            $returnRow[$number] = $value;
+            $number++;
+        }
+    
+        return $returnRow;
+    }
+    
+    private $columnMetaData = array();
+    
+    public function setColumnMetaData($columnName, array $data)
+    {
+        $this->columnMetaData[$columnName] = $data;
+    }
+    
+    public function getColumnMetaData($columnName)
+    {
+        return $this->columnMetaData[$columnName];
+    }
 }

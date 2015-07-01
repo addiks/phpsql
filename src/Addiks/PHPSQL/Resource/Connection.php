@@ -9,12 +9,12 @@
  * @package Addiks
  */
 
-namespace Addiks\Database\Resource;
+namespace Addiks\PHPSQL\Resource;
 
-use Addiks\Database\Entity\Configuration\Database;
-use Addiks\Database\Value\Database\Dsn;
-use Addiks\Database\Resource\PDO\Internal;
-use Addiks\Database\Resource\Storages;
+use Addiks\PHPSQL\Entity\Configuration\Database;
+use Addiks\PHPSQL\Value\Database\Dsn;
+use Addiks\PHPSQL\Resource\PDO\Internal;
+use Addiks\PHPSQL\Resource\Storages;
 
 use Addiks\Common\Value\Text\Directory\Data;
 use Addiks\Common\Resource;
@@ -27,122 +27,138 @@ use PDO;
  * @package Addiks
  * @subpackage Database
  */
-class Connection extends Resource{
-	
-	private $config;
-	
-	public function setDatabaseConnectionConfig(Database $config){
-		$this->config = $config;
-	}
-	
-	public function getDatabaseConnectionConfig(){
-		if(is_null($this->config)){
-			
-			/* @var $config Database */
-			$this->factorize($config);
-			
-			$this->setDatabaseConnectionConfig($config);
-		}
-		return $this->config;
-	}
-	
-	/**
-	 * Php Database Object. see: php.net/pdo
-	 * @var PDO
-	 */
-	protected $pdo;
-	
-	/**
-	 * Gets the PHP Data Object.
-	 * @see http://php.net/pdo
-	 * @see self::connect()
-	 * @return PDO
-	 */
-	public function getPDO(){
-		if(is_null($this->pdo)){
-			$this->connect();
-		}
-		return $this->pdo;
-	}
-	
-	public function query($statement, array $parameters = array()){
-		
-		return $this->getPDO()->query($statement, $parameters);
-		
-	}
-	
-	public function isConfigurationInstalled(Database $configuration){
-		
-		return true;
-	}
-	
-	public function hasConfiguration(){
-		
-		$configuration = $this->getDatabaseConnectionConfig();
-		
-		$dsn = $configuration->getDsn();
-		
-		return $dsn instanceof Dsn;
-	}
-	
-	/**
-	 * tries to cennect to database using configuration.
-	 * @param bool $ignoreInstalled		try to connect even if installer says that installation is incomplete
-	 * @see self::getDatabaseConnectionConfig()
-	 * @throws \InvalidArgumentException
-	 */
-	public function connect($ignoreInstalled=false){
-		
-		$configuration = $this->getDatabaseConnectionConfig();
-		
-		if(!$ignoreInstalled && !$this->isConfigurationInstalled($configuration)){
-			return false;
-		}
-		
-		$username = $configuration->getUsername();
-		$password = $configuration->getPassword();
-		$dsn      = $configuration->getDsn();
-		
-		if(!$dsn instanceof Dsn){
-			throw new InvalidArgumentException("No DSN provided to connect to database with! (no database configured?)");
-		}
-		
-		switch(strtolower($dsn->getDriverName())){
-			
-			case Internal::DRIVERNAME:
-				
-				/* @var $pdoReplacement Internal */
-				$this->factorize($pdoReplacement);
-				
-				$this->injectDepency($pdoReplacement);
-				
-				$this->pdo = $pdoReplacement;
-				break;
-			
-			case 'cubrid':
-			case 'sybase':
-			case 'mssql':
-			case 'dblib':
-			case 'firebird':
-			case 'ibm':
-			case 'informix':
-			case 'mysql':
-			case 'oci':
-			case 'odbc':
-			case 'pgsql':
-			case 'sqlite':
-			case 'sqlsrv':
-			case '4d':
-				$this->pdo = new PDO((string)$dsn, (string)$username, (string)$password);
-				break;
-			
-			default:
-				throw new InvalidArgumentException("Invalid database-driver '{$dsn->getDriverName()}' given!");
-		}
-		
-		$cache = new ApcCache();
-		
-		return true;
-	}
-	
+class Connection extends Resource
+{
+    
+    public static function newFromDsn(Dsn $dsn)
+    {
+        $config = new Database();
+        $config->setDsn($dsn);
+
+        $connection = new self();
+        $connection->setDatabaseConnectionConfig($config);
+
+        return $connection;
+    }
+
+    private $config;
+    
+    public function setDatabaseConnectionConfig(Database $config)
+    {
+        $this->config = $config;
+    }
+    
+    public function getDatabaseConnectionConfig()
+    {
+        if (is_null($this->config)) {
+            /* @var $config Database */
+            $this->factorize($config);
+            
+            $this->setDatabaseConnectionConfig($config);
+        }
+        return $this->config;
+    }
+    
+    public function hasConfiguration()
+    {
+        
+        $configuration = $this->getDatabaseConnectionConfig();
+        
+        $dsn = $configuration->getDsn();
+        
+        return $dsn instanceof Dsn;
+    }
+    
+    /**
+     * Php Database Object. see: php.net/pdo
+     * @var PDO
+     */
+    protected $pdo;
+    
+    /**
+     * Gets the PHP Data Object.
+     * @see http://php.net/pdo
+     * @see self::connect()
+     * @return PDO
+     */
+    public function getPDO()
+    {
+        if (is_null($this->pdo)) {
+            $this->connect();
+        }
+        return $this->pdo;
+    }
+
+    public function isConnected()
+    {
+        return !is_null($this->pdo);
+    }
+    
+    public function query($statement, array $parameters = array())
+    {
+        
+        if (!$this->isConnected()) {
+            $this->connect();
+        }
+
+        return $this->getPDO()->query($statement, $parameters);
+        
+    }
+    
+    /**
+     * tries to cennect to database using configuration.
+     *
+     * @see self::getDatabaseConnectionConfig()
+     * @throws \InvalidArgumentException
+     */
+    public function connect()
+    {
+        
+        $configuration = $this->getDatabaseConnectionConfig();
+        
+        $username = $configuration->getUsername();
+        $password = $configuration->getPassword();
+        $dsn      = $configuration->getDsn();
+        
+        if (!$dsn instanceof Dsn) {
+            throw new InvalidArgumentException("No DSN provided to connect to database with! (no database configured?)");
+        }
+        
+        switch(strtolower($dsn->getDriverName())){
+            
+            case Internal::DRIVERNAME:
+                
+                /* @var $pdoReplacement Internal */
+                $this->factorize($pdoReplacement);
+                
+                $this->injectDepency($pdoReplacement);
+                
+                $this->pdo = $pdoReplacement;
+                break;
+            
+            case 'cubrid':
+            case 'sybase':
+            case 'mssql':
+            case 'dblib':
+            case 'firebird':
+            case 'ibm':
+            case 'informix':
+            case 'mysql':
+            case 'oci':
+            case 'odbc':
+            case 'pgsql':
+            case 'sqlite':
+            case 'sqlsrv':
+            case '4d':
+                $this->pdo = new PDO((string)$dsn, (string)$username, (string)$password);
+                break;
+            
+            default:
+                throw new InvalidArgumentException("Invalid database-driver '{$dsn->getDriverName()}' given!");
+        }
+        
+        $cache = new ApcCache();
+        
+        return true;
+    }
 }

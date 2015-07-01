@@ -9,11 +9,11 @@
  * @package Addiks
  */
 
-namespace Addiks\Database\Service\TestCase\Entity;
+namespace Addiks\PHPSQL\Service\TestCase\Entity;
 
 use Addiks\Common\Value\Text\Filepath;
 
-use Addiks\Database\Entity\Storage;
+use Addiks\PHPSQL\Entity\Storage;
 
 use Addiks\Common\TestCase;
 

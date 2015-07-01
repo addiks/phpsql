@@ -9,20 +9,23 @@
  * @package Addiks
  */
 
-namespace Addiks\Database\Resource\DatabaseAdapter;
+namespace Addiks\PHPSQL\Resource\DatabaseAdapter;
 
-class MySQLDatabaseAdapter extends AbstractDatabaseAdapter{
+class MySQLDatabaseAdapter extends AbstractDatabaseAdapter
+{
 
-    public function getTypeName(){
+    public function getTypeName()
+    {
         return 'mysql';
     }
 
-    public function listSchemas(){
+    public function listSchemas()
+    {
         return array();
     }
 
-    function query($statementString, array $parameters=array(), SQLTokenIterator $tokens = null){
+    function query($statementString, array $parameters = array(), SQLTokenIterator $tokens = null)
+    {
         
     }
-    
 }
