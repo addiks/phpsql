@@ -1,0 +1,36 @@
+{
+    "name":         "addiks/phpsql",
+    "description":  "SQL-database written in PHP",
+    "keywords":     ["sql", "database", "php"],
+    "homepage":     "http://addiks.net/phpsql",
+    "type":         "library",
+    "license":      "GPL-3.0",
+    "authors":      [
+        {
+            "name":      "Gerrit Addiks",
+            "email":     "gerrit@addiks.de",
+            "homepage":  "http://addiks.net"
+        }
+    ],
+
+    "require": {
+        "php": ">=5.4.0",
+    },
+
+    "require-dev": {
+        "phpunit/phpunit": "~4.0"
+    },
+
+    "autoload": {
+        "psr-0": {
+            "Addiks\\PHPSQL":  "src/",
+        }
+    },
+
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    }
+
+}
