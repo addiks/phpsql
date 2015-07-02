@@ -5,7 +5,6 @@
 
 namespace Addiks\PHPSQL\Resource;
 
-use Addiks\Common\Resource;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Resource\DatabaseAdapter\AbstractDatabaseAdapter;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
@@ -13,7 +12,7 @@ use Addiks\PHPSQL\Entity\Result\ResultInterface;
 /**
  *
  */
-class Database extends Resource
+class Database
 {
     
     private $currentDatabaseType = 'internal';

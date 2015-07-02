@@ -11,10 +11,9 @@
 
 namespace Addiks\PHPSQL\Service\ValueResolver;
 
-use Addiks\Common\Service;
 use Addiks\PHPSQL\Entity\Job\FunctionJob;
 
-abstract class FunctionResolver extends Service
+abstract class FunctionResolver
 {
     
     abstract public function getExpectedParameterCount();

@@ -11,9 +11,8 @@
 
 namespace Addiks\PHPSQL\Value\Specifier;
 
-use Addiks\Common\InvalidValue;
-
-use Addiks\Common\Value\Text\Line;
+use ErrorException;
+use Addiks\PHPSQL\Value\Text\Line;
 
 class DatabaseSpecifier extends Line
 {
@@ -29,7 +28,7 @@ class DatabaseSpecifier extends Line
         parent::validate($value);
         
         if (!preg_match("/^[a-zA-Z0-9:_-]+$/is", $value)) {
-            throw new InvalidValue("Invalid database-specifier given: '{$value}'!");
+            throw new ErrorException("Invalid database-specifier given: '{$value}'!");
         }
     }
 }

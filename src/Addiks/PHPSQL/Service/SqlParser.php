@@ -26,10 +26,7 @@ use Addiks\PHPSQL\Service\SqlParser\Part\Parenthesis;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Tool\SQLTokenIterator;
-
-use Addiks\Common\Service;
-
-use Addiks\Analyser\Tool\TokenIterator;
+use Addiks\PHPSQL\Tool\TokenIterator;
 
 /**
  * This is a parser for SQL statements.
@@ -44,7 +41,7 @@ use Addiks\Analyser\Tool\TokenIterator;
  * @see Job
  * @see JobRenderer
  */
-class SqlParser extends Service
+class SqlParser
 {
     
     public function canParseTokens(SQLTokenIterator $tokens)

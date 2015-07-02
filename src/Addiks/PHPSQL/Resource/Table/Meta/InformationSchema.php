@@ -11,38 +11,14 @@
 
 namespace Addiks\PHPSQL\Resource\Table\Meta;
 
-use Addiks\Depencies\Resource\Context;
-
-use Addiks\Common\Resource;
-
 use Addiks\PHPSQL\Resource\Table;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 
-use Addiks\Common\Resource;
-
 /**
  *
- * @Addiks\Factory(static=true, method="self::staticFactory")
  */
-abstract class InformationSchema extends Resource implements IndexInterface
+abstract class InformationSchema implements IndexInterface
 {
-    
-    public static function staticFactory(Context $context, $tableName, $schemaId = null)
-    {
-    
-        switch($tableName){
-                
-            case 'TABLES':
-                /* @var $tableResource Table */
-                $context->factorize($tableResource, [$tableName, $schemaId]);
-                break;
-    
-            default:
-                throw new Error("Unknown table '{$tableName}' in meta-database 'information_schema'!");
-        }
-    
-        return $tableResource;
-    }
     
     public function __construct($tableName, $schemaId = null)
     {

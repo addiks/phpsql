@@ -12,15 +12,11 @@
 namespace Addiks\PHPSQL\Entity\Page;
 
 use Addiks\Analyser\Service\TokenParser\CodeBlock\DocComment;
-
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
-
 use Addiks\PHPSQL\Service\BinaryConverterTrait;
-
-use Addiks\Common\Entity;
+use Addiks\PHPSQL\Entity;
 use Addiks\Common\Tool\ClassAnalyzer;
-
-use Addiks\Protocol\Entity\Exception\Error;
+use ErrorException;
 
 /**
  * A page in an table-index containing information about a column in the table.
@@ -273,7 +269,7 @@ class Column extends Entity
         $data = str_pad($data, self::PAGE_SIZE, "\0", STR_PAD_RIGHT);
         
         if (strlen($data) !== self::PAGE_SIZE) {
-            throw new Error("Invalid page-data generated for column-page! (length ".strlen($data)." !== ".self::PAGE_SIZE.")");
+            throw new ErrorException("Invalid page-data generated for column-page! (length ".strlen($data)." !== ".self::PAGE_SIZE.")");
         }
         
         return $data;
@@ -305,7 +301,7 @@ class Column extends Entity
                 $annotations = $this->getDataTypeAnnotations();
                     
                 if (!isset($annotations['Addiks\\\\Datatype'])) {
-                    throw new Error("Data-type '{$key}' without byte-length annotation requested! (All datatypes should have one)");
+                    throw new ErrorException("Data-type '{$key}' without byte-length annotation requested! (All datatypes should have one)");
                 }
                     
                 /* @var $annotation \Addiks\Common\Annotation */
@@ -323,10 +319,10 @@ class Column extends Entity
                             $this->cellsizeCache = $this->getLength()+$this->getSecondLength();
                                 
                         case 'storage':
-                            throw new Error("Storage-length for data-cells is not implemented yet!");
+                            throw new ErrorException("Storage-length for data-cells is not implemented yet!");
                                 
                         default:
-                            throw new Error("Invalid (non-implemented?) keyword '{$annotation['type']}' found for datatype '{$key}'!");
+                            throw new ErrorException("Invalid (non-implemented?) keyword '{$annotation['type']}' found for datatype '{$key}'!");
                     }
                 }
             } else {

@@ -12,23 +12,18 @@
 namespace Addiks\PHPSQL\Resource;
 
 use Addiks\PHPSQL\Entity\Storage;
-
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
-
 use Addiks\PHPSQL\Resource\Table\Internal;
-
-use Addiks\Common\Resource;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
-use Addiks\Common\Tool\CustomIterator;
+use Addiks\PHPSQL\Tool\CustomIterator;
+use IteratorAggregate;
+use Countable;
 
 /**
  * This represents a table.
  *
  * @Addiks\Singleton(negated=true)
  */
-class Table extends Resource implements \IteratorAggregate, \Countable, TableInterface
+class Table implements IteratorAggregate, Countable, TableInterface
 {
     
     use StoragesProxyTrait;

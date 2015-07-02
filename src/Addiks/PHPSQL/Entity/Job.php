@@ -12,8 +12,7 @@
 namespace Addiks\PHPSQL\Entity;
 
 use Addiks\PHPSQL\Service\SqlParser;
-
-use Addiks\Common\Entity;
+use Addiks\PHPSQL\Entity;
 
 /**
  * A job entity holds all relevand data extracted from an sql-statement.

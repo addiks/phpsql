@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Value\Database;
 
-use Addiks\Common\Value;
+use Addiks\PHPSQL\Value;
 
 /**
  * Value representing a database-username.

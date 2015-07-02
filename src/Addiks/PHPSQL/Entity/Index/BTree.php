@@ -11,10 +11,8 @@
 
 namespace Addiks\PHPSQL\Entity\Index;
 
-use Addiks\Common\Entity;
-
-use Addiks\Common\Tool\CustomIterator;
-
+use Addiks\PHPSQL\Entity;
+use Addiks\PHPSQL\Tool\CustomIterator;
 use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\Page\BTree\Node;

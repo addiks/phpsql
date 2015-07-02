@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Value\Enum\Page\Queue;
 
-use Addiks\Common\Value\Enum;
+use Addiks\PHPSQL\Value\Enum;
 
 class Status extends Enum
 {

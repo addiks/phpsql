@@ -16,8 +16,8 @@ use Addiks\PHPSQL\Value\Enum\Page\Schema\Type;
 use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Entity\Page\Schema as SchemaPage;
 
-use Addiks\Common\Entity;
-use Addiks\Common\Tool\CustomIterator;
+use Addiks\PHPSQL\Entity;
+use Addiks\PHPSQL\Tool\CustomIterator;
 
 /**
  * This entity manages the schema-information about tables, views, ... in the database.

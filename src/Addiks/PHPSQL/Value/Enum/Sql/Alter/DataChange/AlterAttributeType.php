@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Value\Enum\Sql\Alter\DataChange;
 
-use Addiks\Common\Value\Enum;
+use Addiks\PHPSQL\Value\Enum;
 
 class AlterAttributeType extends Enum
 {

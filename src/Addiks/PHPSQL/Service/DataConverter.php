@@ -13,9 +13,7 @@ namespace Addiks\PHPSQL\Service;
 
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 
-use Addiks\Common\Service;
-
-class DataConverter extends Service
+class DataConverter
 {
     
     use BinaryConverterTrait;

@@ -11,22 +11,18 @@
 
 namespace Addiks\PHPSQL\Resource;
 
-use Addiks\Protocol\Entity\Exception\Error;
-
-use Addiks\Common\Value\Text\Directory\Data;
-
+use ErrorException;
+use Addiks\PHPSQL\Value\Text\Directory\Data;
 use Addiks\PHPSQL\Entity\Storage;
-
-use Addiks\Common\Resource;
-use Addiks\Common\Tool\CustomIterator;
-use Addiks\Common\Value\Text\Filepath;
+use Addiks\PHPSQL\Tool\CustomIterator;
+use Addiks\PHPSQL\Value\Text\Filepath;
 
 /**
  * This resource is for accassing storages.
  * @see Storage
  *
  */
-class Storages extends Resource
+class Storages
 {
     
     const HASH_LENGTH = 6;
@@ -43,7 +39,7 @@ class Storages extends Resource
     {
         
         /* @var $dataDirectory Data */
-        $dataDirectory = $this->factory("\Addiks\Common\Value\Text\Directory\Data");
+        $dataDirectory = $this->factory("\Addiks\PHPSQL\Value\Text\Directory\Data");
         
         $path = $this->cleanPath($path);
         
@@ -174,7 +170,7 @@ class Storages extends Resource
     public function getStoreIterator($path, $recursive = true)
     {
         
-        /* @var $dataDirectory \Addiks\Common\Value\Text\Directory\Data */
+        /* @var $dataDirectory \Addiks\PHPSQL\Value\Text\Directory\Data */
         $this->factorize($dataDirectory);
         
         $path = $this->cleanPath($path);
@@ -205,7 +201,7 @@ class Storages extends Resource
     protected function getStorageIteratorFromDirectoryIterator(\DirectoryIterator $directoryIterator, $recursive = true, $namespace = "-")
     {
         
-        /* @var $dataDirectory \Addiks\Common\Value\Text\Directory\Data */
+        /* @var $dataDirectory \Addiks\PHPSQL\Value\Text\Directory\Data */
         $this->factorize($dataDirectory);
         
         $storageResource = $this;
@@ -278,7 +274,7 @@ class Storages extends Resource
         
         if (strlen($path)<=0) {
             $originalPath = func_get_arg(0);
-            throw new Error("Invalid folder-storage-path '{$originalPath}' given!");
+            throw new ErrorException("Invalid folder-storage-path '{$originalPath}' given!");
         }
         
         if (!file_exists($dataPath)) {
@@ -305,8 +301,8 @@ class Storages extends Resource
     protected function getIndexPath($namespace, $path = null)
     {
     
-        /* @var $dataDirectory \Addiks\Common\Value\Text\Directory\Data */
-        $dataDirectory = $this->factory("\Addiks\Common\Value\Text\Directory\Data");
+        /* @var $dataDirectory \Addiks\PHPSQL\Value\Text\Directory\Data */
+        $dataDirectory = $this->factory("\Addiks\PHPSQL\Value\Text\Directory\Data");
     
         if (!is_null($path)) {
             $path = "/{$path}";
@@ -318,8 +314,8 @@ class Storages extends Resource
     protected function getMirrorIndexPath($namespace, $path)
     {
         
-        /* @var $dataDirectory \Addiks\Common\Value\Text\Directory\Data */
-        $dataDirectory = $this->factory("\Addiks\Common\Value\Text\Directory\Data");
+        /* @var $dataDirectory \Addiks\PHPSQL\Value\Text\Directory\Data */
+        $dataDirectory = $this->factory("\Addiks\PHPSQL\Value\Text\Directory\Data");
         
         return sprintf(static::PATH_MIRROR, $dataDirectory, $namespace, $path);
     }
@@ -327,8 +323,8 @@ class Storages extends Resource
     protected function getStorageDataPath($namespace, $path)
     {
     
-        /* @var $dataDirectory \Addiks\Common\Value\Text\Directory\Data */
-        $dataDirectory = $this->factory("\Addiks\Common\Value\Text\Directory\Data");
+        /* @var $dataDirectory \Addiks\PHPSQL\Value\Text\Directory\Data */
+        $dataDirectory = $this->factory("\Addiks\PHPSQL\Value\Text\Directory\Data");
         
         $hash = substr(md5($path), 0, self::HASH_LENGTH);
         $hashArray = str_split($hash);

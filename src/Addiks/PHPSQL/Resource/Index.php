@@ -12,34 +12,23 @@
 namespace Addiks\PHPSQL\Resource;
 
 use Addiks\PHPSQL\Entity\Page\Column;
-
 use Addiks\PHPSQL\Entity\TableSchema;
-
 use Addiks\PHPSQL\Entity\Index\HashTable;
-
 use Addiks\PHPSQL\Entity\Index\BTree;
-
 use Addiks\PHPSQL\Value\Enum\Page\Index\Engine;
-
 use Addiks\PHPSQL\Entity\Page\Schema\Index as IndexPage;
-
 use Addiks\PHPSQL\Service\BinaryConverterTrait;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
 use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Resource\Database;
-
-use Addiks\Common\Tool\CustomIterator;
-
-use Addiks\Common\Resource;
+use Addiks\PHPSQL\Tool\CustomIterator;
+use ErrorException;
 
 /**
  *
  * @author gerrit
  * @Addiks\Singleton(negated=true)
  */
-class Index extends Resource implements \IteratorAggregate
+class Index implements \IteratorAggregate
 {
     
     use StoragesProxyTrait;
@@ -293,7 +282,7 @@ class Index extends Resource implements \IteratorAggregate
             if (!is_string($valueCell)) {
                 $typeString = gettype($valueCell);
                 $valueCell = var_export($valueCell, true);
-                throw new Error("Cannot index non-string: ({$typeString}){$valueCell}");
+                throw new ErrorException("Cannot index non-string: ({$typeString}){$valueCell}");
             }
                     
             $keyLength = $columnPage->getCellSize();

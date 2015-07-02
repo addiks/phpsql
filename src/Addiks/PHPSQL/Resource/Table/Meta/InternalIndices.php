@@ -11,19 +11,12 @@
 
 namespace Addiks\PHPSQL\Resource\Table\Meta;
 
-use Addiks\Common\Tool\CustomIterator;
-
-use Addiks\Analyser\Tool\TokenIterator;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
-use Addiks\Common\Resource;
-
+use Addiks\PHPSQL\Tool\CustomIterator;
+use Addiks\PHPSQL\Tool\TokenIterator;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
+use ErrorException;
 
-use Addiks\Common\Resource;
-
-class InternalIndices extends Resource implements IndexInterface
+class InternalIndices implements IndexInterface
 {
     
     public function __construct($tableName, $schemaId = null)
@@ -32,7 +25,7 @@ class InternalIndices extends Resource implements IndexInterface
         $tableNameParts = explode("__", $tableName);
         
         if (count($tableNameParts)!==3) {
-            throw new Error("Invalid identifier '{$tableName}' for index-dump!");
+            throw new ErrorException("Invalid identifier '{$tableName}' for index-dump!");
         }
         
         list($schemaId, $tableName, $indexId) = $tableNameParts;

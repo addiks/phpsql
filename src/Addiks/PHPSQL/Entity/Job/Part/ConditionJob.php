@@ -12,9 +12,8 @@
 namespace Addiks\PHPSQL\Entity\Job\Part;
 
 use Addiks\PHPSQL\Value\Enum\Sql\Operator;
-
 use Addiks\PHPSQL\Entity\Job\Part;
-use Addiks\Common\Entity;
+use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 
 class ConditionJob extends Part

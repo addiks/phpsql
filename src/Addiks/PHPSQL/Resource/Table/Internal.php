@@ -12,43 +12,27 @@
 namespace Addiks\PHPSQL\Resource\Table;
 
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
-
 use Addiks\PHPSQL\Entity\Storage;
-
 use Addiks\PHPSQL\Entity\TableSchema;
-
 use Addiks\PHPSQL\Entity\ColumnData;
-
 use Addiks\PHPSQL\Entity\Job\Part\Value;
-
 use Addiks\PHPSQL\Service\DataConverter;
-
 use Addiks\PHPSQL\Service\ValueResolver;
-
 use Addiks\PHPSQL\Entity\Page\Column;
-
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
-
 use Addiks\PHPSQL\Resource\Database;
-
 use Addiks\PHPSQL\Resource\TableInterface;
-
 use Addiks\PHPSQL\Service\BinaryConverterTrait;
-
 use Addiks\PHPSQL\Resource\StoragesProxyTrait;
-
-use Addiks\Common\Resource;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
-use Addiks\Common\Tool\CustomIterator;
+use Addiks\PHPSQL\Tool\CustomIterator;
+use ErrorException;
 
 /**
  *
  * @author gerrit
  * @Addiks\Singleton(negated=true)
  */
-class Internal extends Resource implements TableInterface
+class Internal implements TableInterface
 {
 
     use StoragesProxyTrait;
@@ -546,10 +530,10 @@ class Internal extends Resource implements TableInterface
             $rowId = $this->strdec($rowId);
         }
         if (!is_int($rowId)) {
-            throw new Error("Row-id has to be integer!");
+            throw new ErrorException("Row-id has to be integer!");
         }
         if (!$this->getRowExists($rowId)) {
-            throw new Error("Seek to non-existing row-id '{$rowId}'!");
+            throw new ErrorException("Seek to non-existing row-id '{$rowId}'!");
         }
 
         $this->currentRowIndex = $rowId;

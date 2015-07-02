@@ -12,20 +12,15 @@
 namespace Addiks\PHPSQL\Service;
 
 use Addiks\PHPSQL\Entity\Index\QuickSort;
-
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
-
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-
 use Addiks\PHPSQL\Entity\Page\Column;
-
 use Addiks\PHPSQL\Resource\Table;
-
-use Addiks\Common\Service;
-
-use Addiks\Common\Tool\CustomIterator;
+use Addiks\PHPSQL\Tool\CustomIterator;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
+use Countable;
+use SeekableIterator;
 
 /**
  * The purspose of this component is to iterate sorted over one data-source.
@@ -33,10 +28,8 @@ use Addiks\PHPSQL\Entity\Result\ResultInterface;
  *
  * TODO: this iterator can currently on iterate over one index, implement the rest!
  *
- * @author gerrit
- * @Addiks\Singleton(negated=true)
  */
-class SortedResourceIterator extends Service implements \Countable, \SeekableIterator
+class SortedResourceIterator implements Countable, SeekableIterator
 {
 
     private $resource;

@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Value\Enum\Page\Schema;
 
-use Addiks\Common\Value\Enum;
+use Addiks\PHPSQL\Value\Enum;
 
 class RowFormat extends Enum
 {

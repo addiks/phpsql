@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Value\Database\Dsn;
 
-class MySQL extends Dsn
+class MySQLDsn extends Dsn
 {
     
     /**

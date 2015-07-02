@@ -12,27 +12,18 @@
 namespace Addiks\PHPSQL\Resource;
 
 use Addiks\PHPSQL\Service\ValueResolver;
-
 use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
-
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
-
 use Addiks\PHPSQL\Service\BinaryConverterTrait;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
-use Addiks\Common\Resource;
-use Addiks\Common\Entity;
-use Addiks\Common\Tool\CustomIterator;
-
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
+use Addiks\PHPSQL\Tool\CustomIterator;
+use ErrorException;
 
 /**
  * This is an dynamic result-set specific for SELECT statements.
  *
- * @Addiks\Singleton(negated=true)
  */
-class SelectResult extends Resource implements ResultInterface, \IteratorAggregate
+class SelectResult implements ResultInterface, \IteratorAggregate
 {
 
     use BinaryConverterTrait;
@@ -452,7 +443,7 @@ class SelectResult extends Resource implements ResultInterface, \IteratorAggrega
         
         foreach ($sourceRows as $tableAlias => $row) {
             if (!is_array($row)) {
-                throw new Error("Join-Iterator returned non-array as row!");
+                throw new ErrorException("Join-Iterator returned non-array as row!");
             }
             
             foreach ($row as $column => $value) {

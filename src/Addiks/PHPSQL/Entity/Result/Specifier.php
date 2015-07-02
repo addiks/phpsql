@@ -12,8 +12,7 @@
 namespace Addiks\PHPSQL\Entity\Result;
 
 use Addiks\PHPSQL\Entity\Result\Specifier\Column;
-
-use Addiks\Common\Entity;
+use Addiks\PHPSQL\Entity;
 
 class Specifier extends Entity implements \IteratorAggregate
 {

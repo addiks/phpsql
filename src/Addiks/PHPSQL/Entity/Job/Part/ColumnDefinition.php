@@ -11,16 +11,11 @@
 
 namespace Addiks\PHPSQL\Entity\Job\Part;
 
-use Addiks\Common\Value\Text\Annotation;
-
+use Addiks\PHPSQL\Value\Text\Annotation;
 use Addiks\Common\Tool\ClassAnalyzer;
-
 use Addiks\Analyser\Service\TokenParser\CodeBlock\DocComment;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
+use ErrorException;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
-
 use Addiks\PHPSQL\Entity\Job\Part;
 
 class ColumnDefinition extends Part
@@ -81,7 +76,7 @@ class ColumnDefinition extends Part
         $annotations = DocComment::extractAnnotationsFromString($docComment);
         
         if (!isset($annotations['Addiks\\\\Datatype'])) {
-            throw new Error("Missing annotation 'Addiks\\Datatype' on data-type-constant '{$reflection->getName()}::{$this->getDataType()->getName()}'");
+            throw new ErrorException("Missing annotation 'Addiks\\Datatype' on data-type-constant '{$reflection->getName()}::{$this->getDataType()->getName()}'");
         }
         
         /* @var $annotation Annotation */

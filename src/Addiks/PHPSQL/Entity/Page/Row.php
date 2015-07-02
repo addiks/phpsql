@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity\Page;
 
-use Addiks\Common\Entity;
+use Addiks\PHPSQL\Entity;
 
 class Row extends Entity
 {

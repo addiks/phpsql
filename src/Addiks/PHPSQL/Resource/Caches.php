@@ -77,7 +77,7 @@ class Caches extends Storages
         $indexPath = $this->getIndexPath($namespace, $identifier);
         $dataPath  = $this->getStorageDataPath($namespace, $identifier);
         
-        /* @var $dataDirectory \Addiks\Common\Value\Text\Directory\Data */
+        /* @var $dataDirectory \Addiks\PHPSQL\Value\Text\Directory\Data */
         $this->factorize($dataDirectory);
         
         $indexPath = substr($indexPath, strlen((string)$dataDirectory));

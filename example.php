@@ -4,18 +4,23 @@
  */
 
 use Addiks\PHPSQL\Resource\Connection;
-use Addiks\PHPSQL\Value\Database\Dsn;
+use Addiks\PHPSQL\Value\Database\Dsn\InmemoryDsn;
 
 define("BASEDIR", dirname(__FILE__));
 
 function __autoload($className)
 {
-    $filePath = "src/".str_replace("\\", "//", $className).".php";
-    require_once($className);
+    $filePath = "src/".str_replace("\\", "/", $className).".php";
+    if (file_exists($filePath)) {
+        require_once($filePath);
+    }
 }
 
-// create a new in-memory database
-$connection = Connection::newFromDsn(Dsn::factory("inmemory"));
+// define a dsn to connect to (or create) an in-memory database named "some_example_database"
+$dsn = InmemoryDsn::factory("some_example_database");
+
+// create the in-memory database defined in the dsn
+$connection = Connection::newFromDsn($dsn);
 
 // create a few tables inside that database
 // (the ENGINE definition will be ignored)

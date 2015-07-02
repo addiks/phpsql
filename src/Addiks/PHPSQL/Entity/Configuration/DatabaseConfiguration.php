@@ -12,10 +12,7 @@
 namespace Addiks\PHPSQL\Entity\Configuration;
 
 use Addiks\PHPSQL\Value\Database\Dsn\Internal;
-
 use Addiks\PHPSQL\Value\Database\Dsn;
-
-use Addiks\Common\Entity\Configuration;
 
 /**
  * Configuration for database-connection.
@@ -30,7 +27,7 @@ use Addiks\Common\Entity\Configuration;
  * @package Addiks
  * @subpackage Installer
  */
-class Database extends Configuration
+class DatabaseConfiguration
 {
     
     /**

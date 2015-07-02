@@ -11,9 +11,8 @@
 
 namespace Addiks\PHPSQL\Value\Sql;
 
-use Addiks\Common\InvalidValue;
-
-use Addiks\Common\Value\Text\Line;
+use ErrorException;
+use Addiks\PHPSQL\Value\Text\Line;
 
 class Variable extends Line
 {
@@ -22,7 +21,7 @@ class Variable extends Line
     {
         
         if (!preg_match("/^(\:[a-zA-Z0-9_-]+|\?)$/is", $string)) {
-            throw new InvalidValue("SQL Varaible name '{$string}' does not match pattern '^\:[a-zA-Z0-9_-]+$'!");
+            throw new ErrorException("SQL Varaible name '{$string}' does not match pattern '^\:[a-zA-Z0-9_-]+$'!");
         }
     }
 }

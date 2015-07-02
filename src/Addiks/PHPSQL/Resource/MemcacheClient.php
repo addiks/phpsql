@@ -11,8 +11,6 @@
 
 namespace Addiks\PHPSQL\Resource;
 
-use Addiks\Common\Resource;
-
 /**
  * This resource can connect to (multiple) memcache-servers.
  *
@@ -20,7 +18,7 @@ use Addiks\Common\Resource;
  * if they use the default port.
  *
  */
-class MemcacheClient extends Resource implements CacheBackendInterface
+class MemcacheClient implements CacheBackendInterface
 {
     
     /**

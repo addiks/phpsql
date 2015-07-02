@@ -12,13 +12,9 @@
 namespace Addiks\PHPSQL\Entity;
 
 use Addiks\PHPSQL\Entity\Page\Column;
-
-use Addiks\Common\Entity;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
-use Addiks\Common\Tool\CustomIterator;
-
+use Addiks\PHPSQL\Entity;
+use ErrorException;
+use Addiks\PHPSQL\Tool\CustomIterator;
 use Addiks\PHPSQL\Entity\Storage;
 
 class ColumnData extends Entity implements \Countable, \IteratorAggregate
@@ -156,7 +152,7 @@ class ColumnData extends Entity implements \Countable, \IteratorAggregate
         
         if (strlen($data) !== $columnSchema->getCellSize()) {
             fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
-            throw new Error("No or corrupted cell-data at index '{$index}'!");
+            throw new ErrorException("No or corrupted cell-data at index '{$index}'!");
         }
         
         $data = trim($data, "\0");

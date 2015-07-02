@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Value\Enum\Sql\Select;
 
-use Addiks\Common\Value\Enum;
+use Addiks\PHPSQL\Value\Enum;
 
 class SpecialFlags extends Enum
 {

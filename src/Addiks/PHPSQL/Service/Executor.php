@@ -15,9 +15,7 @@ use Addiks\PHPSQL\Resource\StoragesProxyTrait;
 use Addiks\PHPSQL\Entity\Job\Statement;
 use Addiks\PHPSQL\Service\ValueResolver;
 
-use Addiks\Common\Service;
-
-abstract class Executor extends Service
+abstract class Executor
 {
     
     use StoragesProxyTrait;

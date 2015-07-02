@@ -11,18 +11,15 @@
 
 namespace Addiks\PHPSQL\Service;
 
-use Addiks\Common\Service;
-
-use Addiks\Common\Tool\CustomIterator;
-
+use IteratorAggregate;
+use Addiks\PHPSQL\Tool\CustomIterator;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 
 /**
  *
  * @author gerrit
- * @Addiks\Singleton(negated=true)
  */
-class ResultWriter extends Service implements \IteratorAggregate
+class ResultWriter implements IteratorAggregate
 {
     
     public function __construct(ResultInterface $result)

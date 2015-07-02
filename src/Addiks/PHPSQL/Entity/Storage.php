@@ -11,10 +11,10 @@
 
 namespace Addiks\PHPSQL\Entity;
 
-use Addiks\Protocol\Entity\Exception\Error;
+use ErrorException;
 
-use Addiks\Common\Entity;
-use Addiks\Common\Value\Text\Filepath;
+use Addiks\PHPSQL\Entity;
+use Addiks\PHPSQL\Value\Text\Filepath;
 
 /**
  * A storage is a controlled item that allows you to persist data.

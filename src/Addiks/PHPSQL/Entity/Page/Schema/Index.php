@@ -12,14 +12,10 @@
 namespace Addiks\PHPSQL\Entity\Page\Schema;
 
 use Addiks\PHPSQL\Value\Enum\Page\Index\ForeignKeyMethod;
-
 use Addiks\PHPSQL\Value\Enum\Page\Index\Engine;
-
 use Addiks\PHPSQL\Value\Enum\Page\Index\Type;
-
-use Addiks\Common\Entity;
-
-use Addiks\Protocol\Entity\Exception\Error;
+use Addiks\PHPSQL\Entity;
+use ErrorException;
 
 /**
  * Holds information about an index for a table.
@@ -76,7 +72,7 @@ class Index extends Entity
         
         foreach ($columns as $columnId) {
             if (!is_numeric($columnId)) {
-                throw new Error("Index-column-id '{$columnId}' is not numeric!");
+                throw new ErrorException("Index-column-id '{$columnId}' is not numeric!");
             }
         }
         
@@ -194,10 +190,10 @@ class Index extends Entity
     public function setData($data)
     {
         if (!is_string($data)) {
-            throw new Error("Data for index-page has to be string!");
+            throw new ErrorException("Data for index-page has to be string!");
         }
         if (strlen($data) !== self::PAGE_SIZE) {
-            throw new Error("Data for index-page has wrong length!");
+            throw new ErrorException("Data for index-page has wrong length!");
         }
         $this->data = $data;
     }

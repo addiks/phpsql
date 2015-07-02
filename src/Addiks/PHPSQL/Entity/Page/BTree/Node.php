@@ -11,9 +11,8 @@
 
 namespace Addiks\PHPSQL\Entity\Page\BTree;
 
-use Addiks\Common\Entity;
-
-use Addiks\Common\Tool\CustomIterator;
+use Addiks\PHPSQL\Entity;
+use Addiks\PHPSQL\Tool\CustomIterator;
 
 /**
  * A node in an b-tree index.

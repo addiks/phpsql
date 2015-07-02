@@ -12,16 +12,14 @@
 namespace Addiks\PHPSQL\Resource;
 
 use Addiks\PHPSQL\Entity\Mount;
-
-use Addiks\Common\Resource;
-use \ArrayIterator;
+use ArrayIterator;
 
 /**
  * Reads all mounts from /etc/fstab.
  * Gets used for filesystem-based cronjobs.
  * @see \Addiks\Tasks\Resource\FilesystemEvents
  */
-class Mounts extends Resource implements \IteratorAggregate
+class Mounts implements \IteratorAggregate
 {
     
     const FSTAB_FILEPATH = "/etc/fstab";

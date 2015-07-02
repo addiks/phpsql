@@ -12,35 +12,13 @@
 namespace Addiks\PHPSQL\Resource;
 
 use Addiks\PHPSQL\Resource\Filesystem\Real;
-
-use Addiks\Depencies\Resource\Context;
-
-use Addiks\Common\Resource;
-use Addiks\Common\Value\Text\Filepath;
+use Addiks\PHPSQL\Value\Text\Filepath;
 
 /**
  *
- * @Addiks\Factory(static=true, method="self::factoryByDIC")
  */
-abstract class Filesystem extends Resource
+abstract class Filesystem
 {
-    
-    /**
-     * This factory defines the class Real to use as default.
-     *
-     * If you want to change this, inject another filesystem into the used DIC.
-     *
-     * @param Context $context
-     * @return Real
-     */
-    public static function factoryByDIC(Context $context)
-    {
-        
-        /* @var $filesystem Real */
-        $context->factorize($filesystem);
-        
-        return $filesystem;
-    }
     
     abstract public function getFileContents(Filepath $filePath);
     

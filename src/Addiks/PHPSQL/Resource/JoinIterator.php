@@ -12,20 +12,12 @@
 namespace Addiks\PHPSQL\Resource;
 
 use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
-
 use Addiks\PHPSQL\Resource\Table;
-
 use Addiks\PHPSQL\Service\SortedResourceIterator;
-
 use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
-
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
-
-use Addiks\Common\Resource;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
-use Addiks\Common\Tool\CustomIterator;
+use Addiks\PHPSQL\Tool\CustomIterator;
+use ErrorException;
 
 /**
  * The purpose of this component is to cross-join in any needed way
@@ -34,7 +26,7 @@ use Addiks\Common\Tool\CustomIterator;
  * @author gerrit
  * @Addiks\Singleton(negated=true)
  */
-class JoinIterator extends Resource implements \SeekableIterator, \Countable, ResultInterface
+class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
 {
 
     public function __construct(SelectStatement $statement, $schemaId = null, array $parameters = array())
@@ -283,7 +275,7 @@ class JoinIterator extends Resource implements \SeekableIterator, \Countable, Re
                     break;
             
                 default:
-                    throw new \ErrorException("Invalid table-source type!");
+                    throw new ErrorException("Invalid table-source type!");
             }
                 
         }
@@ -308,7 +300,7 @@ class JoinIterator extends Resource implements \SeekableIterator, \Countable, Re
                 return $tableResource->getIterator()->valid();
                 
             default:
-                throw new \ErrorException("Invalid table-source type!");
+                throw new ErrorException("Invalid table-source type!");
         }
     }
 
@@ -336,11 +328,11 @@ class JoinIterator extends Resource implements \SeekableIterator, \Countable, Re
                     break;
 
                 default:
-                    throw new \ErrorException("Invalid table-source type!");
+                    throw new ErrorException("Invalid table-source type!");
             }
             
             if (!is_array($rows[$alias])) {
-                throw new Error("Table-Resource '{$alias}' returned non-array as row!");
+                throw new ErrorException("Table-Resource '{$alias}' returned non-array as row!");
             }
         }
 
@@ -454,7 +446,7 @@ class JoinIterator extends Resource implements \SeekableIterator, \Countable, Re
                     break;
             
                 default:
-                    throw new \ErrorException("Invalid table-source type!");
+                    throw new ErrorException("Invalid table-source type!");
             }
                 
         }

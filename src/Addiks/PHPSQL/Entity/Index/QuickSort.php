@@ -12,13 +12,9 @@
 namespace Addiks\PHPSQL\Entity\Index;
 
 use Addiks\PHPSQL\Entity\Page\Column;
-
 use Addiks\PHPSQL\Service\BinaryConverterTrait;
-
-use Addiks\Common\Entity;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
+use Addiks\PHPSQL\Entity;
+use ErrorException;
 use Addiks\PHPSQL\Entity\Storage;
 
 class QuickSort extends Entity implements \Iterator
@@ -30,7 +26,7 @@ class QuickSort extends Entity implements \Iterator
      *
      * @param Storage $storage
      * @param array $columnPages [[(Column)$columnPage, 'ASC'], [$columnPage2, 'DESC'], $columnPage3, ...]
-     * @throws Error
+     * @throws ErrorException
      */
     public function __construct(Storage $storage, array $columnPages)
     {
@@ -50,13 +46,13 @@ class QuickSort extends Entity implements \Iterator
                 $direction = "ASC";
                 
             } else {
-                throw new Error("Invalid content in parameter \$columnPages!");
+                throw new ErrorException("Invalid content in parameter \$columnPages!");
             }
             
             $direction = $direction === "ASC" ?"ASC" :"DESC";
             
             if (!$columnPage instanceof Column) {
-                throw new Error("Given column-page is not subclass of 'Column'!");
+                throw new ErrorException("Given column-page is not subclass of 'Column'!");
             }
             
             $usedColumnPages[] = [

@@ -11,14 +11,9 @@
 
 namespace Addiks\PHPSQL\Entity\TableSchema\Meta;
 
-use Addiks\Common\Entity;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
-use Addiks\Common\Entity;
-
+use Addiks\PHPSQL\Entity;
+use ErrorException;
 use Addiks\Depencies\Resource\Context;
-
 use Addiks\PHPSQL\TableSchemaInterface;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\TableSchema\Meta\InformationSchema\Tables;
@@ -26,28 +21,10 @@ use Addiks\PHPSQL\Entity\SchemaInterface;
 
 /**
  *
- * @Addiks\Factory(static=true, method="self::staticFactory")
  */
 abstract class InformationSchema extends Entity implements IndexInterface
 {
 
-    public static function staticFactory(Context $context, $tableSchemaStorage, $indexSchemaStorage, $tableName)
-    {
-        
-        switch($tableName){
-            
-            case 'TABLES':
-                /* @var $tableSchema Tables */
-                $context->factorize($tableSchema, [$tableSchemaStorage, $indexSchemaStorage]);
-                break;
-                
-            default:
-                throw new Error("Unknown table '{$tableName}' in meta-database 'information_schema'!");
-        }
-        
-        return $tableSchema;
-    }
-    
     private $databaseSchema;
 
     public function setDatabaseSchema(SchemaInterface $schema)

@@ -12,8 +12,7 @@
 namespace Addiks\PHPSQL\Entity\Result\Specifier;
 
 use Addiks\PHPSQL\Entity\Job\Part\Value;
-
-use Addiks\Common\Entity;
+use Addiks\PHPSQL\Entity;
 
 class Column extends Entity
 {

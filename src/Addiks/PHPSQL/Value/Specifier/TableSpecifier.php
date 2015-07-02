@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Value\Specifier;
 
-use Addiks\Common\InvalidValue;
+use ErrorException;
 
 class TableSpecifier extends DatabaseSpecifier
 {
@@ -45,7 +45,7 @@ class TableSpecifier extends DatabaseSpecifier
         parent::validate($valueArray[0]);
     
         if (!preg_match("/^([a-zA-Z0-9:_-]+\.)?[a-zA-Z0-9:_-]+$/is", $value)) {
-            throw new InvalidValue("Invalid table-specifier given: '{$value}'!");
+            throw new ErrorException("Invalid table-specifier given: '{$value}'!");
         }
     }
 }

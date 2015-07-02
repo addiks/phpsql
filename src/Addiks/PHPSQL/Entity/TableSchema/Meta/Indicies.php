@@ -11,9 +11,8 @@
 
 namespace Addiks\PHPSQL\Entity\TableSchema\Meta;
 
-use Addiks\Common\Entity;
-
-use Addiks\Protocol\Entity\Exception\Error;
+use Addiks\PHPSQL\Entity;
+use ErrorException;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\SchemaInterface;
 
@@ -56,7 +55,7 @@ class Indicies extends Entity implements IndexInterface
             $keyLength = $this->getKeyLength();
             
             if (is_null($keyLength)) {
-                throw new Error("Cannot create meta-table-schema for indicies when no key-length is specified!");
+                throw new ErrorException("Cannot create meta-table-schema for indicies when no key-length is specified!");
             }
             
             $columnPage = new Column();

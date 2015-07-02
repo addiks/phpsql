@@ -27,9 +27,8 @@ use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Tool\SQLTokenIterator;
 use Addiks\PHPSQL\Service\SqlParser;
-
-use Addiks\Common\Exception;
-use Addiks\Analyser\Tool\TokenIterator;
+use Addiks\PHPSQL\Tool\TokenIterator;
+use Exception;
 
 class CreateSqlParser extends SqlParser
 {

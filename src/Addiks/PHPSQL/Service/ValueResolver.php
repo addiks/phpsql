@@ -12,35 +12,21 @@
 namespace Addiks\PHPSQL\Service;
 
 use Addiks\PHPSQL\Value\Enum\Sql\Operator;
-
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
-
 use Addiks\PHPSQL\Entity\Job\Part\Condition\Enum;
-
 use Addiks\PHPSQL\Entity\Job\Part\Condition\Like;
-
 use Addiks\PHPSQL\Entity\Job\Part\Parenthesis;
-
 use Addiks\PHPSQL\Value\Sql\Variable;
-
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-
 use Addiks\PHPSQL\Entity\Job\Part\ConditionJob;
-
 use Addiks\PHPSQL\Entity\Result\Specifier\Column;
-
 use Addiks\PHPSQL\Entity\Job\Part\Value;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
 use Addiks\PHPSQL\Service\ValueResolver\FunctionResolver;
-
-use Addiks\Common\Service;
 use Addiks\PHPSQL\Entity\Job\FunctionJob;
 use Addiks\PHPSQL\Entity\Job\Part\FlowControl\CaseData;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
-
 use Addiks\PHPSQL\Entity\Job\Statement;
+use ErrorException;
 
 /**
  * This service can resolve any Value-Object into an scalar value.
@@ -49,7 +35,7 @@ use Addiks\PHPSQL\Entity\Job\Statement;
  * @author gerrit
  *
  */
-class ValueResolver extends Service
+class ValueResolver
 {
     
     public function resolveSourceRow(array $row)
@@ -278,7 +264,7 @@ class ValueResolver extends Service
         
             case is_object($value):
                 $type = get_class($value);
-                throw new Error("Cannot resolve object of type '{$type}'! (unimplemented!)");
+                throw new ErrorException("Cannot resolve object of type '{$type}'! (unimplemented!)");
                     
             case is_scalar($value):
                 return $value;
@@ -483,7 +469,7 @@ class ValueResolver extends Service
                 return "NoUserManagementImplemented";
                 
             default:
-                throw new Error("Unknown or unimplemented SqlToken '{$token->getName()}' to resolve to scalar value!");
+                throw new ErrorException("Unknown or unimplemented SqlToken '{$token->getName()}' to resolve to scalar value!");
             
         }
     }
@@ -500,7 +486,7 @@ class ValueResolver extends Service
         $className = "\Addiks\PHPSQL\{$classNameFunctionPart}";
         
         if (!class_exists($className)) {
-            throw new InvalidArgument("Unknown or unimplemented function '{$functionName}' called! (No class '{$className}' found!)");
+            throw new ErrorException("Unknown or unimplemented function '{$functionName}' called! (No class '{$className}' found!)");
         }
         
         /* @var $functionExecuter FunctionResolver */

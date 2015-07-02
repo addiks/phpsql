@@ -11,9 +11,8 @@
 
 namespace Addiks\PHPSQL\Entity;
 
-use Addiks\Common\Value\Text\Filepath;
-
-use Addiks\Common\Entity;
+use Addiks\PHPSQL\Value\Text\Filepath;
+use Addiks\PHPSQL\Entity;
 
 class Mount extends Entity
 {

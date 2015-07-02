@@ -11,33 +11,15 @@
 
 namespace Addiks\PHPSQL\Entity;
 
-use Addiks\Common\Entity;
-
-use Addiks\Common\Value\Text\Filepath;
-
-use Addiks\Depencies\Resource\Context;
-
-use Addiks\Common\Entity;
+use Addiks\PHPSQL\Entity;
+use Addiks\PHPSQL\Value\Text\Filepath;
 
 /**
  *
  * @author gerrit
- * @Addiks\Factory(method="static::factory")
  */
 class File extends Entity
 {
-    
-    public static function factory(Context $context, Filepath $filePath)
-    {
-        
-        /* @var $filesystem \Addiks\PHPSQL\Resource\Filesystem */
-        $context->factorize($filesystem);
-        
-        $file = new static($filePath);
-        $file->setBackend($filesystem);
-        
-        return $file;
-    }
     
     public function __construct(Filepath $filePath)
     {

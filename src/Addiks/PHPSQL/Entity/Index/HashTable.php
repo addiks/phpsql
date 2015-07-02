@@ -12,14 +12,10 @@
 namespace Addiks\PHPSQL\Entity\Index;
 
 use Addiks\PHPSQL\Resource\CacheBackendInterface;
-
 use Addiks\PHPSQL\Service\BinaryConverterTrait;
-
-use Addiks\Common\Entity;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
+use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\Entity\Storage;
+use ErrorException;
 
 /**
  * A hash-table is the most efficient indexing method to work with huge data.
@@ -92,7 +88,7 @@ class HashTable extends Entity implements IndexInterface
     {
         
         if (is_null($value)) {
-            throw new Error("Parameter \$value cannot be NULL!");
+            throw new ErrorException("Parameter \$value cannot be NULL!");
         }
         
         if (is_int($value)) {
@@ -132,7 +128,7 @@ class HashTable extends Entity implements IndexInterface
                 $seek = $this->strdec($seek);
                     
                 if (isset($walkedIndicies[$seek])) {
-                    throw new Error("Reference-Loop in HashTable-Doubles-Storage occoured!");
+                    throw new ErrorException("Reference-Loop in HashTable-Doubles-Storage occoured!");
                 }
                 $walkedIndicies[$seek] = $seek;
                     
@@ -141,13 +137,13 @@ class HashTable extends Entity implements IndexInterface
                 $checkLength = fread($handle, self::REFERENCE_SIZE);
                 $checkLength = $this->strdec($checkLength);
                 if ($checkLength <= 0) {
-                    throw new Error("Found length-specification for check-value in hash-table which is lower or equal 0!");
+                    throw new ErrorException("Found length-specification for check-value in hash-table which is lower or equal 0!");
                 }
                 $checkValue  = fread($handle, $checkLength);
                 $dataLength  = fread($handle, self::REFERENCE_SIZE);
                 $dataLength  = $this->strdec($dataLength);
                 if ($dataLength <= 0) {
-                    throw new Error("Found length-specification for data-value in hash-table which is lower or equal 0!");
+                    throw new ErrorException("Found length-specification for data-value in hash-table which is lower or equal 0!");
                 }
                 $data        = fread($handle, $dataLength);
                 $seek        = fread($handle, self::REFERENCE_SIZE);
@@ -178,11 +174,11 @@ class HashTable extends Entity implements IndexInterface
         ### VALUE CLEANING
         
         if (is_null($value)) {
-            throw new Error("Parameter \$value cannot be NULL!");
+            throw new ErrorException("Parameter \$value cannot be NULL!");
         }
         
         if (is_null($rowId)) {
-            throw new Error("Parameter \$rowId cannot be NULL!");
+            throw new ErrorException("Parameter \$rowId cannot be NULL!");
         }
         
         if (is_int($value)) {
@@ -225,7 +221,7 @@ class HashTable extends Entity implements IndexInterface
                     
                 if (isset($walkedIndicies[$seek])) {
                     fseek($handle, $beforeSeek, SEEK_SET);
-                    throw new Error("Reference-Loop in HashTable-Doubles-Storage occoured!");
+                    throw new ErrorException("Reference-Loop in HashTable-Doubles-Storage occoured!");
                 }
                 $walkedIndicies[$seek] = $seek;
                     
@@ -237,7 +233,7 @@ class HashTable extends Entity implements IndexInterface
                 
                 if ($this->strdec($seek) > fstat($handle)['size']) {
                     fseek($handle, $beforeSeek, SEEK_SET);
-                    throw new Error("Invalid reference in hash-table found!");
+                    throw new ErrorException("Invalid reference in hash-table found!");
                 }
                 
             } while (ltrim($seek, "\0") !== "");
@@ -271,14 +267,14 @@ class HashTable extends Entity implements IndexInterface
             fseek($handle, 0, SEEK_END);
             if (ftell($handle) > (50 * 1024 * 1024)) {
                 var_dump([$value, $rowId, $hashSeek, $writeSeek, $seek]);
-                throw new Error("WAAAAIT! Something wrong here!");
+                throw new ErrorException("WAAAAIT! Something wrong here!");
             }
         }
         
         fseek($handle, $beforeSeek, SEEK_SET);
         
         if (!in_array($rowId, $this->search($value))) {
-            throw new Error("Value not found in hash-table after inserting it!");
+            throw new ErrorException("Value not found in hash-table after inserting it!");
         }
         
         if (self::DEBUG) {
@@ -290,11 +286,11 @@ class HashTable extends Entity implements IndexInterface
     {
         
         if (is_null($value)) {
-            throw new Error("Parameter \$value cannot be NULL!");
+            throw new ErrorException("Parameter \$value cannot be NULL!");
         }
         
         if (is_null($rowId)) {
-            throw new Error("Parameter \$rowId cannot be NULL!");
+            throw new ErrorException("Parameter \$rowId cannot be NULL!");
         }
         
         if (is_int($value)) {
@@ -339,7 +335,7 @@ class HashTable extends Entity implements IndexInterface
                 
             if (isset($walkedIndicies[$seek])) {
                 fseek($handle, $beforeSeek, SEEK_SET);
-                throw new Error("Reference-Loop in HashTable-Doubles-Storage occoured!");
+                throw new ErrorException("Reference-Loop in HashTable-Doubles-Storage occoured!");
             }
             $walkedIndicies[$seek] = $seek;
                 
@@ -368,7 +364,7 @@ class HashTable extends Entity implements IndexInterface
         }
         
         if (in_array($rowId, $this->search($value))) {
-            throw new Error("Value still found in hash-table after removing it!");
+            throw new ErrorException("Value still found in hash-table after removing it!");
         }
     }
     
@@ -475,7 +471,7 @@ class HashTable extends Entity implements IndexInterface
             if (ltrim($reference, "\0")!=='') {
                 $reference = $this->strdec($reference);
                 if ($reference >= $size) {
-                    throw new Error("Broken hash-table detected! (Reference '{$reference}' in hashtable points beyond end '{$size}' near seek '".ftell($handle)."'!)");
+                    throw new ErrorException("Broken hash-table detected! (Reference '{$reference}' in hashtable points beyond end '{$size}' near seek '".ftell($handle)."'!)");
                 }
             }
         }
@@ -494,9 +490,9 @@ class HashTable extends Entity implements IndexInterface
             $checkLength = $this->strdec($checkLength);
             
             if ($checkLength <= 0) {
-                throw new Error("Broken hash-table detected! (Check-length cannot be 0 near seek '".ftell($handle)."'!)");
+                throw new ErrorException("Broken hash-table detected! (Check-length cannot be 0 near seek '".ftell($handle)."'!)");
             } elseif ($checkLength + ftell($handle) > $size) {
-                throw new Error("Broken hash-table detected! (Check-length '{$checkLength}' reads beyond data-end '{$size}' near seek '".ftell($handle)."'!)");
+                throw new ErrorException("Broken hash-table detected! (Check-length '{$checkLength}' reads beyond data-end '{$size}' near seek '".ftell($handle)."'!)");
             }
             
             $checkData   = fread($handle, $checkLength);
@@ -507,9 +503,9 @@ class HashTable extends Entity implements IndexInterface
             $valueLength = $this->strdec($valueLength);
 
             if ($valueLength <= 0) {
-                throw new Error("Broken hash-table detected! (Data-length cannot be 0 near seek '".ftell($handle)."'!)");
+                throw new ErrorException("Broken hash-table detected! (Data-length cannot be 0 near seek '".ftell($handle)."'!)");
             } elseif ($valueLength + ftell($handle) > $size) {
-                throw new Error("Broken hash-table detected! (Data-length '{$valueLength}' reads beyond data-end '{$size}' near seek '".ftell($handle)."'!)");
+                throw new ErrorException("Broken hash-table detected! (Data-length '{$valueLength}' reads beyond data-end '{$size}' near seek '".ftell($handle)."'!)");
             }
                 
             $valueData   = fread($handle, $valueLength);
@@ -521,7 +517,7 @@ class HashTable extends Entity implements IndexInterface
             if (ltrim($reference, "\0")!=='') {
                 $reference = $this->strdec($reference);
                 if ($reference >= $size) {
-                    throw new Error("Broken hash-table detected! (Followup-reference '{$reference}' points beyond end '{$size}' near seek '".ftell($handle)."'!)");
+                    throw new ErrorException("Broken hash-table detected! (Followup-reference '{$reference}' points beyond end '{$size}' near seek '".ftell($handle)."'!)");
                 }
             }
         }

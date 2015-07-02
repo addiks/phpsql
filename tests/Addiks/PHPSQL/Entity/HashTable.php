@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Service\TestCase\Entity;
 
-use Addiks\Common\Value\Text\Filepath;
+use Addiks\PHPSQL\Value\Text\Filepath;
 
 use Addiks\PHPSQL\Entity\Storage;
 

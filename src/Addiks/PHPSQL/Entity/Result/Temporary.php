@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity\Result;
 
-use Addiks\Common\Entity;
+use Addiks\PHPSQL\Entity;
 
 /**
  * This resultset will not be stored permanent but only to the RAM.

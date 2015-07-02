@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Value\Enum\Sql;
 
-use Addiks\Common\Value\Enum;
+use Addiks\PHPSQL\Value\Enum;
 
 class IndexType extends Enum
 {

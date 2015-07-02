@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Value\Database;
 
-use Addiks\Common\Value\Text\Line;
+use Addiks\PHPSQL\Value\Text\Line;
 
 use Addiks\Protocol\Resource\Context;
 

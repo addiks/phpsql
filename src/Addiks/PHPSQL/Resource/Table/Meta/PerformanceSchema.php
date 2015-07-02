@@ -11,11 +11,9 @@
 
 namespace Addiks\PHPSQL\Resource\Table\Meta;
 
-use Addiks\Common\Resource;
-
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 
-class PerformanceSchema extends Resource implements IndexInterface
+class PerformanceSchema implements IndexInterface
 {
     
     

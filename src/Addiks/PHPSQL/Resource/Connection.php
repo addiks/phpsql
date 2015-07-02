@@ -11,14 +11,11 @@
 
 namespace Addiks\PHPSQL\Resource;
 
-use Addiks\PHPSQL\Entity\Configuration\Database;
+use Addiks\PHPSQL\Entity\Configuration\DatabaseConfiguration;
 use Addiks\PHPSQL\Value\Database\Dsn;
 use Addiks\PHPSQL\Resource\PDO\Internal;
 use Addiks\PHPSQL\Resource\Storages;
-
-use Addiks\Common\Value\Text\Directory\Data;
-use Addiks\Common\Resource;
-
+use Addiks\PHPSQL\Value\Text\Directory\Data;
 use PDO;
 
 /**
@@ -27,12 +24,12 @@ use PDO;
  * @package Addiks
  * @subpackage Database
  */
-class Connection extends Resource
+class Connection
 {
     
     public static function newFromDsn(Dsn $dsn)
     {
-        $config = new Database();
+        $config = new DatabaseConfiguration();
         $config->setDsn($dsn);
 
         $connection = new self();
@@ -43,7 +40,7 @@ class Connection extends Resource
 
     private $config;
     
-    public function setDatabaseConnectionConfig(Database $config)
+    public function setDatabaseConnectionConfig(DatabaseConfiguration $config)
     {
         $this->config = $config;
     }
@@ -51,7 +48,7 @@ class Connection extends Resource
     public function getDatabaseConnectionConfig()
     {
         if (is_null($this->config)) {
-            /* @var $config Database */
+            /* @var $config DatabaseConfiguration */
             $this->factorize($config);
             
             $this->setDatabaseConnectionConfig($config);

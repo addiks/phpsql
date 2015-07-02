@@ -11,8 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity\Index;
 
-use Addiks\Common\Entity;
-
+use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 
 class Compound extends Entity implements IndexInterface

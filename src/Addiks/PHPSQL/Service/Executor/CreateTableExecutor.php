@@ -12,44 +12,26 @@
 namespace Addiks\PHPSQL\Service\Executor;
 
 use Addiks\PHPSQL\Resource\Table;
-
 use Addiks\PHPSQL\Entity\Storage;
-
 use Addiks\PHPSQL\Value\Enum\Page\Index\ForeignKeyMethod;
-
 use Addiks\PHPSQL\Entity\Page\Schema\Index;
-
-use Addiks\Common\Value\Text\Annotation;
-
+use Addiks\PHPSQL\Value\Text\Annotation;
 use Addiks\PHPSQL\Entity\Page\Column;
-
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
-
 use Addiks\PHPSQL\Entity\TableSchema;
-
 use Addiks\PHPSQL\Value\Enum\Page\Schema\InsertMethod;
-
 use Addiks\PHPSQL\Value\Enum\Page\Schema\RowFormat;
-
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Engine;
-
 use Addiks\PHPSQL\Value\Enum\Page\Index\Engine as IndexEngine;
-
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Type;
 use Addiks\PHPSQL\Value\Enum\Page\Index\Type as IndexType;
-
 use Addiks\PHPSQL\Entity\Schema;
-
 use Addiks\PHPSQL\Entity\Page\Schema as SchemaPage;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
 use Addiks\PHPSQL\Service\Executor;
-
 use Addiks\PHPSQL\Entity\Result\Temporary;
-
 use Addiks\PHPSQL\Resource\Database;
 use Addiks\PHPSQL\Resource\Index as IndexResource;
+use ErrorException;
 
 class CreateTableExecutor extends Executor
 {
@@ -196,7 +178,7 @@ class CreateTableExecutor extends Executor
             foreach ($index->getColumns() as $indexColumnName) {
                 $indexColumnId = $tableSchema->getColumnIndex((string)$indexColumnName);
                 if (strlen($indexColumnId)<=0) {
-                    throw new Error("Could not find index column '{$indexColumnName}' in table-schema!");
+                    throw new ErrorException("Could not find index column '{$indexColumnName}' in table-schema!");
                 }
                 $columns[] = $indexColumnId;
                 $keyLength += $statement->getColumnDefinition()[(string)$indexColumnName]->getDataSize();

@@ -13,16 +13,14 @@ namespace Addiks\PHPSQL\Resource\DatabaseAdapter;
 
 use Addiks\PHPSQL\Entity\Job\Statement;
 
-use Addiks\Common\Resource;
-
 /**
  * Abstract database class.
  * Baseclass for all database-adapters.
  */
-abstract class AbstractDatabaseAdapter extends Resource
+abstract class AbstractDatabaseAdapter
 {
     
-    abstract function query($statementString, array $parameters = array(), SQLTokenIterator $tokens = null);
+    abstract public function query($statementString, array $parameters = array(), SQLTokenIterator $tokens = null);
 
     abstract public function getTypeName();
 }

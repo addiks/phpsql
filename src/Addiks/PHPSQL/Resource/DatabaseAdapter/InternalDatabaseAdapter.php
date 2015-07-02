@@ -12,27 +12,19 @@
 namespace Addiks\PHPSQL\Resource\DatabaseAdapter;
 
 use Addiks\PHPSQL\Entity\TableSchema;
-
 use Addiks\PHPSQL\Entity\Schema;
-
 use Addiks\PHPSQL\Value\Database\Dsn\Internal;
-
 use Addiks\Common\Tool\ClassAnalyzer;
-
 use Addiks\PHPSQL\Service\Executor;
-
 use Addiks\PHPSQL\Tool\SQLTokenIterator;
 use Addiks\PHPSQL\Service\ValueResolver;
 use Addiks\PHPSQL\Service\SqlParser;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Entity\Job\Statement;
-
-use Addiks\Common\Value\Text\Annotation;
-use Addiks\Common\Resource;
-
-use Addiks\Protocol\Entity\Exception\Error;
+use Addiks\PHPSQL\Value\Text\Annotation;
 use Addiks\PHPSQL\Resource\Database\AbstractDatabase;
+use ErrorException;
 
 class InternalDatabaseAdapter extends AbstractDatabaseAdapter
 {
@@ -136,11 +128,11 @@ class InternalDatabaseAdapter extends AbstractDatabaseAdapter
         $annotation = current($analyzer->getClassAnnotation('Addiks\\\\Statement'));
         
         if (!$annotation instanceof Annotation) {
-            throw new Error("Missing annotation 'Addiks\\Statement' in class '{$reflection->getName()}'!");
+            throw new ErrorException("Missing annotation 'Addiks\\Statement' in class '{$reflection->getName()}'!");
         }
         
         if (!isset($annotation['executorClass'])) {
-            throw new Error("Missing attribute 'executorClass' on annotation 'Addiks\\Statement' in class '{$reflection->getName()}'!");
+            throw new ErrorException("Missing attribute 'executorClass' on annotation 'Addiks\\Statement' in class '{$reflection->getName()}'!");
         }
         
         $executorClass = $annotation['executorClass'];
@@ -162,7 +154,7 @@ class InternalDatabaseAdapter extends AbstractDatabaseAdapter
         }
         
         if (is_null($executorClass)) {
-            throw new Error("No executor class defined for statement '{$reflection->getName()}'!");
+            throw new ErrorException("No executor class defined for statement '{$reflection->getName()}'!");
         }
             
         /* @var $executor Executor */
@@ -180,7 +172,7 @@ class InternalDatabaseAdapter extends AbstractDatabaseAdapter
      * The schema contains information about what tables/views/... are present.
      *
      * @param string $schemaId
-     * @throws \Addiks\Protocol\Entity\Exception\Error
+     * @throws ErrorException
      * @return Schema
      */
     public function getSchema($schemaId = null)
@@ -196,7 +188,7 @@ class InternalDatabaseAdapter extends AbstractDatabaseAdapter
         
         $pattern = Internal::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
-            throw new InvalidArgument("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
+            throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
         
         switch($schemaId){
@@ -235,7 +227,7 @@ class InternalDatabaseAdapter extends AbstractDatabaseAdapter
         
         $pattern = Internal::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
-            throw new InvalidArgument("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
+            throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
         
         if ($this->isMetaSchema($schemaId)) {
@@ -253,11 +245,11 @@ class InternalDatabaseAdapter extends AbstractDatabaseAdapter
         
         $pattern = Internal::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
-            throw new InvalidArgument("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
+            throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
         
         if ($this->schemaExists($schemaId)) {
-            throw new Conflict("Database '{$schemaId}' already exist!");
+            throw new ErrorException("Database '{$schemaId}' already exist!");
         }
         
         /* @var $storages \Addiks\PHPSQL\Resource\Storages */
@@ -274,11 +266,11 @@ class InternalDatabaseAdapter extends AbstractDatabaseAdapter
         
         $pattern = Internal::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
-            throw new InvalidArgument("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
+            throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
         
         if ($this->isMetaSchema($schemaId)) {
-            throw new Conflict("Cannot remove or modify meta-database '{$schemaId}'!");
+            throw new ErrorException("Cannot remove or modify meta-database '{$schemaId}'!");
         }
         
         /* @var $storages \Addiks\PHPSQL\Resource\Storages */
@@ -376,7 +368,7 @@ class InternalDatabaseAdapter extends AbstractDatabaseAdapter
         $schema = $this->getSchema($schemaId);
         
         if (!$schema->tableExists($tableName)) {
-            throw new Conflict("Table {$tableName} does not exist!");
+            throw new ErrorException("Table {$tableName} does not exist!");
         }
         
         $schema->unregisterTable($tableName);
@@ -447,7 +439,7 @@ class InternalDatabaseAdapter extends AbstractDatabaseAdapter
             return $this->factory($classId, [$dsn]);
         }
         
-        throw new \InvalidArgumentException("Unknown DSN driver '{$driver}'!");
+        throw new ErrorException("Unknown DSN driver '{$driver}'!");
     }
     
     private $isStatementLogActive;

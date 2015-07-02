@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Value\Enum\Page\Index;
 
-use Addiks\Common\Value\Enum;
+use Addiks\PHPSQL\Value\Enum;
 
 class ForeignKeyMethod extends Enum
 {

@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Resource\Filesystem;
 
 use Addiks\PHPSQL\Resource\Filesystem;
 
-use Addiks\Common\Value\Text\Filepath;
+use Addiks\PHPSQL\Value\Text\Filepath;
 
 class Real extends Filesystem
 {

@@ -11,13 +11,13 @@
 
 namespace Addiks\PHPSQL\Value\Database\Dsn;
 
-use Addiks\Common\Entity\Exception\InvalidValue;
+use ErrorException;
 
 use Addiks\PHPSQL\Value\Database\Dsn;
 
 use Addiks\PHPSQL\Resource\Database;
 
-class Internal extends Dsn
+class InternalDsn extends Dsn
 {
     
     const PATTERN = "^[a-z0-9_]+$";
@@ -48,7 +48,7 @@ class Internal extends Dsn
         $parts = explode(":", $value);
         
         if (count($parts)<2 || $parts[0]!==self::DRIVERNAME || !preg_match("/{$pattern}/is", $parts[1])) {
-            throw new InvalidValue("Invalid DSN for internal database: '{$value}'");
+            throw new ErrorException("Invalid DSN for internal database: '{$value}'");
         }
     }
     

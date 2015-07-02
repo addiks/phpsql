@@ -11,23 +11,15 @@
 
 namespace Addiks\PHPSQL\Service\Executor;
 
-use Addiks\PHPSQL\Entity\Exception\InvalidArgument;
-
 use Addiks\PHPSQL\Resource\Index;
-
 use Addiks\PHPSQL\Service\ValueResolver;
-
 use Addiks\PHPSQL\Resource\Table;
-
 use Addiks\PHPSQL\Service\BinaryConverterTrait;
-
-use Addiks\Common\Exception;
-
 use Addiks\PHPSQL\Service\Executor;
-
 use Addiks\PHPSQL\Entity\Result\Temporary;
-
 use Addiks\PHPSQL\Resource\Database;
+use ErrorException;
+use Exception;
 
 class InsertExecutor extends Executor
 {
@@ -129,7 +121,7 @@ class InsertExecutor extends Executor
                         $columnName = (string)$sourceColumn;
                         
                         if (!isset($columnNameToIdMap[$columnName])) {
-                            throw new InvalidArgument("Unknown column '{$columnName}' in statement!");
+                            throw new ErrorException("Unknown column '{$columnName}' in statement!");
                         }
                         
                         $columnId = $columnNameToIdMap[$columnName];
@@ -151,7 +143,7 @@ class InsertExecutor extends Executor
                         
                         if ($columnPage->isNotNull() && is_null($value)) {
                             $columnName = $tableSchema->getColumn($columnId)->getName();
-                            throw new InvalidArgument("Column '{$columnName}' cannot be NULL!");
+                            throw new ErrorException("Column '{$columnName}' cannot be NULL!");
                         }
                         
                         $rowData[$columnId] = $value;
@@ -190,7 +182,7 @@ class InsertExecutor extends Executor
                         }
                         if (count($index->search($rowData))>0) {
                             $rowDataString = implode(", ", $rowData);
-                            throw new Conflict("Cannot insert because row '{$rowDataString}' collides with unique key '{$index->getIndexPage()->getName()}'!");
+                            throw new ErrorException("Cannot insert because row '{$rowDataString}' collides with unique key '{$index->getIndexPage()->getName()}'!");
                         }
                     }
                     $rowDatas[] = $rowData;
@@ -213,7 +205,7 @@ class InsertExecutor extends Executor
                         continue;
                     }
                     if (count($index->search($rowData))>0) {
-                        throw new Conflict("Cannot insert because of unique key '{$index->getIndexPage()->getName()}'!");
+                        throw new ErrorException("Cannot insert because of unique key '{$index->getIndexPage()->getName()}'!");
                     }
                 }
                 
@@ -228,7 +220,7 @@ class InsertExecutor extends Executor
             
             $success = true;
             
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             ### ROLLBACK
             
             foreach ($insertedRowIds as $rowId) {
@@ -240,7 +232,7 @@ class InsertExecutor extends Executor
                 }
             }
             
-            throw new Exception("Exception in INSERT statement, rollback executed.", null, $exception);
+            throw new ErrorException("Exception in INSERT statement, rollback executed.", null, $exception);
         }
         
         ### RESULT

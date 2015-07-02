@@ -12,22 +12,17 @@
 namespace Addiks\PHPSQL\Resource;
 
 use Addiks\PHPSQL\Entity\Result\Temporary;
-
 use Addiks\PHPSQL\Resource\PDO\Internal;
-
-use Addiks\Common\Resource;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\Resource\Database;
+use ErrorException;
 
 /**
  *
  * @author gerrit
  * @Addiks\Singleton(negated=true)
  */
-class Statement extends Resource
+class Statement
 {
     
     public function __construct($statementString)
@@ -505,7 +500,7 @@ class Statement extends Resource
                 break;
                 
             default:
-                throw new Error("Invalid data-type!");
+                throw new ErrorException("Invalid data-type!");
         }
         
         
