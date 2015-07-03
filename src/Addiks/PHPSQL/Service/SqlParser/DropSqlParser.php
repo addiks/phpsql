@@ -36,7 +36,7 @@ class DropSqlParser extends SqlParser
         $tokens->seekTokenNum(SqlToken::T_DROP());
         
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_DROP()) {
-            throw new Error("Tried to parse sql-drop when token-iterator does not point to T_DROP!");
+            throw new ErrorException("Tried to parse sql-drop when token-iterator does not point to T_DROP!");
         }
         
         /* @var $dropJob DropStatement */

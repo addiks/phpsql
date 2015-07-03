@@ -23,7 +23,7 @@ class Number extends Value{
 		parent::validate($value);
 	
 		if(!is_numeric($value)){
-			throw new InvalidValue("Value has to be numeric!");
+			throw new ErrorException("Value has to be numeric!");
 		}
 	}
 	

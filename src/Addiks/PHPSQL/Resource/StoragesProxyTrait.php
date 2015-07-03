@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Resource;
 
-use Addiks\Protocol\Entity\Exception\Error;
+use ErrorException;
 
 trait StoragesProxyTrait
 {
@@ -58,7 +58,7 @@ trait StoragesProxyTrait
         $schemaId = $this->getDefaultSchemaId($schemaId);
         
         if (is_numeric($columnId)) {
-            throw new Error("Column-Name '{$columnId}' cannot be numeric!");
+            throw new ErrorException("Column-Name '{$columnId}' cannot be numeric!");
         }
         
         $storagePath = sprintf("Databases/%s/Tables/%s/ColumnData/%s/Data/%s", $schemaId, (string)$tableName, (string)$columnId, (string)$dataIndex);
@@ -70,7 +70,7 @@ trait StoragesProxyTrait
         $schemaId = $this->getDefaultSchemaId($schemaId);
         
         if (is_numeric($columnId)) {
-            throw new Error("Column-Name '{$columnId}' cannot be numeric!");
+            throw new ErrorException("Column-Name '{$columnId}' cannot be numeric!");
         }
         
         /* @var $storages \Addiks\PHPSQL\Resource\Storages */

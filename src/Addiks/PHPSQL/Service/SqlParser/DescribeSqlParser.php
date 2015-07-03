@@ -41,7 +41,7 @@ class DescribeSqlParser extends SqlParser
         $tokens->seekTokenNum(SqlToken::T_DESC());
         
         if (!in_array($tokens->getCurrentTokenNumber(), [SqlToken::T_DESCRIBE(), SqlToken::T_DESC()])) {
-            throw new Error("Tried to parse DESCRIBE statement when token-iterator does not point to DESC or DESCRIBE!");
+            throw new ErrorException("Tried to parse DESCRIBE statement when token-iterator does not point to DESC or DESCRIBE!");
         }
         
         /* @var $tableParser TableParser */

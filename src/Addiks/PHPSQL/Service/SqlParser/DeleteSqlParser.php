@@ -36,7 +36,7 @@ class DeleteSqlParser extends SqlParser
         $tokens->seekTokenNum(SqlToken::T_DELETE());
         
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_DELETE()) {
-            throw new Error("Tried to parse DELETE statement when token iterator is not at T_DELETE!");
+            throw new ErrorException("Tried to parse DELETE statement when token iterator is not at T_DELETE!");
         }
         
         /* @var $conditionParser Condition */

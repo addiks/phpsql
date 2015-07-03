@@ -21,7 +21,7 @@ class Integer extends Number{
 		parent::validate($value);
 	
 		if(!is_integer($value)){
-			throw new InvalidValue("Value has to be integer!");
+			throw new ErrorException("Value has to be integer!");
 		}
 	}
 	

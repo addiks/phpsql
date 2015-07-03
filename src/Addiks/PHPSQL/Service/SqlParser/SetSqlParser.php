@@ -36,7 +36,7 @@ class SetSqlParser extends SqlParser
         $tokens->seekTokenNum(SqlToken::T_SET());
         
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_SET()) {
-            throw new Error("Tried to parse SET statement when token-iterator is not at T_SET!");
+            throw new ErrorException("Tried to parse SET statement when token-iterator is not at T_SET!");
         }
         
         /* @var $valueParser ValueParser */

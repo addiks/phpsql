@@ -117,7 +117,7 @@ class InternalIndices implements IndexInterface
                             /* @var $node Node */
                         
                             if (is_null($node)) {
-                                throw new Error("Invalid node given from btree node-iterator!");
+                                throw new ErrorException("Invalid node given from btree node-iterator!");
                             }
                     
                             $row = array();

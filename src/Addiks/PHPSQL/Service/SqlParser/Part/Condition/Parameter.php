@@ -52,7 +52,7 @@ class Parameter extends SqlParser
             throw new MalformedSql($exception->getMessage(), $tokens);
             
         } catch (\Exception $exception) {
-            throw new Error("Tried to parse parameter-condition when token-iterator does not point to valid parameter!");
+            throw new ErrorException("Tried to parse parameter-condition when token-iterator does not point to valid parameter!");
         }
         
         switch($parameter){

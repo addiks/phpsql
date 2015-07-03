@@ -46,7 +46,7 @@ class InsertSqlParser extends SqlParser
         $tokens->seekTokenNum(SqlToken::T_INSERT());
         
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_INSERT()) {
-            throw new Error("Tried to parse INSERT statement when token-iterator is not at INSERT!");
+            throw new ErrorException("Tried to parse INSERT statement when token-iterator is not at INSERT!");
         }
         
         /* @var $valueParser ValueParser */

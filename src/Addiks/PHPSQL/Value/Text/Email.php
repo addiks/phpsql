@@ -47,7 +47,7 @@ class Email extends Text implements AddressInterface{
 		$validator = new EmailValidator();
 		
 		if(!$validator->isValid($value)){
-			throw new InvalidValue("Email address '{$value}' is invalid!");
+			throw new ErrorException("Email address '{$value}' is invalid!");
 		}
 	}
 	

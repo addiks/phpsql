@@ -42,7 +42,7 @@ class Like extends SqlParser
         $likeCondition->setIsNegated($tokens->seekTokenNum(SqlToken::T_NOT()));
         
         if (!$tokens->seekTokenNum(SqlToken::T_LIKE())) {
-            throw new Error("Missing [NOT] LIKE after value when parsing LIKE condition! (not used 'canParseTokens'?)");
+            throw new ErrorException("Missing [NOT] LIKE after value when parsing LIKE condition! (not used 'canParseTokens'?)");
         }
         
         return $likeCondition;

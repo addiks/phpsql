@@ -15,7 +15,7 @@ use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier as ColumnSpecifier;
 
 use Addiks\PHPSQL\Service\SqlParser\Part;
 
-use Addiks\Protocol\Entity\Exception\Error;
+use ErrorException;
 
 use Addiks\Analyser\Tool\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
@@ -52,7 +52,7 @@ class ColumnParser extends Part
                 }
                     
             } else {
-                throw new Error("Tried to convert sql-column-specifier when token-iterator does not point to T_STRING!");
+                throw new ErrorException("Tried to convert sql-column-specifier when token-iterator does not point to T_STRING!");
             }
             
             $parts[] = $part;

@@ -53,7 +53,7 @@ class SqlParser
     {
         
         if (get_class($this) !== __CLASS__) {
-            throw new Error("Class '".get_class($this)."' needs to declare an own method '".__FUNCTION__."'!");
+            throw new ErrorException("Class '".get_class($this)."' needs to declare an own method '".__FUNCTION__."'!");
         }
         
         /* @var $parenthesisParser Parenthesis */

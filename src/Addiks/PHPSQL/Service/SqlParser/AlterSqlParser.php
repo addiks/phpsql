@@ -53,7 +53,7 @@ class AlterSqlParser extends SqlParser
         $tokens->seekTokenNum(SqlToken::T_ALTER());
         
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_ALTER()) {
-            throw new Error("Tried to parse an ALTER statement when token-iterator does not point to T_ALTER!");
+            throw new ErrorException("Tried to parse an ALTER statement when token-iterator does not point to T_ALTER!");
         }
         
         $alterJob->setDoIgnoreErrors($tokens->seekTokenNum(SqlToken::T_IGNORE()));

@@ -45,7 +45,7 @@ class ColumnDefinition extends SqlParser
                 
                 $result = true;
                 
-            } catch (\Addiks\Protocol\Entity\Exception\Error $exception) {
+            } catch (\ErrorException $exception) {
                 # skips $result=true
             }
         }

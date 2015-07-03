@@ -37,7 +37,7 @@ class CaseParser extends SqlParser
         $tokens->seekTokenNum(SqlToken::T_CASE());
         
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_CASE()) {
-            throw new Error("Tried to parse CASE statement when token-iterator is not at CASE!");
+            throw new ErrorException("Tried to parse CASE statement when token-iterator is not at CASE!");
         }
         
         /* @var $caseJob Case */

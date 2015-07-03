@@ -35,7 +35,7 @@ class ShowSqlParser extends SqlParser
         $tokens->seekTokenNum(SqlToken::T_SHOW());
         
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_SHOW()) {
-            throw new Error("Tried to convert sql-show to job-entity when tokeniterator does not point to T_SHOW!");
+            throw new ErrorException("Tried to convert sql-show to job-entity when tokeniterator does not point to T_SHOW!");
         }
         
         /* @var $showJob ShowStatement */

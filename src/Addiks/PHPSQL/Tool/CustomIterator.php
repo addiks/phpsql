@@ -90,7 +90,7 @@ class CustomIterator extends \IteratorIterator implements \ArrayAccess{
 			$trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
 			$methodString = __CLASS__."::{$name}()";
 			$positionString = "in {$trace['file']} on line {$trace['line']}";
-			throw new Error("Call to undefined method {$methodString} {$positionString}");
+			throw new ErrorException("Call to undefined method {$methodString} {$positionString}");
 		}
 		
 		return call_user_func_array([$this->getInnerIterator(), $name], $arguments);

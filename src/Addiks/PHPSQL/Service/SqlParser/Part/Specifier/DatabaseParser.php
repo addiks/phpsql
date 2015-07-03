@@ -36,7 +36,7 @@ class DatabaseParser extends Part
     
         do {
             if (!$tokens->seekTokenNum(T_STRING)) {
-                throw new Error("Tried to convert sql-database-specifier when token-iterator does not point to T_STRING!");
+                throw new ErrorException("Tried to convert sql-database-specifier when token-iterator does not point to T_STRING!");
             }
             
             $part = $tokens->getCurrentTokenString();

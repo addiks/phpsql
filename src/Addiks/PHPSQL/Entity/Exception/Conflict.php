@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity\Exception;
 
-use Addiks\Protocol\Entity\Exception;
+use Exception;
 
 class Conflict extends Exception
 {

@@ -6,12 +6,12 @@
  * If not, see <http://www.gnu.org/licenses/> or send me a mail so i can send you a copy.
  * @license GPL-3.0
  * @author Gerrit Addiks <gerrit@addiks.de>
- * @package Addiks
  */
 
 namespace Addiks\PHPSQL;
 
-use Addiks\PHPSQL\Entity\Exception\InvalidValue;
+use ErrorException;
+use InvalidArgumentException;
 
 /**
  * A value-object ("VO") is a object holding or representing specific data.
@@ -38,17 +38,12 @@ use Addiks\PHPSQL\Entity\Exception\InvalidValue;
  * </p>
  * 
  * @see http://c2.com/cgi/wiki?ValueObject
- * @author Gerrit Addiks <gerrit@addiks.de>
- * @package Addiks
- * @subpackage Common
- * @Addiks\Singleton(negated=true)
  */
 abstract class Value{
 	
 	/**
-	 * Constructor.
 	 * @param scalar $value
-	 * @throws \InvalidArgumentException
+	 * @throws InvalidArgumentException
 	 */
 	private function __construct($value){
 		
@@ -66,7 +61,7 @@ abstract class Value{
 	 * @see self::validate() 
 	 *
 	 * @param scalar $value
-	 * @throws \InvalidArgumentException
+	 * @throws InvalidArgumentException
 	 */
 	static public function factory($value){
 		
@@ -77,7 +72,7 @@ abstract class Value{
 		$value = static::filter($value);
 		
 		if(!is_scalar($value)){
-			throw new InvalidValue("A value object must be created from a scalar value!");
+			throw new ErrorException("A value object must be created from a scalar value!");
 		}
 		
 		$classname = get_called_class();
@@ -141,12 +136,12 @@ abstract class Value{
 	 * value-classes with additional checks.
 	 * 
 	 * @param scalar $value
-	 * @throws \InvalidArgumentException
+	 * @throws InvalidArgumentException
 	 */
 	protected function validate($value){
 		
 		if(!is_scalar($value)){
-			throw new \InvalidArgumentException("Value needs to be scalar!");
+			throw new InvalidArgumentException("Value needs to be scalar!");
 		}
 	}
 	

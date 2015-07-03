@@ -47,7 +47,7 @@ class FunctionParser extends Part
     {
         
         if (!$this->canParseTokens($tokens)) {
-            throw new Error("Tried to convert sql function to job entity when token index is not at function!");
+            throw new ErrorException("Tried to convert sql function to job entity when token index is not at function!");
         }
         
         /* @var $selectParser SelectSqlParser */
@@ -95,7 +95,7 @@ class FunctionParser extends Part
                     while ($parameterConditionParser->canParseTokens($tokens)) {
                         $functionJob->addParameter($parameterConditionParser->convertSqlToJob($tokens));
                     }
-                } catch (\Addiks\Protocol\Entity\Exception\Error $exception) {
+                } catch (\ErrorException $exception) {
                     throw new MalformedSql($exception->getMessage(), $tokens);
                 }
             } while ($tokens->seekTokenText(','));

@@ -446,7 +446,7 @@ class TableSchema extends Entity implements TableSchemaInterface
         }
 
         if (!isset($this->columnPositionCache[$columnId])) {
-            throw new Error("Tableschema has no column at index {$columnId}!");
+            throw new ErrorException("Tableschema has no column at index {$columnId}!");
         }
 
         return $this->columnPositionCache[$columnId];

@@ -33,7 +33,7 @@ class Parenthesis extends Part
     {
         
         if (!$tokens->seekTokenText('(', $from)) {
-            throw new Error("Tried to parse sql-parenthesis when token-iterator does not point to paranthesis ('(' sign)!");
+            throw new ErrorException("Tried to parse sql-parenthesis when token-iterator does not point to paranthesis ('(' sign)!");
         }
         
         /* @var $subQueryParser Select */

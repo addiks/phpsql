@@ -33,7 +33,7 @@ class DropStatement extends Statement
     {
         $type = (string)$type;
         if (!in_array($type, [self::TYPE_DATABASE, self::TYPE_TABLE, self::TYPE_VIEW])) {
-            throw new Error("Invalid type '{$type}' given to drop-job!");
+            throw new ErrorException("Invalid type '{$type}' given to drop-job!");
         }
         $this->type = $type;
     }

@@ -12,41 +12,19 @@
 namespace Addiks\PHPSQL\Value\Text\Filepath;
 
 use Addiks\PHPSQL\Value\Text\Filepath;
-
-use Addiks\Protocol\Entity\Exception\Error;
-
-use Addiks\Depencies\Resource\Context;
+use ErrorException;
 
 /**
  * 
- * @author Gerrit Addiks <gerrit@addiks.de>
- * @package Addiks
- * @subpackage Common
- * @Addiks\Factory(method="self::factoryFromDIC")
- * @Addiks\Singleton
  */
 class EntryScript extends Filepath{
 	
 	const SHELL_SCRIPTNAME = "runshell.php";
 	
-	static public function factoryFromDIC(Context $context){
-		
-		/* @var $dataDir \Addiks\PHPSQL\Value\Text\Directory\Data */
-		$context->factorize($dataDir);
-		
-		$entryScript = "{$dataDir}/".self::SHELL_SCRIPTNAME;
-		
-		if(!file_exists($entryScript)){
-			$context->getFramework()->tryWriteDataShellScript();
-		}
-		
-		return static::factory($entryScript);
-	}
-	
 	protected function validate($value){
 		
 		if(!file_exists($value)){
-			throw new InvalidValue("Entry-Script '{$value}' does not exist!");
+			throw new ErrorException("Entry-Script '{$value}' does not exist!");
 		}
 		
 	}

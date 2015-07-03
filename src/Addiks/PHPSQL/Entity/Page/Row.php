@@ -36,7 +36,7 @@ class Row extends Entity
     public function setData($pageData)
     {
         if (strlen($pageData)!==$this->getTableSchema()->getRowPageSize()) {
-            throw new Error("Given pagedata to row with wrong length! (actual ".strlen($pageData).", expected {$this->getTableSchema()->getRowPageSize()})");
+            throw new ErrorException("Given pagedata to row with wrong length! (actual ".strlen($pageData).", expected {$this->getTableSchema()->getRowPageSize()})");
         }
         $this->data = $pageData;
     }

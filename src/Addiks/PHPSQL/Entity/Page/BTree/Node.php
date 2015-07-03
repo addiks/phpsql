@@ -78,7 +78,7 @@ class Node extends Entity
     public function setData($data)
     {
         if (strlen($data) !== $this->getPageSize()) {
-            throw new Error("Invalid data-page! (actual ".strlen($data)."; expected {$this->getPageSize()})");
+            throw new ErrorException("Invalid data-page! (actual ".strlen($data)."; expected {$this->getPageSize()})");
         }
         $this->data = $data;
     }
@@ -136,16 +136,16 @@ class Node extends Entity
      *
      * @param Node $mergeNode
      * @param array $middleBlock
-     * @throws \Addiks\Protocol\Entity\Exception\Error
+     * @throws \ErrorException
      */
     public function merge(Node $mergeNode, array $middleBlock = null)
     {
         if ($mergeNode->getKeyLength() !== $this->keyLength) {
-            throw new Error("Tried to merge nodes with different key-length!");
+            throw new ErrorException("Tried to merge nodes with different key-length!");
         }
         if (!is_null($middleBlock) && count($middleBlock)<3) {
             $dump = str_replace("\n", "", var_export($middleBlock, true));
-            throw new Error("Invalid middle-block given for merge! ({$dump})");
+            throw new ErrorException("Invalid middle-block given for merge! ({$dump})");
         }
         
         $myLastIndex    = $this     ->getLastWrittenIndex();
@@ -154,11 +154,11 @@ class Node extends Entity
         if (($myLastIndex+$mergeLastIndex+2) > ($this->forkRate-1)) {
             $actual = ($myLastIndex+$mergeLastIndex+2);
             $expect = ($this->forkRate-1);
-            throw new Error("Cannot merge nodes because theyre sum is too big! ({$actual} > {$expect})");
+            throw new ErrorException("Cannot merge nodes because theyre sum is too big! ({$actual} > {$expect})");
         }
         
         if ((trim($this->getLastReference(), "\0")==='') !== (trim($mergeNode->getLastReference(), "\0")==='')) {
-            throw new Error("Cannot merge leaf-node and non-leaf-node!");
+            throw new ErrorException("Cannot merge leaf-node and non-leaf-node!");
         }
         
         $mergeData = $mergeNode->getData();
@@ -252,7 +252,7 @@ class Node extends Entity
     #	$this->checkValue($rowID);
         
         if ($reference[$this->keyLength-1] === chr(13) && defined("DEBUG")) {
-            throw new Error("WRITE HIT!");
+            throw new ErrorException("WRITE HIT!");
         }
         
         ### FIND INSERT INDEX
@@ -293,11 +293,11 @@ class Node extends Entity
     #	$this->checkValue($rowID);
         
         if ($reference[$this->keyLength-1] === chr(13) && defined("DEBUG")) {
-            throw new Error("WRITE HIT!");
+            throw new ErrorException("WRITE HIT!");
         }
         
         if ($index >= $this->forkRate) {
-            throw new Error("Tried to write index out of node!");
+            throw new ErrorException("Tried to write index out of node!");
         }
         
         $data = $this->data;
@@ -314,7 +314,7 @@ class Node extends Entity
     #	$this->checkValue($reference);
         
         if ($reference[$this->keyLength-1] === chr(13) && defined("DEBUG")) {
-            throw new Error("WRITE HIT!");
+            throw new ErrorException("WRITE HIT!");
         }
         
         $data = $this->data;
@@ -557,7 +557,7 @@ class Node extends Entity
     private function checkValue($value)
     {
         if (!is_string($value) || strlen($value) !== $this->keyLength) {
-            throw new Error("Invalid value '{$value}'!");
+            throw new ErrorException("Invalid value '{$value}'!");
         }
     }
 }

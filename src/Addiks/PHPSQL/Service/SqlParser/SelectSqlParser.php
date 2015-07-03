@@ -62,7 +62,7 @@ class SelectSqlParser extends SqlParser
         $tokens->seekTokenNum(SqlToken::T_SELECT());
         
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_SELECT()) {
-            throw new Error("Tried to convert select-sql to job when sql-token-iterator does not point to T_SELECT!");
+            throw new ErrorException("Tried to convert select-sql to job when sql-token-iterator does not point to T_SELECT!");
         }
         
         /* @var $valueParser ValueParser */

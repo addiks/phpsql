@@ -6,24 +6,16 @@
  * If not, see <http://www.gnu.org/licenses/> or send me a mail so i can send you a copy.
  * @license GPL-3.0
  * @author Gerrit Addiks <gerrit@addiks.de>
- * @package Addiks
  */
 
 namespace Addiks\PHPSQL\Value\Database;
 
 use Addiks\PHPSQL\Value\Text\Line;
 
-use Addiks\Protocol\Resource\Context;
-
 /**
  * The "Data Source Name".
  * Holds an address-like data-block for connecting to a database.
  * Currently only mysql is supported.
- * @author Gerrit Addiks <gerrit@addiks.de>
- * @package Addiks
- * @subpackage Database
- * @formrenderer Dsn
- * @Addiks\Factory(method="Database::factorizeDsn")
  */
 abstract class Dsn extends Line
 {

@@ -188,7 +188,7 @@ class Schema extends Entity implements SchemaInterface
                 break;
                 
             default:
-                throw new Error("Unknown schema-page-type!");
+                throw new ErrorException("Unknown schema-page-type!");
         }
         
         $indexStorage = $this->getSchemaIndexStorage();

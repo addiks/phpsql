@@ -25,7 +25,7 @@ class SQLTokenIterator extends TokenIterator
         } elseif (is_string($input)) {
             $tokenArray = $this->tokenizeSqlStatement($input);
         } else {
-            throw new Error("Invalid input given to SqlIterator, needs to be sql-string or token-array!");
+            throw new ErrorException("Invalid input given to SqlIterator, needs to be sql-string or token-array!");
         }
     
         parent::__construct($tokenArray);
@@ -146,7 +146,7 @@ class SQLTokenIterator extends TokenIterator
                     
                 default:
                     $malformedSQLPart = substr($statementString, $position, 100);
-                    throw new Error("Malformed SQL: '{$malformedSQLPart}'!");
+                    throw new ErrorException("Malformed SQL: '{$malformedSQLPart}'!");
             }
             $statementStringLeft = substr($statementString, $position);
         }

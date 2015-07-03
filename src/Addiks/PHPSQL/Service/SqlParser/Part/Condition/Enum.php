@@ -41,7 +41,7 @@ class Enum extends Part
     {
         
         if (!$tokens->seekTokenNum(SqlToken::T_IN(), TokenIterator::NEXT, [SqlToken::T_NOT()])) {
-            throw new Error("Missing IN after string when tried to parse IN-condition! (was 'canParseTokens' not used?)");
+            throw new ErrorException("Missing IN after string when tried to parse IN-condition! (was 'canParseTokens' not used?)");
         }
         
         /* @var $valueParser ValueParser */

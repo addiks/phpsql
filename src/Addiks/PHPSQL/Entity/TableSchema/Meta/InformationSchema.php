@@ -12,12 +12,11 @@
 namespace Addiks\PHPSQL\Entity\TableSchema\Meta;
 
 use Addiks\PHPSQL\Entity;
-use ErrorException;
-use Addiks\Depencies\Resource\Context;
 use Addiks\PHPSQL\TableSchemaInterface;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\TableSchema\Meta\InformationSchema\Tables;
 use Addiks\PHPSQL\Entity\SchemaInterface;
+use ErrorException;
 
 /**
  *

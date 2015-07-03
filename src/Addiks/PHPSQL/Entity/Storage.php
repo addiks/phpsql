@@ -219,7 +219,7 @@ class Storage extends Entity
         
         if (!is_string($data)) {
             $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
-            throw new Error("Storage only accept string, float, int, bool, Value and Entity as content! (in {$trace[0]['file']} on line {$trace[0]['line']})");
+            throw new ErrorException("Storage only accept string, float, int, bool, Value and Entity as content! (in {$trace[0]['file']} on line {$trace[0]['line']})");
         }
         
         flock($this->getHandle(), LOCK_EX); // exclusive write-lock

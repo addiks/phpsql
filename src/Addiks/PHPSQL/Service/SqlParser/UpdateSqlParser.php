@@ -40,7 +40,7 @@ class UpdateSqlParser extends SqlParser
         $tokens->seekTokenNum(SqlToken::T_UPDATE());
         
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_UPDATE()) {
-            throw new Error("Tried to parse update statement when token-iterator does not point to T_UPDATE!");
+            throw new ErrorException("Tried to parse update statement when token-iterator does not point to T_UPDATE!");
         }
         
         /* @var $dataChange DataChange */

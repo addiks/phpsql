@@ -97,7 +97,7 @@ class Real extends Filesystem
         }
         
         if (!is_writable($dir)) {
-            throw new Error("Cannot remove directory {$dir} because it is not writable to current user!");
+            throw new ErrorException("Cannot remove directory {$dir} because it is not writable to current user!");
         }
         
         if (is_dir($dir)) {

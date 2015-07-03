@@ -48,7 +48,7 @@ class CreateSqlParser extends SqlParser
         
         $tokens->seekTokenNum(SqlToken::T_CREATE());
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_CREATE()) {
-            throw new Error("Tried to parse create-statement when token-iterator is not at T_CREATE!");
+            throw new ErrorException("Tried to parse create-statement when token-iterator is not at T_CREATE!");
         }
         
         switch(true){

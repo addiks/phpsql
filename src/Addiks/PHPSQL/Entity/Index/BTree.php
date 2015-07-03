@@ -264,7 +264,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
                     $node = $this->getNode($reference);
                     
                     if (!is_object($node)) {
-                        throw new Error("Invalid reference '{$this->strdec($reference)}'!");
+                        throw new ErrorException("Invalid reference '{$this->strdec($reference)}'!");
                     }
                     
                     $nodePath[]     = $node;
@@ -404,7 +404,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             $node = $this->getNode($reference);
             
             if (!is_object($node)) {
-                throw new Error("Invalid reference '{$this->strdec($reference)}'!");
+                throw new ErrorException("Invalid reference '{$this->strdec($reference)}'!");
             }
             
             $nodePath[]     = $node;
@@ -522,7 +522,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             if (is_null(key($nodePathKeys))) {
                 $indexEntity = $this;
                 $keyString = implode(', ', array_keys($nodePath));
-                throw new Error("Node-index to balance '{$this->strdec($nodeIndex)}' not in given node-path as key! ({$keyString})");
+                throw new ErrorException("Node-index to balance '{$this->strdec($nodeIndex)}' not in given node-path as key! ({$keyString})");
             }
             prev($nodePath);
             prev($nodePathKeys);
@@ -708,7 +708,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             }
         
         } else {
-            throw new Error("Empty node but no left or right sibbling to merge with! (should not happen)");
+            throw new ErrorException("Empty node but no left or right sibbling to merge with! (should not happen)");
         }
         
     }
@@ -809,7 +809,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         }
         
         if ($index === 0) {
-            throw new Error("Cannot get node with index 0!");
+            throw new ErrorException("Cannot get node with index 0!");
         }
         
         $keyLength = $this->getKeyLength();
@@ -825,10 +825,10 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $data = fread($handle, $node->getPageSize());
         
         if (strlen($data)<=0) {
-            throw new Error("Error reading node {$index}!");
+            throw new ErrorException("Error reading node {$index}!");
             
         } elseif (strlen($data) !== $node->getPageSize()) {
-            throw new Error("Error reading node {$index}, size ".strlen($data)." !== ".$node->getPageSize()."!");
+            throw new ErrorException("Error reading node {$index}, size ".strlen($data)." !== ".$node->getPageSize()."!");
         }
         
         $node->setData($data);
@@ -841,7 +841,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     {
         
         if ($node->getKeyLength() !== $this->getKeyLength()) {
-            throw new Error("Mismatching key-length ({$node->getKeyLength()} != {$this->getKeyLength()}) when wrinting node into index!");
+            throw new ErrorException("Mismatching key-length ({$node->getKeyLength()} != {$this->getKeyLength()}) when wrinting node into index!");
         }
         
         if (is_null($index)) {
@@ -857,7 +857,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         }
         
         if ($index === 0) {
-            throw new Error("Cannot write into index {$index}!");
+            throw new ErrorException("Cannot write into index {$index}!");
         }
         
         $keyLength = $this->getKeyLength();
@@ -945,7 +945,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         }
         
         if (trim($reference, "\0")==="") {
-            throw new Error("Root-reference cannot be int(0)!");
+            throw new ErrorException("Root-reference cannot be int(0)!");
         }
     
         $handle = $this->getStorage()->getHandle();
@@ -981,7 +981,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         
         // check if reference can be stored in key-space
         if ($value<=0 || ceil(log($value, 256))>$this->getKeyLength()) {
-            throw new Error("Invalid value given!");
+            throw new ErrorException("Invalid value given!");
         }
         
         return $this->BCTdecstr($value, $keyLength);
@@ -1285,7 +1285,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     {
         
         if (count($path)<=0) {
-            throw new Error("Invalid iterator-path given to increment!");
+            throw new ErrorException("Invalid iterator-path given to increment!");
         }
         
         // build node-path if none is given
@@ -1377,7 +1377,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     {
         
         if (count($path)<=0) {
-            throw new Error("Invalid iterator-path given to decrement!");
+            throw new ErrorException("Invalid iterator-path given to decrement!");
         }
         
         // build node-path if none is given
@@ -1575,7 +1575,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
                 list($reference, $value, $rowId) = $block;
                 
                 if (trim($value, "\0")==='' && trim($reference, "\0")!=='') {
-                    throw new Error("Failed self-test! Found reference '{$this->strdec($reference)}' without value!");
+                    throw new ErrorException("Failed self-test! Found reference '{$this->strdec($reference)}' without value!");
                 }
                 
                 if (trim($value, "\0")==='') {
@@ -1587,11 +1587,11 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
                 if (is_null($isLeaf)) {
                     $isLeaf = trim($reference, "\0")==='';
                 } elseif ($isLeaf !== (trim($reference, "\0")==='')) {
-                    throw new Error("Failed self-test! Mixed node {$nodeIndex} is partly leaf and partly not!");
+                    throw new ErrorException("Failed self-test! Mixed node {$nodeIndex} is partly leaf and partly not!");
                 }
                 
                 if (isset($valuePool[$value])) {
-                    throw new Error("Failed self-test! Value '{$this->strdec($value)}' found twice!");
+                    throw new ErrorException("Failed self-test! Value '{$this->strdec($value)}' found twice!");
                 }
                 $valuePool[$value] = $value;
                 
@@ -1600,27 +1600,27 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
                 }
                 
                 if ($this->strdec($reference) > $this->getNodeCount()-1) {
-                    throw new Error("Failed self-test! Reference '{$this->strdec($reference)}' out of range!");
+                    throw new ErrorException("Failed self-test! Reference '{$this->strdec($reference)}' out of range!");
                 }
                     
                 if (isset($referencePool[$reference])) {
-                    throw new Error("Failed self-test! Reference '{$this->strdec($reference)}' found twice!");
+                    throw new ErrorException("Failed self-test! Reference '{$this->strdec($reference)}' found twice!");
                 }
                 $referencePool[$reference] = $reference;
                 
                 if (is_null($valueBefore)) {
                     $valueBefore = $value;
                 } elseif ($valueBefore > $value) {
-                    throw new Error("Failed self-test! Values in wrong order at node {$nodeIndex}! ({$this->strdec($valueBefore)} > {$this->strdec($value)})");
+                    throw new ErrorException("Failed self-test! Values in wrong order at node {$nodeIndex}! ({$this->strdec($valueBefore)} > {$this->strdec($value)})");
                 }
                 
                 $foreignNode = $this->getNode($reference);
                 $foreignLastIndex = $foreignNode->getLastWrittenIndex();
                 if ($foreignLastIndex===false) {
-                    throw new Error("Failed self-test! Reference to empty node in node {$nodeIndex} for reference {$this->strdec($reference)}!");
+                    throw new ErrorException("Failed self-test! Reference to empty node in node {$nodeIndex} for reference {$this->strdec($reference)}!");
                 }
                 if ($foreignNode->getValueByIndex($foreignLastIndex) > $value) {
-                    throw new Error("Failed self-test! Last value in node {$this->strdec($reference)} is bigger then {$this->strdec($value)} in node {$nodeIndex}!");
+                    throw new ErrorException("Failed self-test! Last value in node {$this->strdec($reference)} is bigger then {$this->strdec($value)} in node {$nodeIndex}!");
                 }
             }
             
@@ -1630,28 +1630,28 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
                 continue;
                 
             } elseif ($isLeaf) {
-                throw new Error("Failed self-test! Mixed node {$nodeIndex} is partly leaf and partly not!");
+                throw new ErrorException("Failed self-test! Mixed node {$nodeIndex} is partly leaf and partly not!");
             }
             
             if ($this->strdec($reference) > $this->getNodeCount()-1) {
-                throw new Error("Failed self-test! Reference '{$this->strdec($reference)}' out of range!");
+                throw new ErrorException("Failed self-test! Reference '{$this->strdec($reference)}' out of range!");
             }
             
             if (isset($referencePool[$reference])) {
-                throw new Error("Failed self-test! Reference '{$this->strdec($reference)}' found twice!");
+                throw new ErrorException("Failed self-test! Reference '{$this->strdec($reference)}' found twice!");
             }
             $referencePool[$reference] = $reference;
             
             $foreignNode = $this->getNode($reference);
             $value = $node->getValueByIndex($node->getLastWrittenIndex());
             if ($foreignNode->getValueByIndex(0) < $value) {
-                throw new Error("Failed self-test! First value in node {$this->strdec($reference)} is smaller then {$this->strdec($value)} in node {$nodeIndex}!");
+                throw new ErrorException("Failed self-test! First value in node {$this->strdec($reference)} is smaller then {$this->strdec($value)} in node {$nodeIndex}!");
             }
         }
         
         foreach ($checkReferences as $nodeIndex) {
             if (!isset($referencePool[$this->decstr($nodeIndex, $this->getKeyLength())])) {
-                throw new Error("Failed self-test! Node {$nodeIndex} is not referenced!");
+                throw new ErrorException("Failed self-test! Node {$nodeIndex} is not referenced!");
             }
         }
     }

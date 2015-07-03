@@ -16,7 +16,6 @@ use Addiks\PHPSQL\Resource\Statement;
 use Addiks\PHPSQL\Value\Database\Dsn\Internal as InternalDSN;
 
 use \Event;
-use Addiks\Depencies\Resource\ContextTrait;
 
 /**
  * Takes place of the original \PDO class in PHP for providing a connection to the internal database.
@@ -26,8 +25,6 @@ class Internal extends \PDO
 {
     
     const DRIVERNAME = "internal";
-    
-    use ContextTrait;
     
     /**
      * The DSN containing the database-id to use for this connection.

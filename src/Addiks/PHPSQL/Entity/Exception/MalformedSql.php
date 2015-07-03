@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Entity\Exception;
 
 use Addiks\PHPSQL\Tool\SQLTokenIterator;
 
-use Addiks\Protocol\Entity\Exception;
+use Exception;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 
 class MalformedSql extends Exception
