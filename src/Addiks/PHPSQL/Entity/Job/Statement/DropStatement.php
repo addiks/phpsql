@@ -9,19 +9,18 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Statement;
+namespace Addiks\PHPSQL\Entity\Job\StatementJob;
 
-use Addiks\PHPSQL\Entity\Job\Statement;
-use Addiks\PHPSQL\Service\Executor\DropExecutor;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Executor\DropExecutor;
 
 /**
- *
- * @Addiks\Statement(executorClass="DropExecutor")
- * @author gerrit
  *
  */
 class DropStatement extends Statement
 {
+
+    const EXECUTOR_CLASS = DropExecutor::class;
     
     private $type;
     

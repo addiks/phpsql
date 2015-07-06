@@ -23,16 +23,16 @@ use Addiks\PHPSQL\Entity\Job\Statement\Create;
 
 
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\Service\Executor\CreateIndexExecutor;
+use Addiks\PHPSQL\Executor\CreateIndexExecutor;
 
 /**
- *
- * @Addiks\Statement(executorClass="CreateIndexExecutor")
  *
  */
 class CreateIndexStatement extends CreateStatement
 {
     
+    const EXECUTOR_CLASS = CreateIndexExecutor::class;
+
     private $isUnique = false;
     
     public function setIsUnique($bool)

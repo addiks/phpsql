@@ -9,22 +9,20 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Statement;
+namespace Addiks\PHPSQL\Entity\Job\StatementJob;
 
 use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
-
-use Addiks\PHPSQL\Entity\Job\Statement;
-use Addiks\PHPSQL\Service\Executor\DescribeExecutor;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Executor\DescribeExecutor;
 
 /**
- *
- * @Addiks\Statement(executorClass="DescribeExecutor")
- * @author gerrit
  *
  */
 class DescribeStatement extends Statement
 {
     
+    const EXECUTOR_CLASS = DescribeExecutor::class;
+
     private $table;
     
     public function setTable(TableSpecifier $table)

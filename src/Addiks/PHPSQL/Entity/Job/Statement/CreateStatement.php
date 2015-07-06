@@ -11,9 +11,9 @@
 
 namespace Addiks\PHPSQL\Entity\Job\Statement;
 
-use Addiks\PHPSQL\Entity\Job\Statement;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
 
-abstract class CreateStatement extends Statement
+abstract class CreateStatement extends StatementJob
 {
     
     protected $name;

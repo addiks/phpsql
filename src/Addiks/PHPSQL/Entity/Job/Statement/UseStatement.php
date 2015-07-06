@@ -9,20 +9,19 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Statement;
+namespace Addiks\PHPSQL\Entity\Job\StatementJob;
 
-use Addiks\PHPSQL\Entity\Job\Statement;
-use Addiks\PHPSQL\Service\Executor\UseExecutor;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Executor\UseExecutor;
 
 /**
- *
- * @Addiks\Statement(executorClass="UseExecutor")
- * @author gerrit
  *
  */
 class UseStatement extends Statement
 {
     
+    const EXECUTOR_CLASS = UseExecutor::class;
+
     private $database;
     
     public function setDatabase(Database $database)

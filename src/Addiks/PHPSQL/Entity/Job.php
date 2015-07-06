@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity;
 
-use Addiks\PHPSQL\Service\SqlParser;
+use Addiks\PHPSQL\SqlParser;
 use Addiks\PHPSQL\Entity;
 
 /**

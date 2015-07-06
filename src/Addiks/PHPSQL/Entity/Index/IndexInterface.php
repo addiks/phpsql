@@ -16,9 +16,9 @@ use Addiks\PHPSQL\Entity\Storage;
 interface IndexInterface
 {
     
-    function search($value);
+    public function search($value);
     
-    function insert($value, $rowId);
+    public function insert($value, $rowId);
     
-    function remove($value, $rowId);
+    public function remove($value, $rowId);
 }

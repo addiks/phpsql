@@ -11,11 +11,9 @@
 
 namespace Addiks\PHPSQL\Entity\Page;
 
-use Addiks\Analyser\Service\TokenParser\CodeBlock\DocComment;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
-use Addiks\PHPSQL\Service\BinaryConverterTrait;
+use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Entity;
-use Addiks\Common\Tool\ClassAnalyzer;
 use ErrorException;
 
 /**
@@ -296,35 +294,17 @@ class Column extends Entity
         
         if (is_null($this->cellsizeCache)) {
             if (!is_null($this->length)) {
-                $key = $this->getDataType()->getName();
+                $dataType = $this->getDataType();
+
+                $length = $dataType->getByteLength();
                     
-                $annotations = $this->getDataTypeAnnotations();
-                    
-                if (!isset($annotations['Addiks\\\\Datatype'])) {
-                    throw new ErrorException("Data-type '{$key}' without byte-length annotation requested! (All datatypes should have one)");
-                }
-                    
-                /* @var $annotation \Addiks\Common\Annotation */
-                $annotation = current($annotations['Addiks\\\\Datatype']);
-                    
-                $length = $annotation['bytelength'];
-                    
-                if (is_numeric($length)) {
-                    $this->cellsizeCache = (int)$length;
-                        
+                if ($dataType->isInFile()) {
+                    throw new ErrorException("Storage-length for data-cells is not implemented yet!");
+
                 } else {
-                    switch($annotation['type']){
-                
-                        case 'length':
-                            $this->cellsizeCache = $this->getLength()+$this->getSecondLength();
-                                
-                        case 'storage':
-                            throw new ErrorException("Storage-length for data-cells is not implemented yet!");
-                                
-                        default:
-                            throw new ErrorException("Invalid (non-implemented?) keyword '{$annotation['type']}' found for datatype '{$key}'!");
-                    }
+                    $this->cellsizeCache = (int)$length;
                 }
+
             } else {
                 $this->cellsizeCache = $this->getLength()+$this->getSecondLength();
             }
@@ -336,28 +316,9 @@ class Column extends Entity
     
     public function isBinary()
     {
-        
-        $annotations = $this->getDataTypeAnnotations();
-        
-        return isset($annotations['binary']);
+        $dataType = $this->getDataType();
+
+        return $dataType->isBinary();
     }
     
-    protected function getDataTypeAnnotations()
-    {
-        
-        /* @var $dataType DataType */
-        $dataType = $this->getDataType();
-        
-        $key = $dataType->getName();
-        
-        $reflection = new \ReflectionClass($dataType);
-        
-        /* @var $analyzer ClassAnalyzer */
-        $analyzer   = ClassAnalyzer::getInstanceFor(get_class($dataType), $reflection->getFileName());
-        
-        $docComment  = $analyzer->getClassConstantDocComment($key);
-        $annotations = DocComment::extractAnnotationsFromString($docComment);
-        
-        return $annotations;
-    }
 }

@@ -9,25 +9,21 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Statement;
+namespace Addiks\PHPSQL\Entity\Job\StatementJob;
 
 use Addiks\PHPSQL\Entity\Job\Insert\DataChange;
-
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
-
 use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
-
-use Addiks\PHPSQL\Entity\Job\Statement;
-use Addiks\PHPSQL\Service\Executor\InsertExecutor;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Executor\InsertExecutor;
 
 /**
- *
- * @Addiks\Statement(executorClass="InsertExecutor")
- * @author gerrit
  *
  */
 class InsertStatement extends Statement
 {
+
+    const EXECUTOR_CLASS = InsertExecutor::class;
 
     private $table;
     

@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity\Exception;
 
-use Addiks\PHPSQL\Tool\SQLTokenIterator;
+use Addiks\PHPSQL\SQLTokenIterator;
 
 use Exception;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;

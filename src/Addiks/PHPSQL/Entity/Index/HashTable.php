@@ -11,8 +11,8 @@
 
 namespace Addiks\PHPSQL\Entity\Index;
 
-use Addiks\PHPSQL\Resource\CacheBackendInterface;
-use Addiks\PHPSQL\Service\BinaryConverterTrait;
+use Addiks\PHPSQL\CacheBackendInterface;
+use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\Entity\Storage;
 use ErrorException;

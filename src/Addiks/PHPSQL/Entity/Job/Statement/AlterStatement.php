@@ -9,18 +9,18 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Statement;
+namespace Addiks\PHPSQL\Entity\Job\StatementJob;
 
-use Addiks\PHPSQL\Entity\Job\Statement;
-use Addiks\PHPSQL\Service\Executor\AlterExecutor;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Executor\AlterExecutor;
 
 /**
  *
- * @Addiks\Statement(executorClass="AlterExecutor")
- * @author gerrit
  */
 class AlterStatement extends Statement
 {
+
+    const EXECUTOR_CLASS = AlterExecutor::class;
 
     private $table;
     

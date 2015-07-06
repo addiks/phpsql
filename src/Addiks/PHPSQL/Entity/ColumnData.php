@@ -14,7 +14,7 @@ namespace Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\Entity\Page\Column;
 use Addiks\PHPSQL\Entity;
 use ErrorException;
-use Addiks\PHPSQL\Tool\CustomIterator;
+use Addiks\PHPSQL\CustomIterator;
 use Addiks\PHPSQL\Entity\Storage;
 
 class ColumnData extends Entity implements \Countable, \IteratorAggregate

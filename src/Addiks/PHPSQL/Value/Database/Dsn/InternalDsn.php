@@ -15,7 +15,7 @@ use ErrorException;
 
 use Addiks\PHPSQL\Value\Database\Dsn;
 
-use Addiks\PHPSQL\Resource\Database;
+use Addiks\PHPSQL\Database;
 
 class InternalDsn extends Dsn
 {

@@ -9,20 +9,19 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Statement;
+namespace Addiks\PHPSQL\Entity\Job\StatementJob;
 
-use Addiks\PHPSQL\Entity\Job\Statement;
-use Addiks\PHPSQL\Service\Executor\Set as SetExecutor;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Executor\Set as SetExecutor;
 
 /**
- *
- * @Addiks\Statement(executorClass="SetExecutor")
- * @author gerrit
  *
  */
 class SetStatement extends Statement
 {
     
+    const EXECUTOR_CLASS = SetExecutor::class;
+
     private $key;
     
     public function setKey($key)

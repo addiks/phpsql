@@ -12,11 +12,9 @@
 namespace Addiks\PHPSQL\Entity\Job\Part;
 
 use Addiks\PHPSQL\Value\Text\Annotation;
-use Addiks\Common\Tool\ClassAnalyzer;
-use Addiks\Analyser\Service\TokenParser\CodeBlock\DocComment;
-use ErrorException;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Entity\Job\Part;
+use ErrorException;
 
 class ColumnDefinition extends Part
 {
@@ -68,39 +66,10 @@ class ColumnDefinition extends Part
             return 0;
         }
         
-        $reflection = new \ReflectionClass($this->getDataType());
-        /* @var $analyzer ClassAnalyzer */
-        $analyzer = ClassAnalyzer::getInstanceFor($reflection->getName(), $reflection->getFileName());
-        
-        $docComment  = $analyzer->getClassConstantDocComment($this->getDataType()->getName());
-        $annotations = DocComment::extractAnnotationsFromString($docComment);
-        
-        if (!isset($annotations['Addiks\\\\Datatype'])) {
-            throw new ErrorException("Missing annotation 'Addiks\\Datatype' on data-type-constant '{$reflection->getName()}::{$this->getDataType()->getName()}'");
-        }
-        
-        /* @var $annotation Annotation */
-        $annotation = current($annotations['Addiks\\\\Datatype']);
-        
-        if (isset($annotation['type'])) {
-            switch($annotation['type']){
-                case 'enum':
-                    $maximumLength = 0;
-                    foreach ($this->getEnumValues() as $value) {
-                        if (strlen($value) > $maximumLength) {
-                            $maximumLength = strlen($value);
-                        }
-                    }
-                    return $maximumLength;
-                    
-                case 'storage':
-                    throw new Conflict("Unimplemented!");
-            }
-            
-        } else {
-            return (int)$annotation['length'];
-        }
-        
+        $dataType = $this->getDataType();
+
+        return $dataType->getByteLength();
+
     }
     
     private $dataTypeLength;

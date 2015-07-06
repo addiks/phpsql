@@ -14,17 +14,16 @@ namespace Addiks\PHPSQL\Entity\Job\Statement\Create;
 use Addiks\PHPSQL\Entity\Job\Statement\CreateStatement;
 
 use Addiks\PHPSQL\Entity\Job\Statement\Create;
-use Addiks\PHPSQL\Service\Executor\CreateDatabaseExecutor;
+use Addiks\PHPSQL\Executor\CreateDatabaseExecutor;
 
 /**
- *
- * @author gerrit
- * @Addiks\Statement(executorClass="CreateDatabaseExecutor")
  *
  */
 class CreateDatabaseStatement extends CreateStatement
 {
     
+    const EXECUTOR_CLASS = CreateDatabaseExecutor::class;
+
     private $characterSet;
     
     public function setCharacterSet($characterSet)

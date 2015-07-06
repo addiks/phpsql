@@ -9,20 +9,19 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Statement;
+namespace Addiks\PHPSQL\Entity\Job\StatementJob;
 
-use Addiks\PHPSQL\Entity\Job\Statement;
-use Addiks\PHPSQL\Service\Executor\DeleteExecutor;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Executor\DeleteExecutor;
 
 /**
- *
- * @Addiks\Statement(executorClass="DeleteExecutor")
- * @author gerrit
  *
  */
 class DeleteStatement extends Statement
 {
     
+    const EXECUTOR_CLASS = DeleteExecutor::class;
+
     private $deleteTables = array();
     
     public function addDeleteTable(Table $table)

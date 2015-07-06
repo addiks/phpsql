@@ -17,7 +17,7 @@ use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Entity\Page\Schema as SchemaPage;
 
 use Addiks\PHPSQL\Entity;
-use Addiks\PHPSQL\Tool\CustomIterator;
+use Addiks\PHPSQL\CustomIterator;
 
 /**
  * This entity manages the schema-information about tables, views, ... in the database.

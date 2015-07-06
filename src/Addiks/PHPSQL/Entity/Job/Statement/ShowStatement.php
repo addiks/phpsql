@@ -9,21 +9,19 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Statement;
+namespace Addiks\PHPSQL\Entity\Job\StatementJob;
 
 use Addiks\PHPSQL\Value\Enum\Sql\Show\ShowType;
-
-use Addiks\PHPSQL\Entity\Job\Statement;
-use Addiks\PHPSQL\Service\Executor\ShowExecutor;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Executor\ShowExecutor;
 
 /**
- *
- * @Addiks\Statement(executorClass="ShowExecutor")
- * @author gerrit
  *
  */
 class ShowStatement extends Statement
 {
+
+    const EXECUTOR_CLASS = ShowExecutor::class;
 
     private $type;
     

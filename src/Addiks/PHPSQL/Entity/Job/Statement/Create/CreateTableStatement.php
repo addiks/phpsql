@@ -12,34 +12,24 @@
 namespace Addiks\PHPSQL\Entity\Job\Statement\Create;
 
 use Addiks\PHPSQL\Entity\Job\Statement\CreateStatement;
-
 use Addiks\PHPSQL\Entity\Job\Part\Join\Table as TablePart;
-
 use Addiks\PHPSQL\Value\Enum\Sql\TableOptions\InsertMethod;
-
 use Addiks\PHPSQL\Value\Enum\Sql\TableOptions\RowFormat;
-
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Engine;
-
 use Addiks\PHPSQL\Entity\Job\Part\Index;
-
 use Addiks\PHPSQL\Entity\Job\Statement\Select;
-
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
-
 use Addiks\PHPSQL\Entity\Job\Statement\Create;
-
-use Addiks\PHPSQL\Service\Executor\CreateTableExecutor;
+use Addiks\PHPSQL\Executor\CreateTableExecutor;
 
 /**
- *
- * @Addiks\Statement(executorClass="CreateTableExecutor")
- * @author gerrit
  *
  */
 class CreateTableStatement extends CreateStatement
 {
     
+    const EXECUTOR_CLASS = CreateTableExecutor::class;
+
     /**
      * Temporary tables exist only within one runtime and are dropped when the runtime is finished.
      * This is useful when you want to make sure there are no conflicting table-names.

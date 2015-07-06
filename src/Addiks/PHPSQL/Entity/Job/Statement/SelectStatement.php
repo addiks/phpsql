@@ -9,7 +9,7 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Statement;
+namespace Addiks\PHPSQL\Entity\Job\StatementJob;
 
 use Addiks\PHPSQL\Entity\Job\Part\Value;
 
@@ -19,8 +19,8 @@ use Addiks\PHPSQL\Entity\Result\Specifier;
 
 use Addiks\PHPSQL\Entity\Job\Part\Join;
 
-use Addiks\PHPSQL\Entity\Job\Statement;
-use Addiks\PHPSQL\Service\Executor\SelectExecutor;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Executor\SelectExecutor;
 
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
@@ -28,12 +28,11 @@ use Addiks\PHPSQL\Entity\Job\FunctionJob;
 
 /**
  *
- * @Addiks\Statement(executorClass="SelectExecutor")
- * @author gerrit
- *
  */
 class SelectStatement extends Statement
 {
+
+    const EXECUTOR_CLASS = SelectExecutor::class;
 
     private $columns = array();
     

@@ -12,11 +12,11 @@
 namespace Addiks\PHPSQL\Entity\Index;
 
 use Addiks\PHPSQL\Entity;
-use Addiks\PHPSQL\Tool\CustomIterator;
+use Addiks\PHPSQL\CustomIterator;
 use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\Page\BTree\Node;
-use Addiks\PHPSQL\Service\BinaryConverterTrait;
+use Addiks\PHPSQL\BinaryConverterTrait;
 
 class BTree extends Entity implements \IteratorAggregate, IndexInterface
 {

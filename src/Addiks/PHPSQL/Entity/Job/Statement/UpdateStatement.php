@@ -9,13 +9,12 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Statement;
+namespace Addiks\PHPSQL\Entity\Job\StatementJob;
 
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-
-use Addiks\PHPSQL\Entity\Job\Statement;
-use Addiks\PHPSQL\Service\Executor\UpdateExecutor;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Executor\UpdateExecutor;
 
 /**
  *
@@ -25,6 +24,8 @@ use Addiks\PHPSQL\Service\Executor\UpdateExecutor;
  */
 class UpdateStatement extends Statement
 {
+
+    const EXECUTOR_CLASS = UpdateExecutor::class;
 
     private $tables = array();
     

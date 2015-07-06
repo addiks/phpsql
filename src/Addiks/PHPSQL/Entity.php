@@ -35,8 +35,6 @@ use Addiks\PHPSQL\Entity\EntityTrait;
  */
 abstract class Entity{
 
-	use EntityTrait;
-	
 	/**
 	 * The identification of this entity.
 	 * @var int

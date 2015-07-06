@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL\Entity\Index;
 
 use Addiks\PHPSQL\Entity\Page\Column;
-use Addiks\PHPSQL\Service\BinaryConverterTrait;
+use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Entity;
 use ErrorException;
 use Addiks\PHPSQL\Entity\Storage;

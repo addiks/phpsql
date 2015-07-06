@@ -3,28 +3,25 @@
  * @author Gerrit Addiks <gerrit.addiks@brille24.de>
  */
 
-use Addiks\PHPSQL\Resource\Connection;
-use Addiks\PHPSQL\Value\Database\Dsn\InmemoryDsn;
+use Addiks\PHPSQL\PDO;
 
 define("BASEDIR", dirname(__FILE__));
 
 function __autoload($className)
 {
-    $filePath = "src/".str_replace("\\", "/", $className).".php";
+    $filePath = str_replace("\\", "/", $className);
+    $filePath = BASEDIR."/src/{$filePath}.php";
     if (file_exists($filePath)) {
         require_once($filePath);
     }
 }
 
-// define a dsn to connect to (or create) an in-memory database named "some_example_database"
-$dsn = InmemoryDsn::factory("some_example_database");
-
-// create the in-memory database defined in the dsn
-$connection = Connection::newFromDsn($dsn);
+// create an in-memory database called "some_database_example"
+$pdo = new PDO("inmemory:some_example_database");
 
 // create a few tables inside that database
 // (the ENGINE definition will be ignored)
-$connection->query("
+$pdo->query("
 
     CREATE TABLE `product` (
       `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -53,9 +50,9 @@ $connection->query("
 ");
 
 // Oops, forgot the quantity on that cart-item table, let's add it
-$connection->query("ALTER TABLE `cart_item` ADD COLUMN `quantity` FLOAT NOT NULL DEFAULT 1.0");
+$pdo->query("ALTER TABLE `cart_item` ADD COLUMN `quantity` FLOAT NOT NULL DEFAULT 1.0");
 
 // Let's have a look on the table 'cart_item'
-echo (string)$connection->query("DESCRIBE TABLE `cart_item`");
+echo (string)$pdo->query("DESCRIBE TABLE `cart_item`");
 
 
