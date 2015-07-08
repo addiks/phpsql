@@ -22,19 +22,20 @@ use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
 
-class CreateIndexExecutor extends Executor
+class CreateIndexExecutor implements StatementExecutorInterface
 {
     
-    public function __construct(SchemaManager $schemaManager)
-    {
-        $this->schemaManager = $schemaManager;
+    public function __construct(
+        TableManager $tableManager
+    ) {
+        $this->tableManager = $tableManager;
     }
 
-    protected $schemaManager;
+    protected $tableManager;
 
-    public function getSchemaManager()
+    public function getTableManager()
     {
-        return $this->schemaManager;
+        return $this->tableManager;
     }
     
     public function executeConcreteJob($statement, array $parameters = array())
@@ -44,24 +45,18 @@ class CreateIndexExecutor extends Executor
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTable();
         
-        /* @var $schema Schema */
-        $schema = $this->schemaManager->getSchema($tableSpecifier->getDatabase());
-        
-        if (!$schema->tableExists($tableSpecifier->getTable())) {
-            throw new Conflict("Table '{$tableSpecifier}' does not exist!");
-        }
-        
         ### WRITE INDEX PAGE
         
-        /* @var $indexPage Index */
-        $this->factorize($indexPage);
-        
         /* @var $tableResource Table */
-        $this->factorize($tableResource, [$tableSpecifier->getTable(), $tableSpecifier->getDatabase()]);
-        
+        $tableResource = $this->tableManager->getTable(
+            $tableSpecifier->getTable(),
+            $tableSpecifier->getDatabase()
+        );
+
         /* @var $tableSchema TableSchema */
         $tableSchema = $tableResource->getTableSchema();
         
+        $indexPage = new Index();
         $indexPage->setName($statement->getName());
         $indexPage->setEngine(Engine::factory($statement->getIndexType()->getName()));
         
@@ -103,9 +98,13 @@ class CreateIndexExecutor extends Executor
         
         ### PHSICALLY BUILD INDEX
         
-        /* @var $indexResource Index */
-        $this->factorize($indexResource, [$indexPage->getName(), $tableSpecifier->getTable(), $tableSpecifier->getDatabase()]);
-        
+        /* @var $tableResource Table */
+        $tableResource = $this->tableManager->getIndex(
+            $indexPage->getName(),
+            $tableSpecifier->getTable(),
+            $tableSpecifier->getDatabase()
+        );
+
         foreach ($tableResource->getIterator() as $rowId => $row) {
             $indexResource->insert($row, $rowId);
         }

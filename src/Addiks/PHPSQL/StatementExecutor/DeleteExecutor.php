@@ -12,9 +12,7 @@
 namespace Addiks\PHPSQL\Executor;
 
 use Addiks\PHPSQL\Executor;
-
-use Addiks\PHPSQL\Entity\Result\Temporary;
-
+use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\Database;
 
 class DeleteExecutor extends Executor
@@ -22,32 +20,38 @@ class DeleteExecutor extends Executor
     
     use BinaryConverterTrait;
     
-    public function __construct(SchemaManager $schemaManager)
-    {
-        $this->schemaManager = $schemaManager;
+    public function __construct(
+        ValueResolver $valueResolver,
+        TableManager $tableManager
+    ) {
+        $this->valueResolver = $valueResolver;
+        $this->tableManager = $tableManager;
     }
 
-    protected $schemaManager;
+    protected $valueResolver;
 
-    public function getSchemaManager()
+    public function getValueResolver()
     {
-        return $this->schemaManager;
+        return $this->valueResolver;
+    }
+
+    protected $tableManager;
+
+    public function getTableManager()
+    {
+        return $this->tableManager;
     }
     
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Delete */
         
-        /* @var $result Temporary */
-        $this->factorize($result);
+        $result = new TemporaryResult();
         
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
-        
-        $valueResolver->setResultSet($result);
-        $valueResolver->setStatement($statement);
-        $valueResolver->setStatementParameters($parameters);
-        $valueResolver->resetParameterCurrentIndex();
+        $this->valueResolver->setResultSet($result);
+        $this->valueResolver->setStatement($statement);
+        $this->valueResolver->setStatementParameters($parameters);
+        $this->valueResolver->resetParameterCurrentIndex();
         
         /* @var $conditionValue Value */
         $conditionValue = $statement->getCondition();
@@ -62,10 +66,12 @@ class DeleteExecutor extends Executor
             /* @var $tableSpecifier TableSpecifier */
             
             /* @var $tableResource Table */
-            $this->factorize($tableResource, [$tableSpecifier->getTable(), $tableSpecifier->getDatabase()]);
-            
-            /* @var $sortedIterator SortedResourceIterator */
-            $this->factorize($sortedIterator);
+            $tableResource = $this->tableManager->getTable(
+                $tableSpecifier->getTable(),
+                $tableSpecifier->getDatabase()
+            );
+
+            $sortedIterator = new SortedResourceIterator();
             
             /* @var $tableSchema TableSchema */
             $tableSchema = $tableResource->getTableSchema();
@@ -108,10 +114,10 @@ class DeleteExecutor extends Executor
             }
             
             foreach ($sortedIterator->getIterator() as $rowId => $row) {
-                $valueResolver->setSourceRow($row);
-                $valueResolver->resetParameterCurrentIndex();
+                $this->valueResolver->setSourceRow($row);
+                $this->valueResolver->resetParameterCurrentIndex();
                 
-                $isConditionMatch = is_null($conditionValue) || $valueResolver->resolveValue($conditionValue);
+                $isConditionMatch = is_null($conditionValue) || $this->valueResolver->resolveValue($conditionValue);
                 
                 if ($isConditionMatch) {
                     if (!is_null($limitOffset) && $rowSkip < $limitOffset) {

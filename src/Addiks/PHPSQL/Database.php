@@ -14,6 +14,29 @@ use Addiks\PHPSQL\DatabaseAdapter\DatabaseAdapterInterface;
  */
 class Database
 {
+
+    public function __construct($dsn)
+    {
+        if (substr($dsn, 0, 9) === "inmemory:") {
+            $dsnValue = InmemoryDsn::factory($dsn);
+
+        } elseif (substr($dsn, 0, 9) === "internal:") {
+            $dsnValue = InternalDSN::factory($dsn);
+
+        } else {
+            throw new ErrorException("Internal PDO cannot handle this DSN: {$dsn}");
+        }
+        
+        $this->dsn = $dsnValue;
+        
+    }
+
+    protected $dsn;
+
+    public function getDsn()
+    {
+        return $this->dsn;
+    }
     
     private $currentDatabaseType = 'internal';
     
@@ -56,6 +79,11 @@ class Database
     public function getAvailableDatabaseTypes()
     {
         return array_keys($this->databaseAdapters);
+    }
+
+    public function getFilesystem()
+    {
+        return $this->getDatabaseAdapter()->
     }
     
     /**

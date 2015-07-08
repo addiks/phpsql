@@ -3,9 +3,12 @@
  * @author Gerrit Addiks <gerrit.addiks@brille24.de>
  */
 
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Addiks\PHPSQL\PDO;
 
-define("BASEDIR", dirname(__FILE__)."/..");
+define("BASEDIR", realpath(__DIR__."/.."));
 
 function __autoload($className)
 {
@@ -15,6 +18,12 @@ function __autoload($className)
         require_once($filePath);
     }
 }
+
+require_once(BASEDIR."/vendor/autoload.php");
+
+$container = new ContainerBuilder();
+$loader = new XmlFileLoader($container, new FileLocator(__DIR__));
+$loader->load(BASEDIR.'/services.xml');
 
 // create an in-memory database called "some_database_example"
 $pdo = new PDO("inmemory:some_example_database");

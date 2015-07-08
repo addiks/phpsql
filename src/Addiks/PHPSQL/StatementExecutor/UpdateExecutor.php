@@ -20,18 +20,6 @@ use Addiks\PHPSQL\Database;
 class UpdateExecutor extends Executor
 {
     
-    public function __construct(SchemaManager $schemaManager)
-    {
-        $this->schemaManager = $schemaManager;
-    }
-
-    protected $schemaManager;
-
-    public function getSchemaManager()
-    {
-        return $this->schemaManager;
-    }
-    
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Update */
@@ -43,10 +31,6 @@ class UpdateExecutor extends Executor
         
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTables()[0];
-        
-        if (!$this->schemaManager->getSchema()->tableExists((string)$tableSpecifier)) {
-            throw new Conflict("Table '{$tableSpecifier}' does not exist!");
-        }
         
         /* @var $tableResource Table */
         $this->factorize($tableResource, [$tableSpecifier]);

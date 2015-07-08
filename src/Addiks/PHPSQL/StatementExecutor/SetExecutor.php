@@ -17,38 +17,17 @@ use Addiks\PHPSQL\Entity\Result\Temporary;
 
 use Addiks\PHPSQL\Database;
 
-class CreateDatabaseExecutor extends Executor
+class SetExecutor extends Executor
 {
-    
-    public function __construct(SchemaManager $schemaManager)
-    {
-        $this->schemaManager = $schemaManager;
-    }
-
-    protected $schemaManager;
-
-    public function getSchemaManager()
-    {
-        return $this->schemaManager;
-    }
     
     protected function executeConcreteJob($statement, array $parameters = array())
     {
-        /* @var $statement Database */
+        /* @var $statement Set */
         
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
-        
-        $name = $valueResolver->resolveValue($statement->getName());
-        
-        $this->schemaManager->createSchema($name);
-        
-        ### CREATE RESULTSET
+        # ...
         
         /* @var $result Temporary */
         $this->factorize($result);
-        
-        $result->setIsSuccess($this->schemaManager->schemaExists($name));
         
         return $result;
     }

@@ -45,8 +45,7 @@ use Addiks\PHPSQL\SqlParser\Part\ColumnDefinitionParser;
 class InternalDatabaseAdapter implements DatabaseAdapterInterface
 {
 
-    public function __construct()
-    {
+    public function __construct(SqlParser $sqlParser) {
         if (is_null($this->filesystem)) {
             $this->filesystem = new RealFilesystem();
         }
@@ -59,27 +58,7 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
             $this->valueResolver = new ValueResolver();
         }
 
-        if (is_null($this->sqlParser)) {
-            $this->sqlParser = new SqlParser();
-            $this->sqlParser->addSqlParser(new ParenthesisParser());
-            $this->sqlParser->addSqlParser(new SelectSqlParser());
-            $this->sqlParser->addSqlParser(new InsertSqlParser());
-            $this->sqlParser->addSqlParser(new UpdateSqlParser());
-            $this->sqlParser->addSqlParser(new DeleteSqlParser());
-            $this->sqlParser->addSqlParser(new ShowSqlParser());
-            $this->sqlParser->addSqlParser(new UseSqlParser());
-            $this->sqlParser->addSqlParser(new CreateSqlParser());
-            $this->sqlParser->addSqlParser(new AlterSqlParser());
-            $this->sqlParser->addSqlParser(new DropSqlParser());
-            $this->sqlParser->addSqlParser(new SetSqlParser());
-            $this->sqlParser->addSqlParser(new DescribeSqlParser());
-    #        $this->sqlParser->addSqlParser(new BeginSqlParser());
-    #        $this->sqlParser->addSqlParser(new EndSqlParser());
-            $this->sqlParser->addSqlParser(new ConditionParser());
-            $this->sqlParser->addSqlParser(new ColumnParser());
-            $this->sqlParser->addSqlParser(new ColumnDefinitionParser());
-            $this->sqlParser->addSqlParser(new TableParser());
-        }
+        $this->sqlParser = $sqlParser;
     }
 
     /**
@@ -87,10 +66,20 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
      */
     protected $filesystem;
 
+    public function getFilesystem()
+    {
+        return $this->filesystem;
+    }
+
     /**
      * @var SchemaManager
      */
     protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
 
     /**
      * @var SqlParser

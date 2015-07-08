@@ -11,6 +11,7 @@
 
 namespace Addiks\PHPSQL\Executor;
 
+use ErrorException;
 use Addiks\PHPSQL\Table;
 use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Value\Enum\Page\Index\ForeignKeyMethod;
@@ -31,14 +32,17 @@ use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Index as IndexResource;
-use ErrorException;
+use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 
-class CreateTableExecutor extends Executor
+class CreateTableExecutor implements StatementExecutorInterface
 {
     
-    public function __construct(SchemaManager $schemaManager)
-    {
+    public function __construct(
+        SchemaManager $schemaManager,
+        TableManager $tableManager
+    ) {
         $this->schemaManager = $schemaManager;
+        $this->tableManager = $tableManager;
     }
 
     protected $schemaManager;
@@ -46,6 +50,13 @@ class CreateTableExecutor extends Executor
     public function getSchemaManager()
     {
         return $this->schemaManager;
+    }
+
+    protected $tableManager;
+
+    public function getTableManager()
+    {
+        return $this->tableManager;
     }
     
     protected function executeConcreteJob($statement, array $parameters = array())
@@ -55,9 +66,7 @@ class CreateTableExecutor extends Executor
         /* @var $databaseSchema Schema */
         $databaseSchema = $this->schemaManager->getSchema();
         
-        /* @var $schemaPage SchemaPage */
-        $this->factorize($schemaPage);
-        
+        $schemaPage = new SchemaPage();
         $schemaPage->setName($statement->getName());
         $schemaPage->setType(Type::TABLE());
         $schemaPage->setEngine(Engine::factory($statement->getEngine()->getName()));
@@ -83,9 +92,7 @@ class CreateTableExecutor extends Executor
                 foreach ($statement->getColumnDefinition() as $name => $column) {
                     /* @var $column ColumnDefinition */
                     
-                    /* @var $columnPage Column */
-                    $this->factorize($columnPage);
-                    
+                    $columnPage = new ColumnPage();
                     $columnPage->setName($name);
                     $columnPage->setDataType(DataType::factory($column->getDataType()->getName()));
                     
@@ -136,9 +143,7 @@ class CreateTableExecutor extends Executor
         foreach ($statement->getIndexes() as $indexName => $index) {
             /* @var $index Index */
             
-            /* @var $indexSchemaPage Index */
-            $this->factorize($indexSchemaPage);
-            
+            $indexSchemaPage = new IndexPage();
             $indexSchemaPage->setName($indexName);
             $indexSchemaPage->setEngine(IndexEngine::BTREE());
             
@@ -179,22 +184,21 @@ class CreateTableExecutor extends Executor
             $indexSchemaPage->setColumns($columns);
             $indexSchemaPage->setKeyLength($keyLength);
             
-            $indexPosition = $tableSchema->addIndexPage($indexSchemaPage);
-            
             /* @var $indexResource IndexResource */
-            $this->factorize($indexResource, [$indexPosition, $statement->getName()]);
+            $indexResource = $this->tableManager->createIndex(
+                $indexSchemaPage,
+                $statement->getName()
+            );
             
             $indexResource->getIndexBackend();
         }
     
         /* @var $tableResource Table */
-        $this->factorize($tableResource, [$tableSchema]);
+        $tableResource = $this->tableManager->createTable($tableSchema);
         
         ### RESULT
         
-        /* @var $result Temporary */
-        $this->factorize($result);
-        
+        $result = new TemporaryResult();
         $result->setIsSuccess(true);
         
         return $result;

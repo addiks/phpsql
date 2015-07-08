@@ -9,20 +9,21 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
-use Addiks\PHPSQL\Executor;
-
+use Addiks\PHPSQL\StatementExecutor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
-
 use Addiks\PHPSQL\Database;
 
-class SetExecutor extends Executor
+class CreateDatabaseExecutor implements StatementExecutorInterface
 {
     
-    public function __construct(SchemaManager $schemaManager)
-    {
+    public function __construct(
+        ValueResolver $valueResolver,
+        SchemaManager $schemaManager
+    ) {
         $this->schemaManager = $schemaManager;
+        $this->valueResolver = $valueResolver;
     }
 
     protected $schemaManager;
@@ -32,14 +33,27 @@ class SetExecutor extends Executor
         return $this->schemaManager;
     }
     
+    protected $valueResolver;
+
+    public function getValueResolver()
+    {
+        return $this->valueResolver;
+    }
+
     protected function executeConcreteJob($statement, array $parameters = array())
     {
-        /* @var $statement Set */
+        /* @var $statement Database */
         
-        # ...
+        $name = $this->valueResolver->resolveValue($statement->getName());
+        
+        $this->schemaManager->createSchema($name);
+        
+        ### CREATE RESULTSET
         
         /* @var $result Temporary */
         $this->factorize($result);
+        
+        $result->setIsSuccess($this->schemaManager->schemaExists($name));
         
         return $result;
     }

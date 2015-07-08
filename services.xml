@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <service id="addiks.phpsql.pdo" class="Addiks\PHPSQL\PDO">
+            <argument>%addiks.phpsql.dsn%</argument>
+            <argument>%addiks.phpsql.username%</argument>
+            <argument>%addiks.phpsql.passwd%</argument>
+            <argument>%addiks.phpsql.options%</argument>
+            <argument type="service" id="addiks.phpsql.database" />
+        </service>
+
+        <service id="addiks.phpsql.database" class="Addiks\PHPSQL\Database">
+            <argument>%addiks.phpsql.dsn%</argument>
+
+            <call method="addDatabaseAdapter">
+                <argument type="service" id="addiks.phpsql.database.internal" />
+            </call>
+            <call method="addDatabaseAdapter">
+                <argument type="service" id="addiks.phpsql.database.inmemory" />
+            </call>
+        </service>
+
+        <service id="addiks.phpsql.filesystem" class="Addiks\PHPSQL\Filesystem\FilesystemInterface">
+            <factory service="addiks.phpsql.database" method="getFilesystem" />
+        </service>
+
+        <service id="addiks.phpsql.database.internal" class="Addiks\PHPSQL\DatabaseAdapter\InternalDatabaseAdapter">
+            <argument type="service" id="addiks.phpsql.sql_parser" />
+        </service>
+
+        <service id="addiks.phpsql.database.inmemory" class="Addiks\PHPSQL\DatabaseAdapter\InmemoryDatabaseAdapter">
+            <argument type="service" id="addiks.phpsql.sql_parser" />
+        </service>
+
+        <service id="addiks.phpsql.table_manager" class="Addiks\PHPSQL\TableManager">
+        </service>
+
+        <service id="addiks.phpsql.schema_manager" class="Addiks\PHPSQL\SchemaManager">
+        </service>
+
+        <service id="addiks.phpsql.value_resolver" class="Addiks\PHPSQL\ValueResolver">
+        </service>
+
+        <service id="addiks.phpsql.sql_parser" class="Addiks\PHPSQL\SchemaManager">
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\Part\ParenthesisParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\SelectSqlParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\InsertSqlParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\UpdateSqlParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\DeleteSqlParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\ShowSqlParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\UseSqlParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\CreateSqlParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\AlterSqlParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\DropSqlParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\SetSqlParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\DescribeSqlParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\Part\ConditionParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser" /></call>
+            <call method="addSqlParser"><argument type="service" class="Addiks\PHPSQL\SqlParser\Part\ColumnDefinitionParser" /></call>
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.alter" class="Addiks\PHPSQL\StatementExecutor\AlterExecutor">
+            <argument type="service" id="addiks.phpsql.schema_manager" >
+            <argument type="service" id="addiks.phpsql.table_manager" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.create_database" class="Addiks\PHPSQL\StatementExecutor\CreateDatabaseExecutor">
+            <argument type="service" id="addiks.phpsql.value_resolver" >
+            <argument type="service" id="addiks.phpsql.schema_manager" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.create_index" class="Addiks\PHPSQL\StatementExecutor\CreateIndexExecutor">
+            <argument type="service" id="addiks.phpsql.table_manager" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.create_table" class="Addiks\PHPSQL\StatementExecutor\CreateTableExecutor">
+            <argument type="service" id="addiks.phpsql.schema_manager" >
+            <argument type="service" id="addiks.phpsql.table_manager" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.delete" class="Addiks\PHPSQL\StatementExecutor\DeleteExecutor">
+            <argument type="service" id="addiks.phpsql.value_resolver" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.describe" class="Addiks\PHPSQL\StatementExecutor\DescribeExecutor">
+            <argument type="service" id="addiks.phpsql.value_resolver" >
+            <argument type="service" id="addiks.phpsql.schema_manager" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.drop" class="Addiks\PHPSQL\StatementExecutor\DropExecutor">
+            <argument type="service" id="addiks.phpsql.value_resolver" >
+            <argument type="service" id="addiks.phpsql.schema_manager" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.insert" class="Addiks\PHPSQL\StatementExecutor\InsertExecutor">
+            <argument type="service" id="addiks.phpsql.value_resolver" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.select" class="Addiks\PHPSQL\StatementExecutor\SelectExecutor">
+            <argument type="service" id="addiks.phpsql.value_resolver" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.set" class="Addiks\PHPSQL\StatementExecutor\SetExecutor">
+            <argument type="service" id="addiks.phpsql.value_resolver" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.show" class="Addiks\PHPSQL\StatementExecutor\ShowExecutor">
+            <argument type="service" id="addiks.phpsql.value_resolver" >
+            <argument type="service" id="addiks.phpsql.schema_manager" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.update" class="Addiks\PHPSQL\StatementExecutor\UpdateExecutor">
+            <argument type="service" id="addiks.phpsql.value_resolver" >
+        </service>
+
+        <service id="addiks.phpsql.statement_executer.use" class="Addiks\PHPSQL\StatementExecutor\UseExecutor">
+            <argument type="service" id="addiks.phpsql.value_resolver" >
+            <argument type="service" id="addiks.phpsql.schema_manager" >
+        </service>
+
+    </services>
+</container>

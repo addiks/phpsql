@@ -24,9 +24,14 @@ class MySQLDatabaseAdapter implements DatabaseAdapterInterface
         return array();
     }
 
-    function query($statementString, array $parameters = array(), SQLTokenIterator $tokens = null)
+    public function query($statementString, array $parameters = array(), SQLTokenIterator $tokens = null)
     {
         
+    }
+
+    public function getFilesystem()
+    {
+        return null;
     }
 
 }

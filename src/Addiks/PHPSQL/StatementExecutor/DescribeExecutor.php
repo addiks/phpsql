@@ -20,8 +20,12 @@ use Addiks\PHPSQL\Schema\SchemaManager;
 class DescribeExecutor extends Executor
 {
     
-    public function __construct(SchemaManager $schemaManager)
-    {
+    public function __construct(
+        FilesystemInterface $filesystem,
+        ValueResolver $valueResolver,
+        SchemaManager $schemaManager
+    ) {
+        parent::__construct($filesystem, $valueResolver);
         $this->schemaManager = $schemaManager;
     }
 

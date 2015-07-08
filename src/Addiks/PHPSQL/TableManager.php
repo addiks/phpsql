@@ -55,6 +55,11 @@ class TableManager
         return $this->tables[$tableId];
     }
 
+    public function createTable(TableSchema $tableSchema)
+    {
+        unimplemented();
+    }
+
     ### INDICIES
 
     protected $indicies = array();
@@ -74,6 +79,13 @@ class TableManager
             );
         }
         return $this->indicies[$indexId];
+    }
+
+    public function createIndex(IndexPage $indexPage, $tableName, $schemaId = null)
+    {
+        unimplemented();
+
+        $indexPosition = $tableSchema->addIndexPage($indexSchemaPage);
     }
 
 }

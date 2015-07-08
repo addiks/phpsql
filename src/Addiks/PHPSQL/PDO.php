@@ -36,8 +36,13 @@ class PDO extends BasePDO
      * @param passwd
      * @param options[optional]
      */
-    public function __construct($dsn, $username="", $passwd="", $options = array())
-    {
+    public function __construct(
+        $dsn,
+        $username = "",
+        $passwd = "",
+        $options = array(),
+        Database $database = null
+    ) {
         if (substr($dsn, 0, 9) === "inmemory:") {
             $dsnValue = InmemoryDsn::factory($dsn);
 
@@ -50,6 +55,11 @@ class PDO extends BasePDO
         
         $this->dsn = $dsnValue;
         $this->options = $options;
+
+        if (!is_null($database)) {
+            $this->databaseResource = $database;
+            $this->databaseResource->setCurrentDatabaseType($dsnValue->getDriverName());
+        }
     }
     
     /**
@@ -90,14 +100,6 @@ class PDO extends BasePDO
      */
     public function getDatabaseResource()
     {
-        if (is_null($this->databaseResource)) {
-            $dsn = $this->dsn;
-
-            $this->databaseResource = new Database();
-            $this->databaseResource->addDatabaseAdapter(new InmemoryDatabaseAdapter());
-            $this->databaseResource->addDatabaseAdapter(new InternalDatabaseAdapter());
-            $this->databaseResource->setCurrentDatabaseType($dsn->getDriverName());
-        }
         return $this->databaseResource;
     }
     

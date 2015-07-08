@@ -9,20 +9,27 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Value\Enum\Sql\Alter\DataChange\AlterAttributeType;
 
 use Addiks\PHPSQL\Entity\Result\Temporary;
 
 use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
+use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 
-class AlterExecutor extends Executor
+class AlterExecutor implements StatementExecutorInterface
 {
     
-    public function __construct(SchemaManager $schemaManager)
-    {
+    public function __construct(
+        SchemaManager $schemaManager,
+        TableManager $tableManager
+    ) {
         $this->schemaManager = $schemaManager;
+        $this->tableManager = $tableManager;
     }
 
     protected $schemaManager;
@@ -30,6 +37,13 @@ class AlterExecutor extends Executor
     public function getSchemaManager()
     {
         return $this->schemaManager;
+    }
+
+    protected $tableManager;
+
+    public function getTableManager()
+    {
+        return $this->tableManager;
     }
     
     protected function executeConcreteJob($statement, array $parameters = array())
@@ -40,8 +54,11 @@ class AlterExecutor extends Executor
         $tableSpecifier = $statement->getTable();
         
         /* @var $tableResource Table */
-        $this->factorize($tableResource, [$tableSpecifier->getTable(), $tableSpecifier->getDatabase()]);
-        
+        $tableResource = $this->tableManager->getTable(
+            $tableSpecifier->getTable(),
+            $tableSpecifier->getDatabase()
+        );
+
         /* @var $tableSchema TableSchema */
         $tableSchema = $tableResource->getTableSchema();
         
@@ -104,8 +121,7 @@ class AlterExecutor extends Executor
             }
         }
         
-        /* @var $result Temporary */
-        $this->factorize($result);
+        $result = new TemporaryResult();
         
         return $result;
     }

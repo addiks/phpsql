@@ -21,8 +21,12 @@ use Addiks\PHPSQL\Entity\Job\Statement\ShowStatement as ShowJob;
 class ShowExecutor extends Executor
 {
     
-    public function __construct(SchemaManager $schemaManager)
-    {
+    public function __construct(
+        FilesystemInterface $filesystem,
+        ValueResolver $valueResolver,
+        SchemaManager $schemaManager
+    ) {
+        parent::__construct($filesystem, $valueResolver);
         $this->schemaManager = $schemaManager;
     }
 
