@@ -15,31 +15,21 @@ use Addiks\PHPSQL\Entity\Job\FunctionJob;
 
 abstract class FunctionResolver
 {
+
+    public function __construct(ValueResolver $valueResolver)
+    {
+        $this->valueResolver = $valueResolver;
+    }
+    
+    protected $valueResolver;
+
+    public function getValueResolver()
+    {
+        return $this->valueResolver;
+    }
     
     abstract public function getExpectedParameterCount();
     
     abstract public function executeFunction(FunctionJob $function);
     
-    private $valueResolver;
-    
-    /**
-     *
-     * @return ValueResolver
-     *
-     */
-    public function getValueResolver()
-    {
-        if (is_null($this->valueResolver)) {
-            /* @var $resolver ValueResolver */
-            $this->factorize($resolver);
-            
-            $this->setValueResolver($resolver);
-        }
-        return $this->valueResolver;
-    }
-    
-    public function setValueResolver(ValueResolver $resolver)
-    {
-        $this->valueResolver = $resolver;
-    }
 }

@@ -20,12 +20,21 @@ use Addiks\PHPSQL\Database;
 class SetExecutor extends Executor
 {
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+    
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Set */
-        
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
         
         # ...
         

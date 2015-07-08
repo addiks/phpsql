@@ -11,6 +11,7 @@
 
 namespace Addiks\PHPSQL;
 
+use ErrorException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\SQLTokenIterator;
@@ -93,6 +94,7 @@ class SqlParser
     
     public function addSqlParser(self $sqlParser)
     {
+        $sqlParser->setParentSqlParser($this);
         $this->sqlParser[get_class($sqlParser)] = $sqlParser;
     }
 
@@ -106,6 +108,10 @@ class SqlParser
 
         if (is_null($sqlParser) && !is_null($this->getParentSqlParser())) {
             $sqlParser = $this->getParentSqlParser()->getSqlParserByClass($className);
+        }
+
+        if (is_null($sqlParser)) {
+            throw new ErrorException("Could not find sql-parser '{$className}' in parser list!");
         }
 
         return $sqlParser;

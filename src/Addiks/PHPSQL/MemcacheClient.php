@@ -10,6 +10,7 @@
  */
 
 namespace Addiks\PHPSQL;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 
 /**
  * This resource can connect to (multiple) memcache-servers.
@@ -26,13 +27,22 @@ class MemcacheClient implements CacheBackendInterface
      * Automaticaly runs auto-connect if not specified else in parameters.
      * @param bool $autoConnect
      */
-    public function __construct($autoConnect = true)
+    public function __construct($autoConnect = true, FilesystemInterface $filesystem = null)
     {
+        $this->filesystem = $filesystem;
+
         if ($autoConnect) {
             $this->autoConnect();
         }
     }
     
+    protected $filesystem;
+
+    public function getFilesystem()
+    {
+        return $this->filesystem;
+    }
+
     ### SERVERS MANAGEMENT
     
     /**
@@ -54,23 +64,19 @@ class MemcacheClient implements CacheBackendInterface
     public function autoConnect()
     {
         
-        /* @var $storages \Addiks\PHPSQL\Storages */
-        $this->factorize($storages);
-        
-        /* @var $addressesStorage Storage */
-        $addressesStorage = $storages->acquireStorage("Memcache/LocalServers");
-        
-        if ($addressesStorage->getLength() <= 0) {
+        $addressesFile = $this->filesystem->fileGetContents("Memcache/LocalServers");
+
+        if ($addressesFile->getSize() <= 0) {
             $addresses = $this->scanInternalNetwork();
             
             if (count($addresses)>0) {
-                 $addressesStorage->setData(implode(",", $addresses));
+                 $addressesFile->setData(implode(",", $addresses));
             } else {
-                 $addressesStorage->setData('NONE');
+                 $addressesFile->setData('NONE');
             }
             
         } else {
-            $addresses = explode(",", $addressesStorage->getData());
+            $addresses = explode(",", $addressesFile->getData());
             
             if ($addresses === array('NONE')) {
                 $addresses = array();

@@ -22,15 +22,24 @@ class DeleteExecutor extends Executor
     
     use BinaryConverterTrait;
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+    
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Delete */
         
         /* @var $result Temporary */
         $this->factorize($result);
-        
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
         
         /* @var $valueResolver ValueResolver */
         $this->factorize($valueResolver);

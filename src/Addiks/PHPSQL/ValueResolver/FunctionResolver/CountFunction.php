@@ -37,17 +37,14 @@ class CountFunction extends FunctionResolver implements AggregateInterface
         /* @var $argumentValue Value */
         $argumentValue = current($function->getArguments());
         
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
-        
         $count = 0;
         
         foreach ($this->rowIdsInGrouping as $rowId) {
             $row = $result->getRowUnresolved($rowId);
             
-            $valueResolver->setSourceRow($row);
+            $this->valueResolver->setSourceRow($row);
             
-            $value = $valueResolver->resolveValue($argumentValue);
+            $value = $this->valueResolver->resolveValue($argumentValue);
             
             if (!is_null($value)) {
                 $count++;

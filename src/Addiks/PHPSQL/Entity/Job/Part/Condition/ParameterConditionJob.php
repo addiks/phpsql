@@ -13,12 +13,12 @@ namespace Addiks\PHPSQL\Entity\Job\Part\Condition;
 
 use Addiks\PHPSQL\Entity\Job\Part;
 
-class Parameter extends Part
+class ParameterConditionJob extends Part
 {
     
     private $parameter;
     
-    public function setParameter(Parameter $parameter)
+    public function setParameter(ParameterConditionJob $parameter)
     {
         $this->parameter = $parameter;
     }

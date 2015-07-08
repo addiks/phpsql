@@ -21,6 +21,18 @@ use Addiks\PHPSQL\Entity\Job\Statement\ShowStatement as ShowJob;
 class ShowExecutor extends Executor
 {
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+    
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Show */
@@ -52,14 +64,11 @@ class ShowExecutor extends Executor
     
     protected function executeShowTables(ShowJob $statement, array $parameters = array())
     {
-        
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
             
         /* @var $result Temporary */
         $this->factorize($result, [['TABLE']]);
         
-        $list = $databaseResource->getSchema($statement->getDatabase())->listTables();
+        $list = $this->schemaManager->getSchema($statement->getDatabase())->listTables();
         sort($list);
         
         foreach ($list as $tableName) {
@@ -73,14 +82,11 @@ class ShowExecutor extends Executor
     
     protected function executeShowDatabases(ShowJob $statement, array $parameters = array())
     {
-        
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
             
         /* @var $result Temporary */
         $this->factorize($result, [['DATABASE']]);
         
-        $list = $databaseResource->listSchemas();
+        $list = $this->schemaManager->listSchemas();
         sort($list);
         
         foreach ($list as $schemaId) {

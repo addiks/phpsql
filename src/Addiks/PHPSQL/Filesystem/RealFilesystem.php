@@ -27,6 +27,18 @@ class RealFilesystem implements FilesystemInterface
         file_put_contents($filePath, $content, $flags);
     }
     
+    public function getFile(Filepath $filePath, $mode)
+    {
+        $resourceProxy = null;
+
+        if (!$this->fileIsDir($filePath)) {
+            $fileHandle = $this->fileOpen($filePath, $mode);
+            $resourceProxy = new FileResourceProxy($fileHandle, $mode);
+        }
+
+        return $resourceProxy;
+    }
+
     public function fileOpen(Filepath $filePath, $mode)
     {
         
@@ -84,6 +96,43 @@ class RealFilesystem implements FilesystemInterface
         unlink($filePath);
     }
     
+    public function fileSize($filePath)
+    {
+        return filesize($filePath);
+    }
+
+    public function fileExists($filePath)
+    {
+        return file_exists($filePath);
+    }
+
+    public function fileIsDir($path)
+    {
+        return is_dir($path);
+    }
+
+    public function getFilesInDir($path)
+    {
+        $files = array();
+        if (is_dir($dir)) {
+            if ($dh = opendir($dir)) {
+                while (($file = readdir($dh)) !== false) {
+                    $files[] = $file;
+                }
+                closedir($dh);
+            }
+        }
+        return $files;
+    }
+
+    /**
+     * @return DirectoryIterator
+     */
+    public function getDirectoryIterator($path)
+    {
+        return new DirectoryIterator($path);
+    }
+
     /**
      * removes recursive a whole directory
      * (copied from a comment in http://de.php.net/rmdir)

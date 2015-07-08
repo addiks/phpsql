@@ -288,10 +288,7 @@ class Statement
         
         $this->setResult($result);
         
-        /* @var $pdo PDO */
-        $this->factorize($pdo);
-        
-        $pdo->setLastInsetId($result->getLastInsertId());
+        $this->pdo->setLastInsetId($result->getLastInsertId());
         
         return $result->getIsSuccess();
     }
@@ -413,12 +410,12 @@ class Statement
      */
     public function fetchObject($className = 'stdClass', $args = array())
     {
-        
-        $object = $this->factory($className, $args);
+        $reflectionClass = new ReflectionClass($className);
+        $object = $reflectionClass->newInstanceArgs($args);
         
         $assoc = $result->fetchAssoc();
         foreach ($assoc as $key => $value) {
-            $object->$key = $value;
+            $object->$key = $value; # TODO: set via reflection-property
         }
         
         return $object;

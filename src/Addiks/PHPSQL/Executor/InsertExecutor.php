@@ -25,6 +25,18 @@ class InsertExecutor extends Executor
 {
     
     use BinaryConverterTrait;
+
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
     
     protected function executeConcreteJob($statement, array $parameters = array())
     {
@@ -33,11 +45,8 @@ class InsertExecutor extends Executor
         /* @var $result Temporary */
         $this->factorize($result);
         
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
-        
         /* @var $databaseSchema Schema */
-        $databaseSchema = $databaseResource->getSchema();
+        $databaseSchema = $this->schemaManager->getSchema();
         
         $tableName = (string)$statement->getTable();
         

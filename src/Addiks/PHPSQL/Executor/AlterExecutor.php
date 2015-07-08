@@ -20,12 +20,21 @@ use Addiks\PHPSQL\Database;
 class AlterExecutor extends Executor
 {
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+    
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Alter */
-        
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
         
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTable();

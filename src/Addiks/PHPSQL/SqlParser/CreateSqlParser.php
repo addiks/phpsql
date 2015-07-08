@@ -11,6 +11,7 @@
 
 namespace Addiks\PHPSQL\SqlParser;
 
+use Exception;
 use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateDatabaseStatement;
 use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateIndexStatement;
 use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateTableStatement;
@@ -28,7 +29,9 @@ use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser;
 use Addiks\PHPSQL\TokenIterator;
-use Exception;
+use Addiks\PHPSQL\SqlParser\SelectSqlParser;
+use Addiks\PHPSQL\SqlParser\Part\ColumnDefinitionParser;
+use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
 
 class CreateSqlParser extends SqlParser
 {
@@ -85,7 +88,7 @@ class CreateSqlParser extends SqlParser
         }
         
         /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
+        $this->getSqlParserByClass(ValueParser::class);
         
         if (!$valueParser->canParseTokens($tokens)) {
             throw new MalformedSql("Missing name of database to create!", $tokens);
@@ -118,14 +121,14 @@ class CreateSqlParser extends SqlParser
         /* @var $tableParser TableParser */
         $tableParser = $this->getSqlParserByClass(TableParser::class);
 
-        /* @var $columnDefinitonParser ColumnDefinition */
-        $columnDefinitonParser = $this->getSqlParserByClass(ColumnDefinition::class);
+        /* @var $columnDefinitonParser ColumnDefinitionParser */
+        $columnDefinitonParser = $this->getSqlParserByClass(ColumnDefinitionParser::class);
 
         /* @var $columnParser ColumnParser */
         $columnParser = $this->getSqlParserByClass(ColumnParser::class);
 
-        /* @var $conditionParser Condition */
-        $conditionParser = $this->getSqlParserByClass(Condition::class);
+        /* @var $conditionParser ConditionParser */
+        $conditionParser = $this->getSqlParserByClass(ConditionParser::class);
 
         $createTableJob = new CreateTableStatement();
         $createTableJob->setIsTemporaryTable(is_int($tokens->isTokenNum(SqlToken::T_TEMPORARY(), TokenIterator::PREVIOUS)));
@@ -221,7 +224,7 @@ class CreateSqlParser extends SqlParser
                     case $tokens->seekTokenNum(SqlToken::T_INDEX()):
                     case $tokens->seekTokenNUm(SqlToken::T_KEY()):
                         /* @var $indexJob Index */
-                        $this->factorize($indexJob);
+                        $indexJob = new Index();
                         
                         if ($tokens->seekTokenNum(T_STRING)) {
                             $indexJob->setName($tokens->getCurrentTokenString());
@@ -259,7 +262,7 @@ class CreateSqlParser extends SqlParser
                     case $tokens->seekTokenNum(SqlToken::T_SPATIAL(), TokenIterator::NEXT, [SqlToken::T_CONSTRAINT(), T_STRING]):
                             
                         /* @var $indexJob Index */
-                        $this->factorize($indexJob);
+                        $indexJob = new Index();
                             
                         switch($tokens->getCurrentTokenNumber()){
                             case SqlToken::T_UNIQUE():
@@ -317,7 +320,7 @@ class CreateSqlParser extends SqlParser
                     # [CONSTRAINT [$symbol]] FOREIGN KEY [$name] ($column[, $column, ...]) [$reference]
                     case $tokens->seekTokenNum(SqlToken::T_FOREIGN(), TokenIterator::NEXT, [T_STRING, SqlToken::T_CONSTRAINT()]):
                         /* @var $indexJob Index */
-                        $this->factorize($indexJob);
+                        $indexJob = new Index();
                         
                         if ($tokens->isTokenNum(SqlToken::T_CONSTRAINT(), TokenIterator::PREVIOUS, [T_STRING])
                         && $tokens->seekTokenNum(T_STRING, TokenIterator::PREVIOUS)) {
@@ -667,16 +670,16 @@ class CreateSqlParser extends SqlParser
     {
         
         /* @var $tableParser TableParser */
-        $this->factorize($tableParser);
-        
+        $tableParser = $this->getSqlParserByClass(TableParser::class);
+
         /* @var $columnParser ColumnParser */
-        $this->factorize($columnParser);
-        
+        $columnParser = $this->getSqlParserByClass(ColumnParser::class);
+
         /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
+        $this->getSqlParserByClass(ValueParser::class);
         
         /* @var $entity CreateIndexStatement */
-        $this->factorize($entity);
+        $entity = new CreateIndexStatement();
         
         ### FLAGS
         

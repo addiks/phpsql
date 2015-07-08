@@ -5,7 +5,7 @@
 
 use Addiks\PHPSQL\PDO;
 
-define("BASEDIR", dirname(__FILE__));
+define("BASEDIR", dirname(__FILE__)."/..");
 
 function __autoload($className)
 {

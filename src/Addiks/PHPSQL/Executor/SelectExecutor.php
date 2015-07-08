@@ -26,9 +26,6 @@ class SelectExecutor extends Executor
     {
         /* @var $statement SelectStatement */
         
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
-        
         /* @var $result SelectResult */
         $this->factorize($result, [$statement, $parameters]);
         

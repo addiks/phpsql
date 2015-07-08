@@ -12,10 +12,24 @@
 namespace Addiks\PHPSQL\Schema\Meta;
 
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
+use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Index;
 
 class Indicies implements IndexInterface
 {
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+
     ### TABLES
     
     public function listTables()
@@ -23,20 +37,17 @@ class Indicies implements IndexInterface
         
         $tables = array();
     
-        /* @var $database Database */
-        $this->factorize($database);
-        
-        foreach ($database->listSchemas() as $schemaId) {
-            if ($database->isMetaSchema($schemaId)) {
+        foreach ($this->schemaManager->listSchemas() as $schemaId) {
+            if ($this->schemaManager->isMetaSchema($schemaId)) {
                 continue;
             }
             
             /* @var $schema Schema */
-            $schema = $database->getSchema($schemaId);
+            $schema = $this->schemaManager->getSchema($schemaId);
             
             foreach ($schema->listTables() as $tableName) {
                 /* @var $tableSchema TableSchema */
-                $tableSchema = $database->getTableSchema($tableName, $schemaId);
+                $tableSchema = $this->schemaManager->getTableSchema($tableName, $schemaId);
                 
                 foreach ($tableSchema->getIndexIterator() as $indexPage) {
                     /* @var $indexPage Index */
@@ -62,16 +73,10 @@ class Indicies implements IndexInterface
         
         list($schemaId, $tableName, $indexId) = $tableNameParts;
         
-        /* @var $database Database */
-        $this->factorize($database);
-        
         /* @var $tableSchema TableSchema */
-        $tableSchema = $database->getTableSchema($tableName, $schemaId);
+        $tableSchema = $this->schemaManager->getTableSchema($tableName, $schemaId);
         
         return $tableSchema->indexExist($indexId);
-        
-        /* @var $index Index */
-        $this->factorize($index, [$indexId, $tableName, $schemaId]);
         
     }
     

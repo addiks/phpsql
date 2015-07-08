@@ -20,26 +20,35 @@ use Addiks\PHPSQL\Database;
 class CreateDatabaseExecutor extends Executor
 {
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+    
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Database */
-        
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
         
         /* @var $valueResolver ValueResolver */
         $this->factorize($valueResolver);
         
         $name = $valueResolver->resolveValue($statement->getName());
         
-        $databaseResource->createSchema($name);
+        $this->schemaManager->createSchema($name);
         
         ### CREATE RESULTSET
         
         /* @var $result Temporary */
         $this->factorize($result);
         
-        $result->setIsSuccess($databaseResource->schemaExists($name));
+        $result->setIsSuccess($this->schemaManager->schemaExists($name));
         
         return $result;
     }

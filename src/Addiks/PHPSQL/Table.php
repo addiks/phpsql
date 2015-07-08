@@ -13,46 +13,61 @@ namespace Addiks\PHPSQL;
 
 use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
-use Addiks\PHPSQL\Table\Internal;
+use Addiks\PHPSQL\Table\InternalTable;
 use Addiks\PHPSQL\CustomIterator;
 use IteratorAggregate;
 use Countable;
 
 /**
  * This represents a table.
- *
- * @Addiks\Singleton(negated=true)
  */
 class Table implements IteratorAggregate, Countable, TableInterface
 {
     
-    public function __construct($tableName, $schemaId = null)
-    {
+    public function __construct(
+        SchemaManager $schemaManager,
+        FilesystemInterface $filesystem,
+        $tableName,
+        $schemaId = null
+    ) {
         
         switch(true){
             
             case $schemaId === Database::DATABASE_ID_META_INDICES:
                 /* @var $tableBackend InternalIndices */
-                $this->factorize($tableBackend, [$tableName, $schemaId]);
+                $tableBackend = new InternalIndices($tableName, $schemaId);
                 break;
                 
             case $schemaId === Database::DATABASE_ID_META_MYSQL:
-                /* @var $tableBackend MySQL */
-                $this->factorize($tableBackend, [$tableName, $schemaId]);
+                /* @var $tableBackend MySQLTable */
+                $tableBackend = new MySQLTable($tableName, $schemaId);
                 break;
                 
             case $schemaId === Database::DATABASE_ID_META_INFORMATION_SCHEMA:
                 /* @var $tableBackend InformationSchema */
-                $this->factorize($tableBackend, [$tableName, $schemaId]);
+                $tableBackend = new InformationSchema($tableName, $schemaId);
                 break;
             
             default:
                 /* @var $tableBackend Internal */
-                $this->factorize($tableBackend, [$tableName, $schemaId]);
+                $tableBackend = new InternalTable(
+                    $schemaManager,
+                    $filesystem,
+                    $tableName,
+                    $schemaId
+                );
                 break;
         }
         
+        $this->filesystem = $filesystem;
         $this->tableBackend = $tableBackend;
+    }
+
+    protected $filesystem;
+
+    public function getFilesystem()
+    {
+        return $this->filesystem;
     }
     
     public function getIsSuccess()
@@ -109,38 +124,22 @@ class Table implements IteratorAggregate, Countable, TableInterface
     
     public function getDBSchemaId()
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->getDBSchemaId();
+        return $this->tableBackend->getDBSchemaId();
     }
     
     public function getDBSchema()
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->getDBSchema();
+        return $this->tableBackend->getDBSchema();
     }
     
     public function getTableName()
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->getTableName();
+        return $this->tableBackend->getTableName();
     }
     
     public function getTableId()
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->getTableId();
+        return $this->tableBackend->getTableId();
     }
     
     /**
@@ -149,128 +148,72 @@ class Table implements IteratorAggregate, Countable, TableInterface
      */
     public function getTableSchema()
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->getTableSchema();
+        return $this->tableBackend->getTableSchema();
     }
     
     public function addColumnDefinition(ColumnDefinition $columnDefinition)
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->addColumnDefinition($columnDefinition);
+        return $this->tableBackend->addColumnDefinition($columnDefinition);
     }
     
     public function getIterator()
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->getIterator();
+        return $this->tableBackend->getIterator();
     }
     
     public function getCellData($rowId, $columnId)
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->getCellData($rowId, $columnId);
+        return $this->tableBackend->getCellData($rowId, $columnId);
     }
     
     public function setCellData($rowId, $columnId, $data)
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->setCellData($rowId, $columnId, $data);
+        return $this->tableBackend->setCellData($rowId, $columnId, $data);
     }
     
     public function getRowData($rowId = null)
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->getRowData($rowId);
+        return $this->tableBackend->getRowData($rowId);
     }
     
     public function setRowData($rowId, array $rowData)
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->setRowData($rowId, $rowData);
+        return $this->tableBackend->setRowData($rowId, $rowData);
     }
     
     public function addRowData(array $rowData)
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->addRowData($rowData);
+        return $this->tableBackend->addRowData($rowData);
     }
 
     public function removeRow($rowId)
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->removeRow($rowId);
+        return $this->tableBackend->removeRow($rowId);
     }
     
     public function getRowExists($rowId = null)
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->getRowExists($rowId);
+        return $this->tableBackend->getRowExists($rowId);
     }
     
     public function count()
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->count();
+        return $this->tableBackend->count();
     }
     
     public function seek($rowId)
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->seek($rowId);
+        return $this->tableBackend->seek($rowId);
     }
     
     public function convertStringRowToDataRow(array $row)
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->convertStringRowToDataRow($row);
+        return $this->tableBackend->convertStringRowToDataRow($row);
     }
     
     public function convertDataRowToStringRow(array $row)
     {
-        
-        /* @var $backend TableInterface */
-        $backend = $this->tableBackend;
-        
-        return $backend->convertDataRowToStringRow($row);
+        return $this->tableBackend->convertDataRowToStringRow($row);
     }
     
     ### HELPER

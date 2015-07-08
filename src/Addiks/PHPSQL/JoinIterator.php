@@ -18,23 +18,41 @@ use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\CustomIterator;
 use ErrorException;
+use Addiks\PHPSQL\Database;
 
 /**
  * The purpose of this component is to cross-join in any needed way
  * between multiple data-sources (tables, resultsets, indexes, ...).
- *
- * @author gerrit
- * @Addiks\Singleton(negated=true)
  */
 class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
 {
 
-    public function __construct(SelectStatement $statement, $schemaId = null, array $parameters = array())
-    {
-
+    public function __construct(
+        TableManager $tableManager,
+        Database $database,
+        SelectStatement $statement,
+        $schemaId = null,
+        array $parameters = array()
+    ) {
+        $this->tableManager = $tableManager;
+        $this->database = $database;
         $this->statement = $statement;
         $this->schemaId;
         $this->parameters = $parameters;
+    }
+
+    protected $tableManager;
+
+    public function getTableManager()
+    {
+        return $this->tableManager;
+    }
+
+    protected $database;
+
+    public function getDatabase()
+    {
+        return $this->database;
     }
     
     public function getIsSuccess()
@@ -163,8 +181,7 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
             $alias      = $parenthesis->getAlias();
             $dataSource = $parenthesis->getContain();
         
-            /* @var $resourceIterator SortedResourceIterator */
-            $this->factorize($resourceIterator);
+            $resourceIterator = new SortedResourceIterator();
             
             switch(true){
         
@@ -182,7 +199,10 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
                     }
         
                     /* @var $tableResource Table */
-                    $this->factorize($tableResource, [$dataSource->getTable(), $database]);
+                    $tableResource = $this->tableManager->getTable(
+                        $dataSource->getTable(),
+                        $database
+                    );
         
                     $resourceIterator->setResourceTable($tableResource);
         
@@ -202,7 +222,11 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
         
                         if (!is_null($primaryIndexId)) {
                             /* @var $index Index */
-                            $this->factorize($index, [$primaryIndexId, $dataSource->getTable(), $database]);
+                            $index = $this->tableManager->getIndex(
+                                $primaryIndexId,
+                                $dataSource->getTable(),
+                                $database
+                            );
                                 
                             // TODO: try to extract begin/end values from conditions
                             $beginValue = null;
@@ -233,13 +257,10 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
         
                 case $dataSource instanceof Select:
         
-                    /* @var $databaseResource Database */
-                    $this->factorize($databaseResource);
-        
                     print((string)$dataSource);
                     
                     /* @var $result SelectResult */
-                    $result = $databaseResource->queryStatement($dataSource, $this->getParameters());
+                    $result = $this->database->queryStatement($dataSource, $this->getParameters());
         
                     $this->tableResources[$alias] = $result;
                     break;
@@ -425,9 +446,14 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
     public function getUnsortedIterator()
     {
         
-        /* @var $unsortedJoinIterator JoinIterator */
-        $this->factorize($unsortedJoinIterator, [$this->getStatement(), $this->getSchemaId(), $this->getParameters()]);
-        
+        $unsortedJoinIterator = new JoinIterator(
+            $this->getTableManager(),
+            $this->getDatabase(),
+            $this->getStatement(),
+            $this->getSchemaId(),
+            $this->getParameters()
+        );
+
         $tableResources = array();
         
         foreach ($this->tableResources as $alias => $tableResource) {

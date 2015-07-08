@@ -12,11 +12,9 @@
 namespace Addiks\PHPSQL\SqlParser\Part\Condition;
 
 use Addiks\PHPSQL\SqlParser\Part;
-
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
-
 use Addiks\PHPSQL\SQLTokenIterator;
 
 class Enum extends Part
@@ -45,11 +43,9 @@ class Enum extends Part
         }
         
         /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
+        $valueParser = $this->getSqlParserByClass(ValueParser::class);
         
-        /* @var $enumConditionJob Enum */
-        $this->factorize($enumConditionJob);
-        
+        $enumConditionJob = new EnumConditionJob();
         $enumConditionJob->setIsNegated($tokens->isTokenNum(SqlToken::T_NOT(), TokenIterator::PREVIOUS));
         
         if (!$tokens->seekTokenText('(')) {

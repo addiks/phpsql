@@ -13,10 +13,31 @@ namespace Addiks\PHPSQL;
 
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 
 abstract class Executor
 {
     
+    public function __construct(FilesystemInterface $filesystem, ValueResolver $valueResolver)
+    {
+        $this->filesystem = $filesystem;
+        $this->valueResolver = $valueResolver;
+    }
+
+    protected $filesystem;
+
+    public function getFilesystem()
+    {
+        return $this->filesystem;
+    }
+
+    protected $valueResolver;
+
+    public function getValueResolver()
+    {
+        return $this->valueResolver;
+    }
+
     /**
      *
      * @return Result
@@ -27,12 +48,9 @@ abstract class Executor
         
         $statement->validate();
         
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
-        
-        $valueResolver->resetParameterCurrentIndex();
-        $valueResolver->setStatement($statement);
-        $valueResolver->setStatementParameters($parameters);
+        $this->valueResolver->resetParameterCurrentIndex();
+        $this->valueResolver->setStatement($statement);
+        $this->valueResolver->setStatementParameters($parameters);
         
         $className = get_class($statement);
         
@@ -51,29 +69,13 @@ abstract class Executor
     public function newEmptyResult()
     {
     
-        /* @var $caches \Addiks\Common\Resource\Caches */
-        $this->factorize($caches);
-    
         $id = str_replace(" ", "-", microtime())."-".uniqid();
     
-        $cacheStorage = $caches->acquireCache("DatabaseResults/{$id}");
-    
-        /* @var $result Result */
-        $this->factorize($result, [$cacheStorage]);
-    
+        $resultFile = $this->filesystem->getFile("DatabaseResults/{$id}");
+
+        $result = new Result($resultFile);
+
         return $result;
-    }
-    
-    public function Specifier($resultId)
-    {
-    
-        /* @var $resultSchemaStorage \Addiks\PHPSQL\Entity\Storage */
-        $resultSchemaStorage = $this->getResultSchemataStorage($resultId);
-        
-        /* @var $resultSchema TableSchema */
-        $this->factorize($resultSchema, [$resultSchemaStorage]);
-    
-        return $resultSchema;
     }
     
     public function getIndexDoublesStorage($indexName, $tableName)

@@ -4,6 +4,9 @@
  */
 
 namespace Addiks\PHPSQL\Schema;
+use Addiks\PHPSQL\Schema\Meta\InformationSchema;
+use Addiks\PHPSQL\Entity\Schema;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 
 class SchemaManager
 {
@@ -13,10 +16,29 @@ class SchemaManager
     const DATABASE_ID_META_INFORMATION_SCHEMA = "information_schema";
     const DATABASE_ID_META_PERFORMANCE_SCHEMA = "performance_schema";
     const DATABASE_ID_META_INDICES = "indicies";
+
+    const FILEPATH_SCHEMA             = "%s.schema";
+    const FILEPATH_TABLE_SCHEMA       = "%s/Tables/%s.schema";
+    const FILEPATH_TABLE_INDEX_SCHEMA = "%s/Tables/%s.index";
+    const FILEPATH_VIEW_SQL           = "%s/Views/%s.sql";
     
+    public function __construct(FilesystemInterface $filesystem)
+    {
+        $this->filesystem = $filesystem;
+    }
+
+    protected $filesystem;
+
+    public function getFilesystem()
+    {
+        return $this->filesystem;
+    }
+
+    protected $schemas = array();
+
     /**
      * Gets the schema for a database.
-     * The schema contains information about what tables/views/... are present.
+     * The schema contains information about existing tables/views/etc.
      *
      * @param string $schemaId
      * @throws ErrorException
@@ -38,25 +60,25 @@ class SchemaManager
             throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
         
-        switch($schemaId){
-            case self::DATABASE_ID_META_INDICES:
-                /* @var $schema Indicies */
-                $this->factorize($schema);
-                break;
-                
-            case self::DATABASE_ID_META_INFORMATION_SCHEMA:
-                /* @var $schema InformationSchema */
-                $this->factorize($schema);
-                break;
-                
-            default:
-                /* @var $schema Schema */
-                $this->factorize($schema, [$this->getDatabaseSchemaStorage($schemaId)]);
-                break;
-                
+        if (!isset($this->schemas[$schemaId])) {
+            switch($schemaId){
+                case self::DATABASE_ID_META_INDICES:
+                    $this->schemas[$schemaId] = new Indicies($this);
+                    break;
+                    
+                case self::DATABASE_ID_META_INFORMATION_SCHEMA:
+                    $this->schemas[$schemaId] = new InformationSchema($this);
+                    break;
+                    
+                default:
+                    $schemaFilePath = sprintf(self::FILEPATH_SCHEMA, $schemaId);
+                    $schemaFile = $this->filesystem->getFile($schemaFilePath);
+                    $this->schemas[$schemaId] = new Schema($schemaFile);
+                    break;
+                    
+            }
         }
-        
-        return $schema;
+        return $this->schemas[$schemaId];
     }
     
     public function isMetaSchema($schemaId)
@@ -81,10 +103,7 @@ class SchemaManager
             return true;
         }
         
-        /* @var $storages \Addiks\PHPSQL\Storages */
-        $this->factorize($storages);
-        
-        return $storages->storageExists("Databases/{$schemaId}.schema");
+        return $this->filesystem->fileExists(sprintf(self::FILEPATH_SCHEMA, $schemaId));
     }
     
     public function createSchema($schemaId)
@@ -99,13 +118,14 @@ class SchemaManager
             throw new ErrorException("Database '{$schemaId}' already exist!");
         }
         
-        /* @var $storages \Addiks\PHPSQL\Storages */
-        $this->factorize($storages);
-        
+        $schemaFilePath = sprintf(self::FILEPATH_SCHEMA, $schemaId);
+        $schemaFile = $this->filesystem->getFile($schemaFilePath);
+
         /* @var $schema Schema */
-        $this->factorize($schema, [$this->getDatabaseSchemaStorage($schemaId)]);
-        
+        $schema = new Schema($schemaFile);
         $schema->setId($schemaId);
+
+        return $schema;
     }
     
     public function removeSchema($schemaId)
@@ -120,10 +140,7 @@ class SchemaManager
             throw new ErrorException("Cannot remove or modify meta-database '{$schemaId}'!");
         }
         
-        /* @var $storages \Addiks\PHPSQL\Storages */
-        $this->factorize($storages);
-        
-        $storages->removeStorage($this->getDatabaseSchemaStorage($schemaId));
+        $this->filesystem->fileUnlink($this->getSchemaFile($schemaId));
     }
     
     public function listSchemas()
@@ -133,26 +150,20 @@ class SchemaManager
             $this->createSchema(self::DATABASE_ID_DEFAULT);
         }
         
-        /* @var $storages \Addiks\PHPSQL\Storages */
-        $this->factorize($storages);
-        
-        $iterator = $storages->getStoreIterator("Databases");
-        
-        if (is_null($iterator)) {
-            return array();
-        }
-        
-        $result = array();
-        foreach ($iterator as $schemaName => $schemaIterator) {
-            /* @var $schemaIterator CustomIterator */
-            
-            if (substr($schemaName, strlen($schemaName)-7)==='.schema') {
-                $schemaName = substr($schemaName, 0, strlen($schemaName)-7);
+        /* @var $filesystem FilesystemInterface */
+        $filesystem = $this->filesystem;
+
+        list($schemaPath, $suffix) = explode("%s", self::FILEPATH_SCHEMA);
+
+        foreach ($filesystem->getDirectoryIterator($filesystem) as $item) {
+            /* @var $item DirectoryIterator */
+
+            $filename = $item->getFilename();
+            if (substr($filename, strlen($filename)-strlen($suffix)) === $suffix) {
+                $result[] = substr($filename, 0, strlen($filename)-strlen($suffix));
             }
-            
-            $result[] = (string)$schemaName;
         }
-        
+
         $result[] = self::DATABASE_ID_META_INDICES;
         $result[] = self::DATABASE_ID_META_INFORMATION_SCHEMA;
     #	$result[] = self::DATABASE_ID_META_PERFORMANCE_SCHEMA;
@@ -162,6 +173,8 @@ class SchemaManager
         
         return $result;
     }
+
+    protected $tableSchemas = array();
     
     public function getTableSchema($tableName, $schemaId = null)
     {
@@ -183,25 +196,35 @@ class SchemaManager
             return null;
         }
         
-        $tableSchemaStorage = $this->getTableSchemaStorage((string)$tableName, $schemaId);
-        $indexSchemaStorage = $this->getTableIndexStorage((string)$tableName, $schemaId);
+        if (!isset($this->tableSchemas["{$schemaId}.{$tableName}"])) {
+            $tableSchemaFilepath = sprintf(self::FILEPATH_TABLE_SCHEMA, $schemaId, $tableName);
+            $indexSchemaFilepath = sprintf(self::FILEPATH_TABLE_INDEX_SCHEMA, $schemaId, $tableName);
 
-        switch($schemaId){
-            
-            case self::DATABASE_ID_META_INFORMATION_SCHEMA:
-                /* @var $tableSchema InformationSchema */
-                $this->factorize($tableSchema, [$tableSchemaStorage, $indexSchemaStorage, $tableName]);
-                break;
-            
-            default:
-                /* @var $tableSchema TableSchema */
-                $this->factorize($tableSchema, [$tableSchemaStorage, $indexSchemaStorage]);
-                break;
+            $tableSchemaFile = $this->filesystem->getFile($tableSchemaFilepath);
+            $indexSchemaFile = $this->filesystem->getFile($indexSchemaFilepath);
+
+            switch($schemaId){
+                
+                case self::DATABASE_ID_META_INFORMATION_SCHEMA:
+                    $this->tableSchemas["{$schemaId}.{$tableName}"] = new InformationSchema(
+                        $tableSchemaFile,
+                        $indexSchemaFile,
+                        $tableName
+                    );
+                    break;
+                
+                default:
+                    $this->tableSchemas["{$schemaId}.{$tableName}"] = new TableSchema(
+                        $tableSchemaFile,
+                        $indexSchemaFile
+                    );
+                    break;
+            }
         }
         
-        $tableSchema->setDatabaseSchema($schema);
+        $this->tableSchemas["{$schemaId}.{$tableName}"]->setDatabaseSchema($schema);
         
-        return $tableSchema;
+        return $this->tableSchemas["{$schemaId}.{$tableName}"];
     }
     
     public function dropTable($tableName, $schemaId = null)
@@ -220,12 +243,6 @@ class SchemaManager
         
         $schema->unregisterTable($tableName);
         
-        /* @var $storages \Addiks\PHPSQL\Storages */
-        $this->factorize($storages);
-        
-        $storagePath = $this->getTableStoragePath($tableName, $schemaId);
-        
-        $storages->removeStorage($storagePath);
     }
     
     ### VIEW
@@ -242,13 +259,9 @@ class SchemaManager
         if (is_null($viewIndex)) {
             return null;
         }
-        
-        /* @var $storages \Addiks\PHPSQL\Storages */
-        $this->factorize($storages);
-        
-        $viewQueryStorage = $this->getViewDefinitionStorage($viewIndex, $schema->getId());
-        
-        return $viewQueryStorage->getData();
+
+        $viewFilePath = sprintf(self::FILEPATH_VIEW_SQL, $schema->getId(), $viewIndex);
+        return $this->filesystem->getFileContents($viewFilePath);
     }
     
     public function setViewQuery($query, $viewName, Schema $schema = null)
@@ -264,12 +277,9 @@ class SchemaManager
             $schema->registerView($viewName);
             $viewIndex = $schema->getViewIndex($viewName);
         }
-        
-        /* @var $storages \Addiks\PHPSQL\Storages */
-        $this->factorize($storages);
-        
-        $viewQueryStorage = $this->getViewDefinitionStorage($viewIndex, $schema->getId());
-        $viewQueryStorage->setData($query);
+
+        $viewFilePath = sprintf(self::FILEPATH_VIEW_SQL, $schema->getId(), $viewIndex);
+        $this->filesystem->putFileContents($viewFilePath, $query);
     }
 
 }

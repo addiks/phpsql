@@ -11,6 +11,7 @@
 
 namespace Addiks\PHPSQL\Table;
 
+use ErrorException;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Entity\TableSchema;
@@ -24,35 +25,75 @@ use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\TableInterface;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\CustomIterator;
-use ErrorException;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 
-/**
- *
- * @author gerrit
- * @Addiks\Singleton(negated=true)
- */
-class Internal implements TableInterface
+class InternalTable implements TableInterface
 {
+
+    const FILEPATH_COLUMN_DATA = "%s/Table/%s/ColumnData/%s_%s.dat";
 
     use BinaryConverterTrait;
 
-    public function __construct($tableName, $schemaId = null)
-    {
+    public function __construct(
+        SchemaManager $schemaManager,
+        FilesystemInterface $filesystem,
+        $tableName,
+        $schemaId = null,
+        $valueResolver = null,
+        $dataConverter = null
+    ) {
 
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
-
-        if (is_null($schemaId)) {
-            $schemaId = $databaseResource->getCurrentlyUsedDatabaseId();
+        if (is_null($valueResolver)) {
+            $valueResolver = new ValueResolver();
         }
 
-        $schema = $databaseResource->getSchema($schemaId);
+        if (is_null($dataConverter)) {
+            $dataConverter = new DataConverter();
+        }
 
+        if (is_null($schemaId)) {
+            $schemaId = $schemaMamager->getCurrentlyUsedDatabaseId();
+        }
+
+        $schema = $schemaMamager->getSchema($schemaId);
+
+        $this->schemaManager = $schemaManager;
+        $this->filesystem = $filesystem;
+        $this->valueResolver = $valueResolver;
+        $this->dataConverter = $dataConverter;
         $this->dbSchemaId = $schemaId;
         $this->dbSchema = $schema;
         $this->tableSchema = $databaseResource->getTableSchema($tableName, $schemaId);
         $this->tableId = $schema->getTableIndex($tableName);
         $this->tableName = $tableName;
+    }
+
+    private $valueResolver;
+
+    public function getValueResolver()
+    {
+        return $this->valueResolver;
+    }
+
+    private $dataConverter;
+
+    public function getDataConverter()
+    {
+        return $this->dataConverter;
+    }
+
+    private $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+
+    private $filesystem;
+
+    public function getFilesystem()
+    {
+        return $this->filesystem;
     }
 
     private $dbSchemaId;
@@ -104,13 +145,8 @@ class Internal implements TableInterface
             throw new Conflict("Column '{$columnDefinition->getName()}' already exist!");
         }
         
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
-        
         $columnPage = new Column();
-    
         $columnPage->setName($columnDefinition->getName());
-    
         $columnPage->setDataType($columnDefinition->getDataType());
     
         if (!is_null($columnDefinition->getDataTypeLength())) {
@@ -155,12 +191,9 @@ class Internal implements TableInterface
         /* @var $defaultValue Value */
         $defaultValue = $columnDefinition->getDefaultValue();
         
-        /* @var $dataConverter DataConverter */
-        $this->factorize($dataConverter);
-        
         if (!is_null($defaultValue)) {
-            $defaultValueData = $valueResolver->resolveValue($defaultValue);
-            $defaultValueData = $dataConverter->convertStringToBinary($defaultValueData, $columnPage->getDataType());
+            $defaultValueData = $this->valueResolver->resolveValue($defaultValue);
+            $defaultValueData = $this->dataConverter->convertStringToBinary($defaultValueData, $columnPage->getDataType());
         } else {
             $defaultValueData = null;
         }
@@ -216,17 +249,22 @@ class Internal implements TableInterface
         $columnDataIndex = floor($rowIndex / $rowsPerColumnData);
 
         if (!isset($this->columnDataCache[$columnId][$columnDataIndex])) {
-            /* @var $storages \Addiks\PHPSQL\Storages */
-            $this->factorize($storages);
 
-            /* @var $columnDataStorage \Addiks\PHPSQL\Entity\Storage */
-            $columnDataStorage = $this->getTableColumnDataStorage($columnDataIndex, $columnId, $this->getTableName(), $this->dbSchemaId);
+            $columnDataFilePath = sprintf(
+                self::FILEPATH_COLUMN_DATA,
+                $this->dbSchemaId,
+                $this->getTableName(),
+                $columnId,
+                $columnDataIndex
+            );
+
+            $columnDataFile = $this->filesystem->getFile($columnDataFilePath);
 
             /* @var $columnSchemaPage Column */
             $columnSchemaPage = $this->getTableSchema()->getColumn($columnId);
 
             /* @var $columnData ColumnData */
-            $this->factorize($columnData, [$columnDataStorage, $columnSchemaPage]);
+            $columnData = new ColumnData($columnDataFile, $columnSchemaPage);
 
             if ($columnDataStorage->getLength() <= 0) {
                 $columnData->preserveSpace($this->getRowsPerColumnData($columnId));
@@ -309,13 +347,20 @@ class Internal implements TableInterface
                 return 0;
             }
             
-            /* @var $columnDataStorage Storage */
-            $columnDataStorage = $this->getTableColumnDataStorage($lastDataIndex, $columnPage->getName(), $this->getTableName(), $this->getDBSchemaId());
-            
+            $columnDataFilePath = sprintf(
+                self::FILEPATH_COLUMN_DATA,
+                $this->dbSchemaId,
+                $this->getTableName(),
+                $columnId,
+                $columnDataIndex
+            );
+
+            $columnDataFile = $this->filesystem->getFile($columnDataFilePath);
+
             $columnSchemaPage = $tableSchema->getColumn(0);
             
             /* @var $columnData ColumnData */
-            $this->factorize($columnData, [$columnDataStorage, $columnSchemaPage]);
+            $columnData = new ColumnData($columnDataFile, $columnSchemaPage);
             
             $lastColumnDataIndex = $columnData->count();
             
@@ -445,65 +490,51 @@ class Internal implements TableInterface
     
     protected function popDeletedRowStack()
     {
-        
-        /* @var $storage Storage */
-        $storage = $this->getTableDeletedRowsStorage($this->getTableName(), $this->getDBSchemaId());
-        
-        $handle = $storage->getHandle();
-        
-        flock($handle, LOCK_EX);
-        
-        fseek($handle, 0, SEEK_END);
-        
-        if (ftell($handle)===0) {
-            return null;
+        $rowId = null;
+
+        $deletedRowsFilepath = sprintf(self::FILEPATH_DELETED_ROWS, $this->getDBSchemaId(), $this->getTableName());
+        $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
+
+        $deletedRowsFile->lock(LOCK_EX);
+        $deletedRowsFile->seek(0, SEEK_END);
+
+        if ($deletedRowsFile->tell() !== 0) {
+            $deletedRowsFile->seek(0-self::DELETEDROWS_PAGE_SIZE, SEEK_CUR);
+            $sizeAfterFetch = $deletedRowsFile->tell();
+            $rowId = $deletedRowsFile->read(self::DELETEDROWS_PAGE_SIZE);
+            $deletedRowsFile->truncate($sizeAfterFetch);
+            $rowId = $this->strdec($rowId);
         }
-        
-        fseek($handle, 0-self::DELETEDROWS_PAGE_SIZE, SEEK_CUR);
-        $sizeAfterFetch = ftell($handle);
-        
-        $rowId = fread($handle, self::DELETEDROWS_PAGE_SIZE);
-        
-        ftruncate($handle, $sizeAfterFetch);
-        
-        flock($handle, LOCK_UN);
-        
-        $rowId = $this->strdec($rowId);
+
+        $deletedRowsFile->lock(LOCK_UN);
+
         return $rowId;
     }
     
     protected function pushDeletedRowStack($rowId)
     {
-        
-        /* @var $storage Storage */
-        $storage = $this->getTableDeletedRowsStorage($this->getTableName(), $this->getDBSchemaId());
-        
-        $handle = $storage->getHandle();
-        
+        $deletedRowsFilepath = sprintf(self::FILEPATH_DELETED_ROWS, $this->getDBSchemaId(), $this->getTableName());
+        $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
+
         $rowId = $this->decstr($rowId);
         $rowId = str_pad($rowId, self::DELETEDROWS_PAGE_SIZE, "\0", STR_PAD_LEFT);
         
-        flock($handle, LOCK_EX);
-        fseek($handle, 0, SEEK_END);
-        fwrite($handle, $rowId);
-        flock($handle, LOCK_UN);
+        $deletedRowsFile->lock(LOCK_EX);
+        $deletedRowsFile->seek(0, SEEK_END);
+        $deletedRowsFile->write($rowId);
+        $deletedRowsFile->lock(LOCK_UN);
     }
     
     protected function getDeletedRowsCount()
     {
-        
-        /* @var $storage Storage */
-        $storage = $this->getTableDeletedRowsStorage($this->getTableName(), $this->getDBSchemaId());
-        
-        $handle = $storage->getHandle();
-        
-        flock($handle, LOCK_SH);
-        fseek($handle, 0, SEEK_END);
-        
-        $count = ftell($handle) / self::DELETEDROWS_PAGE_SIZE;
-        
-        flock($handle, LOCK_UN);
-        
+        $deletedRowsFilepath = sprintf(self::FILEPATH_DELETED_ROWS, $this->getDBSchemaId(), $this->getTableName());
+        $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
+
+        $deletedRowsFile->lock(LOCK_SH);
+        $deletedRowsFile->seek(0, SEEK_END);
+        $count = $deletedRowsFile->tell() / self::DELETEDROWS_PAGE_SIZE;
+        $deletedRowsFile->lock(LOCK_UN);
+
         return $count;
     }
     
@@ -590,9 +621,6 @@ class Internal implements TableInterface
 
         $tableSchema = $this->getTableSchema();
 
-        /* @var $dataConverter DataConverter */
-        $this->factorize($dataConverter);
-
         foreach ($row as $columnId => &$value) {
             if (is_null($value)) {
                 continue;
@@ -604,7 +632,7 @@ class Internal implements TableInterface
             /* @var $dataType DataType */
             $dataType = $columnPage->getDataType();
 
-            $value = $dataConverter->convertStringToBinary($value, $dataType);
+            $value = $this->dataConverter->convertStringToBinary($value, $dataType);
         }
 
         return $row;
@@ -614,9 +642,6 @@ class Internal implements TableInterface
     {
 
         $tableSchema = $this->getTableSchema();
-
-        /* @var $dataConverter DataConverter */
-        $this->factorize($dataConverter);
 
         foreach ($row as $columnId => &$value) {
             if (is_null($value)) {
@@ -629,7 +654,7 @@ class Internal implements TableInterface
             /* @var $dataType DataType */
             $dataType = $columnPage->getDataType();
                 
-            $value = $dataConverter->convertBinaryToString($value, $dataType);
+            $value = $this->dataConverter->convertBinaryToString($value, $dataType);
         }
 
         return $row;

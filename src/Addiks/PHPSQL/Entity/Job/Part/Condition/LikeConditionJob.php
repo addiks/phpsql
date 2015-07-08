@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Entity\Job\Part\Condition;
 
 use Addiks\PHPSQL\Entity\Job\Part;
 
-class Enum extends Part
+class LikeConditionJob extends Part
 {
     
     private $checkValue;
@@ -28,18 +28,6 @@ class Enum extends Part
         return $this->checkValue;
     }
     
-    private $values = array();
-    
-    public function addValue($value)
-    {
-        $this->value[] = $value;
-    }
-    
-    public function getValues()
-    {
-        return $this->values;
-    }
-    
     private $isNegated = false;
     
     public function setIsNegated($bool)
@@ -50,5 +38,17 @@ class Enum extends Part
     public function getIsNegated()
     {
         return $this->isNegated;
+    }
+    
+    private $pattern;
+    
+    public function setPattern($pattern)
+    {
+        $this->pattern = $pattern;
+    }
+    
+    public function getPattern()
+    {
+        return $this->pattern;
     }
 }

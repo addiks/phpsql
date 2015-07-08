@@ -100,7 +100,7 @@ abstract class Entity{
 	
 		$this->modifiedDate = date("Y-m-d H:i:s", time());
 	
-		$this->id = self::uuid();
+		$this->id = uniqid();
 	
 	}
 }

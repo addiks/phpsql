@@ -14,9 +14,7 @@ namespace Addiks\PHPSQL\SqlParser\Part\Condition;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
-
 use Addiks\PHPSQL\SQLTokenIterator;
-
 use Addiks\PHPSQL\SqlParser;
 
 class Like extends SqlParser
@@ -36,9 +34,7 @@ class Like extends SqlParser
     public function convertSqlToJob(SQLTokenIterator $tokens, &$skipChecks = 0)
     {
         
-        /* @var $likeCondition Like */
-        $this->factorize($likeCondition);
-        
+        $likeCondition = new LikeConditionJob();
         $likeCondition->setIsNegated($tokens->seekTokenNum(SqlToken::T_NOT()));
         
         if (!$tokens->seekTokenNum(SqlToken::T_LIKE())) {

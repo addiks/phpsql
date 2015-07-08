@@ -12,26 +12,34 @@
 namespace Addiks\PHPSQL\Executor;
 
 use Addiks\PHPSQL\Executor;
-
 use Addiks\PHPSQL\Entity\Result\Temporary;
-
 use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Entity\Result\TemporaryResult;
+use Addiks\PHPSQL\Schema\SchemaManager;
 
 class DescribeExecutor extends Executor
 {
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Describe */
         
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
-        
-        /* @var $result Temporary */
-        $this->factorize($result, [['Field', 'Type', 'Null', 'Key', 'Default', 'Extra']]);
+        $result = new TemporaryResult(['Field', 'Type', 'Null', 'Key', 'Default', 'Extra']);
         
         /* @var $tableSchema TableSchema */
-        $tableSchema = $databaseResource->getTableSchema($statement->getTable()->getTable(), $statement->getTable()->getDatabase());
+        $tableSchema = $this->schemaManager->getTableSchema($statement->getTable()->getTable(), $statement->getTable()->getDatabase());
         
         if (is_null($tableSchema)) {
             throw new InvalidArgument("Table '{$statement->getTable()}' not found!");

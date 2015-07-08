@@ -20,6 +20,18 @@ use Addiks\PHPSQL\Database;
 class DropExecutor extends Executor
 {
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+    
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Drop */
@@ -40,17 +52,14 @@ class DropExecutor extends Executor
     protected function executeDropDatabase(Drop $statement, array $parameters = array())
     {
         
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
-        
         /* @var $databaseSchema Schema */
-        $databaseSchema = $databaseResource->getSchema();
+        $databaseSchema = $this->schemaManager->getSchema();
         
         /* @var $result Result */
         $this->factorize($result, ["SHOW_DATABASES"]);
         
         foreach ($statement->getSubjects() as $subject) {
-            $databaseResource->removeSchema($subject);
+            $this->schemaManager->removeSchema($subject);
         }
         
         ### RESULT
@@ -61,7 +70,7 @@ class DropExecutor extends Executor
         $result->setIsSuccess(true);
         
         foreach ($statement->getSubjects() as $subject) {
-            if ($databaseResource->schemaExists($subject)) {
+            if ($this->schemaManager->schemaExists($subject)) {
                 $result->setIsSuccess(false);
                 break;
             }
@@ -73,15 +82,11 @@ class DropExecutor extends Executor
     protected function executeDropTable(Drop $statement, array $parameters = array())
     {
         
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
-        
-        
         foreach ($statement->getSubjects() as $tableName) {
-            $databaseResource->dropTable($tableName);
+            $this->schemaManager->dropTable($tableName);
         }
         
-        $databaseSchema = $databaseResource->getSchema();
+        $databaseSchema = $this->schemaManager->getSchema();
         
         /* @var $result Temporary */
         $this->factorize($result);

@@ -11,6 +11,7 @@
 
 namespace Addiks\PHPSQL;
 
+use ErrorException;
 use Addiks\PHPSQL\Entity\Page\Column;
 use Addiks\PHPSQL\Entity\TableSchema;
 use Addiks\PHPSQL\Entity\Index\HashTable;
@@ -21,7 +22,7 @@ use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\CustomIterator;
-use ErrorException;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 
 /**
  *
@@ -29,14 +30,38 @@ use ErrorException;
 class Index implements \IteratorAggregate
 {
     
+    const FILEPATH_KEY_LENGTH    = "%s/Tables/%s/Indices/%s.keylength";
+    const FILEPATH_INDEX_DATA    = "%s/Tables/%s/Indices/%s.data";
+    const FILEPATH_INDEX_DOUBLES = "%s/Tables/%s/Indices/%s.doubles";
+
     use BinaryConverterTrait;
     
-    public function __construct($indexId, $tableName, $schemaId = null)
-    {
-        
+    public function __construct(
+        FilesystemInterface $filesystem,
+        SchemaManager $schemaManager,
+        $indexId,
+        $tableName,
+        $schemaId = null
+    ) {
+        $this->filesystem = $filesystem;
+        $this->schemaManager = $schemaManager;
         $this->schemaId  = $schemaId;
         $this->tableName = (string)$tableName;
         $this->indexId   = (int)$indexId;
+    }
+
+    protected $filesystem;
+
+    public function getFilesystem()
+    {
+        return $this->filesystem;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
     }
     
     private $schemaId = null;
@@ -44,10 +69,7 @@ class Index implements \IteratorAggregate
     public function getSchemaId()
     {
         if (is_null($this->schemaId)) {
-            /* @var $databaseResource Database */
-            $this->factorize($databaseResource);
-            
-            $this->schemaId = $databaseResource->getCurrentlyUsedDatabaseId();
+            $this->schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
         }
         return $this->schemaId;
     }
@@ -61,11 +83,7 @@ class Index implements \IteratorAggregate
     
     public function getTableIndex()
     {
-        
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
-        
-        return $databaseResource->getSchema($this->schemaId)->getTableIndex($this->tableName);
+        return $this->schemaManager->getSchema($this->schemaId)->getTableIndex($this->tableName);
     }
     
     private $indexId;
@@ -77,11 +95,7 @@ class Index implements \IteratorAggregate
     
     public function getTableSchema()
     {
-        
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
-        
-        return $databaseResource->getTableSchema($this->tableName, $this->schemaId);
+        return $this->schemaManager->getTableSchema($this->tableName, $this->schemaId);
     }
     
     /**
@@ -94,19 +108,25 @@ class Index implements \IteratorAggregate
     
     protected $indexBackend;
     
-    private $keyLengthStorage;
+    private $keyLengthFile;
     
     private function getKeyLengthStorage()
     {
         
-        if (is_null($this->keyLengthStorage)) {
+        if (is_null($this->keyLengthFile)) {
             /* @var $indexPage IndexPage */
             $indexPage = $this->getIndexPage();
                 
-            $this->keyLengthStorage = $this->getStorage("Databases/{$this->getSchemaId()}/Tables/{$this->getTableIndex()}/Indices/{$indexPage->getName()}.length");
+            $keyLengthFilepath = sprintf(
+                self::FILEPATH_KEY_LENGTH,
+                $this->getSchemaId(),
+                $this->getTableIndex(),
+                $indexPage->getName()
+            );
 
+            $this->keyLengthFile = $this->filesystem->getFile($keyLengthFilepath);
         }
-        return $this->keyLengthStorage;
+        return $this->keyLengthFile;
     }
     
     /**
@@ -121,12 +141,29 @@ class Index implements \IteratorAggregate
             /* @var $indexPage IndexPage */
             $indexPage = $this->getIndexPage();
             
+            $indexDataFilepath = sprintf(
+                self::FILEPATH_INDEX_DATA,
+                $this->getSchemaId(),
+                $this->getTableName(),
+                $indexPage->getName()
+            );
+
+            $indexDataFile = $this->filesystem->getFile($indexDataFilepath);
+
             /* @var $storage Storage */
             $storage = $this->getTableColumnIndexStorage($indexPage->getName(), $this->getTableName(), $this->getSchemaId());
             
+            $indexDoublesFilepath = "";
+            $indexDoublesFile = null;
             if (!$indexPage->isUnique()) {
-                /* @var $storage Storage */
-                $doublesStorage = $this->getTableColumnIndexDoublesStorage($indexPage->getName(), $this->getTableName(), $this->getSchemaId());
+                $indexDoublesFilepath = sprintf(
+                    self::FILEPATH_INDEX_DOUBLES,
+                    $this->getSchemaId(),
+                    $this->getTableName(),
+                    $indexPage->getName()
+                );
+
+                $indexDoublesFile = $this->filesystem->getFile($indexDoublesFilepath);
             }
             
             switch($indexPage->getEngine()){
@@ -134,28 +171,24 @@ class Index implements \IteratorAggregate
                 default:
                 case Engine::RTREE():
                     trigger_error("Requested unimplemented INDEX-ENGINE {$indexPage->getEngine()->getName()}, using B-TREE instead!", E_USER_NOTICE);
+                    # Use B-TREE instad of unimplemented index-engine
                 
                 case Engine::BTREE():
-                    
-                    /* @var $btree BTree */
-                    $this->factorize($btree, [$storage, $this->getIndexPage()->getKeyLength()]);
+                    $btree = new BTree($indexDataFile, $this->getIndexPage()->getKeyLength());
                     
                     if (!$indexPage->isUnique()) {
-                        $btree->setDoublesStorage($doublesStorage);
+                        $btree->setDoublesStorage($indexDoublesFile);
                     }
                     
                     $this->indexBackend = $btree;
                     break;
                     
-                    
                 case Engine::HASH():
-                    
-                    /* @var $hashtable HashTable */
-                    $this->factorize($hashtable, [$storage, $this->getIndexPage()->getKeyLength()]);
+                    $hashtable = new HashTable($indexDataFile, $this->getIndexPage()->getKeyLength());
                     $hashtable->setCacheBackend($this->getUsableCacheBackend());
                         
                     if (!$indexPage->isUnique()) {
-                        $hashtable->setDoublesStorage($doublesStorage);
+                        $hashtable->setDoublesStorage($indexDoublesFile);
                     }
                         
                     $this->indexBackend = $hashtable;

@@ -12,7 +12,6 @@
 namespace Addiks\PHPSQL\Entity\Job;
 
 use Addiks\PHPSQL\Entity\Job;
-
 use Addiks\PHPSQL\SqlParser;
 
 /**

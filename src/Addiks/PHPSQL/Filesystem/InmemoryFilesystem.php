@@ -15,6 +15,10 @@ use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Value\Text\Filepath;
 
+/**
+ * Emulates a file-system completely in-memory.
+ * All files will be lost after process-termination.
+ */
 class InmemoryFilesystem implements FilesystemInterface
 {
     
@@ -25,8 +29,9 @@ class InmemoryFilesystem implements FilesystemInterface
      * Resources to give away (e.g.: fopen) are always proxies to these ones.
      *
      * array(
-     *  [filepathA] => (resource)$resourceA),
-     *  [filepathB] => (resource)$resourceB),
+     *  "/foo" => array("bar", "baz"),
+     *  "/foo/bar" => (resource)$resourceA),
+     *  "/foo/baz" => (resource)$resourceB),
      * )
      *
      * @var array
@@ -35,6 +40,9 @@ class InmemoryFilesystem implements FilesystemInterface
 
     protected function getInternalFileHandle(Filepath $filePath)
     {
+        if ($this->fileIsDir($filePath)) {
+            throw new ErrorException("Requested file is a folder ('{$filePath}')!");
+        }
         if (!isset($this->fileResources[$filePath])) {
             $this->fileResources = fopen("php://memory", "w+");
         }
@@ -60,13 +68,21 @@ class InmemoryFilesystem implements FilesystemInterface
         fwrite($fileHandle, $content);
     }
     
-    public function fileOpen(Filepath $filePath, $mode)
+    public function getFile(Filepath $filePath, $mode)
     {
-        $fileHandle = $this->getInternalFileHandle($filePath);
+        $resourceProxy = null;
 
-        $resourceProxy = new FileResourceProxy($fileHandle, $mode);
+        if (!$this->fileIsDir($filePath)) {
+            $fileHandle = $this->getInternalFileHandle($filePath);
+            $resourceProxy = new FileResourceProxy($fileHandle, $mode);
+        }
 
         return $resourceProxy;
+    }
+
+    public function fileOpen(Filepath $filePath, $mode)
+    {
+        return $this->getFileProxy($filePath, $mode);
     }
     
     public function fileClose($handle)
@@ -112,11 +128,54 @@ class InmemoryFilesystem implements FilesystemInterface
     public function fileUnlink($filePath)
     {
         if (isset($this->fileResources[$filePath])) {
+            if (is_array($this->fileResources[$filePath])) {
+                throw new ErrorException("Cannot unlink a folder!");
+            }
             fclose($this->fileResources[$filePath]);
             unset($this->fileResources[$filePath]);
         }
     }
     
+    public function fileSize($filePath)
+    {
+        $size = 0;
+
+        if (!$this->fileIsDir($filePath)) {
+            $resource = $this->fileResources[$filePath];
+            $stat = fstat($resource);
+            $size = $stat['size'];
+        }
+
+        return $size;
+    }
+
+    public function fileExists($filePath)
+    {
+        return isset($this->fileResources[$filePath]);
+    }
+
+    public function fileIsDir($path)
+    {
+        return isset($this->fileResources[$path]) && is_array($this->fileResources[$path]);
+    }
+
+    public function getFilesInDir($path)
+    {
+        $files = array();
+        if ($this->fileIsDir($path)) {
+            $files = $this->fileResources[$path];
+        }
+        return $files;
+    }
+
+    /**
+     * @return DirectoryIterator
+     */
+    public function getDirectoryIterator($path)
+    {
+        return new InmemoryDirectoryIterator($path, $this);
+    }
+
     /**
      * removes recursive a whole directory
      * (copied from a comment in http://de.php.net/rmdir)
@@ -126,12 +185,7 @@ class InmemoryFilesystem implements FilesystemInterface
      */
     public static function rrmdir($dir)
     {
-        $dir = trim($dir);
-        foreach ($this->fileResources as $filePath => $resource) {
-            if (substr($filePath, 0, strlen($dir)) === $dir) {
-                $this->fileUnlink($filePath);
-            }
-        }
+        
     }
 
 }

@@ -12,10 +12,23 @@
 namespace Addiks\PHPSQL\Table\Meta\InformationSchema;
 
 use Addiks\PHPSQL\CustomIterator;
+use Addiks\PHPSQL\Schema\SchemaManager;
 
 class Table extends InformationSchema
 {
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    private $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+
     private $internalTablesCache;
     
     protected function getInternalTables()
@@ -24,12 +37,9 @@ class Table extends InformationSchema
         if (is_null($this->internalTablesCache)) {
             $this->internalTablesCache = array();
             
-            /* @var $databaseResource Database */
-            $this->factorize($databaseResource);
-            
-            foreach ($databaseResource->listSchemas() as $schemaId) {
+            foreach ($this->schemaManager->listSchemas() as $schemaId) {
                 /* @var $schema Schema */
-                $schema = $databaseResource->getSchema($schemaId);
+                $schema = $this->schemaManager->getSchema($schemaId);
                 
                 foreach ($schema->listTables() as $tableName) {
                     $this->internalTablesCache[] = "{$schemaId}.{$tableName}";
@@ -51,11 +61,8 @@ class Table extends InformationSchema
     
     public function getTableSchema()
     {
-        
-        /* @var $tableSchema Tables */
-        $this->factorize($tableSchema);
-
-        return $tableSchema;
+        return $this->schemaManager->getTableSchema();
+        # ?
     }
     
     public function addColumnDefinition(ColumnDefinition $columnDefinition)
@@ -69,20 +76,14 @@ class Table extends InformationSchema
         $tableName = $this->getInternalTables()[$rowId];
         list($database, $tableName) = explode(".", $tableName);
         
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
-        
         /* @var $schema InformationSchema */
-        $schema = $databaseResource->getSchema($database);
+        $schema = $this->schemaManager->getSchema($database);
         
         /* @var $schemaPage Schema */
         $schemaPage = $schema->getTablePage($tableName);
         
-        /* @var $tableResource Table */
-        $this->factorize($tableResource, [$tableName, $database]);
-        
         /* @var $tableSchema TableSchema */
-        $tableSchema = $tableResource->getTableSchema();
+        $tableSchema = $this->schemaManager->getTableSchema($database, $tableName);
         
         switch($columnId){
             
@@ -108,7 +109,7 @@ class Table extends InformationSchema
                 return $schemaPage->getRowFormat();
             
             case 7: # TABLE_ROWS
-                return $tableResource->count();
+                return 0;
                     
             case 8: # AVG_ROW_LENGTH
                 return null;
@@ -126,7 +127,7 @@ class Table extends InformationSchema
                 return null;
                     
             case 13: # AUTO_INCREMENT
-                return $tableResource->getAutoIncrementId();
+                return 0;
                     
             case 14: # CREATE_TIME
                 return null;

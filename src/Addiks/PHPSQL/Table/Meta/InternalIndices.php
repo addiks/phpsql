@@ -31,7 +31,7 @@ class InternalIndices implements IndexInterface
         list($schemaId, $tableName, $indexId) = $tableNameParts;
         
         /* @var $index Index */
-        $this->factorize($index, [$indexId, $tableName, $schemaId]);
+        $index = new Index($indexId, $tableName, $schemaId);
         
         $this->index = $index;
         $this->schemaId = $schemaId;
@@ -80,7 +80,7 @@ class InternalIndices implements IndexInterface
     {
         if (is_null($this->tableSchema)) {
             /* @var $tableSchema Indicies */
-            $this->factorize($tableSchema);
+            $tableSchema = new Indicies();
             
             /* @var $index Index */
             $index = $this->getIndex();

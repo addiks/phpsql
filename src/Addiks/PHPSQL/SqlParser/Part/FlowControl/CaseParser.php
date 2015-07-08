@@ -14,10 +14,9 @@ namespace Addiks\PHPSQL\SqlParser\Part\FlowControl;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
-
 use Addiks\PHPSQL\SQLTokenIterator;
-
 use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\Entity\Job\Part\FlowControl\CaseJob;
 
 class CaseParser extends SqlParser
 {
@@ -32,7 +31,7 @@ class CaseParser extends SqlParser
     {
         
         /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
+        $valueParser = $this->getSqlParserByClass(ValueParser::class);
         
         $tokens->seekTokenNum(SqlToken::T_CASE());
         
@@ -40,8 +39,7 @@ class CaseParser extends SqlParser
             throw new ErrorException("Tried to parse CASE statement when token-iterator is not at CASE!");
         }
         
-        /* @var $caseJob Case */
-        $this->factorize($caseJob);
+        $caseJob = new CaseJob();
         
         if (!$tokens->isTokenNum(SqlToken::T_WHEN()) && $valueParser->canParseTokens($tokens)) {
             $caseJob->setCaseValue($valueParser->convertSqlToJob($tokens));

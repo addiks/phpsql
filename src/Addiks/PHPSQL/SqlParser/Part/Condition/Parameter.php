@@ -34,12 +34,9 @@ class Parameter extends SqlParser
     
     public function convertSqlToJob(SQLTokenIterator $tokens)
     {
+        $valueParser = $this->getSqlParserByClass(ValueParser::class);
         
-        /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
-        
-        /* @var $parameterCondition Parameter */
-        $this->factorize($parameterCondition);
+        $parameterCondition = new ParameterConditionJob();
         
         try {
             $parameter = Parameter::getByValue(strtolower($tokens->getExclusiveTokenString()));

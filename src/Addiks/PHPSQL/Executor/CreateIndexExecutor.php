@@ -12,40 +12,40 @@
 namespace Addiks\PHPSQL\Executor;
 
 use Addiks\PHPSQL\Value\Enum\Page\Index\Type;
-
 use Addiks\PHPSQL\Entity\Exception\Conflict;
-
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
-
 use Addiks\PHPSQL\Value\Enum\Page\Index\Engine;
-
 use Addiks\PHPSQL\Entity\TableSchema;
-
 use Addiks\PHPSQL\Table;
-
 use Addiks\PHPSQL\Entity\Page\Schema\Index;
-
 use Addiks\PHPSQL\Executor;
-
 use Addiks\PHPSQL\Entity\Result\Temporary;
-
 use Addiks\PHPSQL\Database;
 
 class CreateIndexExecutor extends Executor
 {
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+    
     public function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Index */
-        
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
         
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTable();
         
         /* @var $schema Schema */
-        $schema = $databaseResource->getSchema($tableSpecifier->getDatabase());
+        $schema = $this->schemaManager->getSchema($tableSpecifier->getDatabase());
         
         if (!$schema->tableExists($tableSpecifier->getTable())) {
             throw new Conflict("Table '{$tableSpecifier}' does not exist!");

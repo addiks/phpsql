@@ -20,19 +20,28 @@ use Addiks\PHPSQL\Database;
 class UseExecutor extends Executor
 {
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+    
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Drop */
         
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
-        
-        $databaseResource->setCurrentlyUsedDatabaseId($statement->getDatabase());
+        $this->schemaManager->setCurrentlyUsedDatabaseId($statement->getDatabase());
         
         /* @var $result Temporary */
         $this->factorize($result);
         
-        $result->setIsSuccess($databaseResource->getCurrentlyUsedDatabaseId() === $statement->getDatabase());
+        $result->setIsSuccess($this->schemaManager->getCurrentlyUsedDatabaseId() === $statement->getDatabase());
         
         return $result;
     }

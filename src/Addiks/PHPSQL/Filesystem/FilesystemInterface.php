@@ -21,6 +21,8 @@ interface FilesystemInterface
     
     public function putFileContents(Filepath $filePath, $content, $flags = 0);
     
+    public function getFile(Filepath $filePath, $mode);
+
     public function fileOpen(Filepath $filePath, $mode);
     
     public function fileClose($handle);
@@ -41,14 +43,21 @@ interface FilesystemInterface
     
     public function fileUnlink($filePath);
 
+    public function fileSize($filePath);
+
+    public function fileIsDir($path);
+
+    public function fileExists($filePath);
+
+    public function getFilesInDir($path);
+
+    /**
+     * @return DirectoryIterator
+     */
+    public function getDirectoryIterator($path);
+
     /**
      * removes recursive a whole directory
-     * (copied from a comment in http://de.php.net/rmdir)
-     *
-     * @package Addiks
-     * @subpackage External
-     * @author Someone else from the thing called internet (NOSPAMzentralplan dot de)
-     * @param string $dir
      */
     public static function rrmdir($dir);
 }

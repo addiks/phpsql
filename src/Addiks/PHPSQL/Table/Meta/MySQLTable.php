@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Table\Meta;
 
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 
-class MySQL implements IndexInterface
+class MySQLTable implements IndexInterface
 {
     
     

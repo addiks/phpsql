@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Entity\Job\Part\FlowControl;
 
 use Addiks\PHPSQL\Entity\Job\Part;
 
-class CaseData extends Part
+class CaseJob extends Part
 {
     
     private $caseValue;

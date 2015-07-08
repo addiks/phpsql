@@ -19,8 +19,8 @@ class InmemoryDatabaseAdapter extends InternalDatabaseAdapter
 
     public function __construct()
     {
-        parent::__construct();
         $this->filesystem = new InmemoryFilesystem();
+        parent::__construct();
     }
 
     public function getTypeName()

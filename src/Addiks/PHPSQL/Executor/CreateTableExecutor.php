@@ -36,15 +36,24 @@ use ErrorException;
 class CreateTableExecutor extends Executor
 {
     
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+    
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Table */
         
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
-        
         /* @var $databaseSchema Schema */
-        $databaseSchema = $databaseResource->getSchema();
+        $databaseSchema = $this->schemaManager->getSchema();
         
         /* @var $schemaPage SchemaPage */
         $this->factorize($schemaPage);
@@ -64,7 +73,7 @@ class CreateTableExecutor extends Executor
         $databaseSchema->registerTableSchema($schemaPage);
         
         /* @var $tableSchema TableSchema */
-        $tableSchema = $databaseResource->getTableSchema($statement->getName());
+        $tableSchema = $this->schemaManager->getTableSchema($statement->getName());
         
         ### WRITE COLUMNS
         

@@ -37,31 +37,49 @@ use Addiks\PHPSQL\SqlParser\AlterSqlParser;
 use Addiks\PHPSQL\SqlParser\DropSqlParser;
 use Addiks\PHPSQL\SqlParser\SetSqlParser;
 use Addiks\PHPSQL\SqlParser\DescribeSqlParser;
+use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
+use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
+use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
+use Addiks\PHPSQL\SqlParser\Part\ColumnDefinitionParser;
 
 class InternalDatabaseAdapter implements DatabaseAdapterInterface
 {
 
     public function __construct()
     {
-        $this->schemaManager = new SchemaManager();
-        $this->filesystem = new RealFilesystem();
-        $this->valueResolver = new ValueResolver();
+        if (is_null($this->filesystem)) {
+            $this->filesystem = new RealFilesystem();
+        }
 
-        $this->sqlParser = new SqlParser();
-        $this->sqlParser->addSqlParser(new ParenthesisParser());
-        $this->sqlParser->addSqlParser(new SelectSqlParser());
-        $this->sqlParser->addSqlParser(new InsertSqlParser());
-        $this->sqlParser->addSqlParser(new UpdateSqlParser());
-        $this->sqlParser->addSqlParser(new DeleteSqlParser());
-        $this->sqlParser->addSqlParser(new ShowSqlParser());
-        $this->sqlParser->addSqlParser(new UseSqlParser());
-        $this->sqlParser->addSqlParser(new CreateSqlParser());
-        $this->sqlParser->addSqlParser(new AlterSqlParser());
-        $this->sqlParser->addSqlParser(new DropSqlParser());
-        $this->sqlParser->addSqlParser(new SetSqlParser());
-        $this->sqlParser->addSqlParser(new DescribeSqlParser());
-#        $this->sqlParser->addSqlParser(new BeginSqlParser());
-#        $this->sqlParser->addSqlParser(new EndSqlParser());
+        if (is_null($this->schemaManager)) {
+            $this->schemaManager = new SchemaManager($this->filesystem);
+        }
+
+        if (is_null($this->valueResolver)) {
+            $this->valueResolver = new ValueResolver();
+        }
+
+        if (is_null($this->sqlParser)) {
+            $this->sqlParser = new SqlParser();
+            $this->sqlParser->addSqlParser(new ParenthesisParser());
+            $this->sqlParser->addSqlParser(new SelectSqlParser());
+            $this->sqlParser->addSqlParser(new InsertSqlParser());
+            $this->sqlParser->addSqlParser(new UpdateSqlParser());
+            $this->sqlParser->addSqlParser(new DeleteSqlParser());
+            $this->sqlParser->addSqlParser(new ShowSqlParser());
+            $this->sqlParser->addSqlParser(new UseSqlParser());
+            $this->sqlParser->addSqlParser(new CreateSqlParser());
+            $this->sqlParser->addSqlParser(new AlterSqlParser());
+            $this->sqlParser->addSqlParser(new DropSqlParser());
+            $this->sqlParser->addSqlParser(new SetSqlParser());
+            $this->sqlParser->addSqlParser(new DescribeSqlParser());
+    #        $this->sqlParser->addSqlParser(new BeginSqlParser());
+    #        $this->sqlParser->addSqlParser(new EndSqlParser());
+            $this->sqlParser->addSqlParser(new ConditionParser());
+            $this->sqlParser->addSqlParser(new ColumnParser());
+            $this->sqlParser->addSqlParser(new ColumnDefinitionParser());
+            $this->sqlParser->addSqlParser(new TableParser());
+        }
     }
 
     /**
