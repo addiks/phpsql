@@ -20,21 +20,41 @@ use Addiks\PHPSQL\Database;
 class UpdateExecutor extends Executor
 {
     
+    public function __construct(
+        ValueResolver $valueResolver,
+        TableManager $tableManager
+    ) {
+        $this->valueResolver = $valueResolver;
+        $this->tableManager = $tableManager;
+    }
+
+    protected $valueResolver;
+
+    public function getValueResolver()
+    {
+        return $this->valueResolver;
+    }
+
+    protected $tableManager;
+
+    public function getTableManager()
+    {
+        return $this->tableManager;
+    }
+    
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Update */
         
-        /* @var $result Temporary */
-        $this->factorize($result);
-        
+        $result = new TemporaryResult();
         // TODO: multiple tables or not?
         
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTables()[0];
         
         /* @var $tableResource Table */
-        $this->factorize($tableResource, [$tableSpecifier]);
-        
+        $tableResource = $this->tableManager->getTable($tableSpecifier);
+
         /* @var $tableSchema TableSchema */
         $tableSchema = $tableResource->getTableSchema();
         
@@ -43,17 +63,18 @@ class UpdateExecutor extends Executor
             /* @var $indexPage Index */
             
             /* @var $index Index */
-            $this->factorize($index, [$indexPage->getName(), $tableSpecifier->getTable(), $tableSpecifier->getDatabase()]);
-            
+            $index = $this->tableManager->getIndex(
+                $indexPage->getName(),
+                $tableSpecifier->getTable(),
+                $tableSpecifier->getDatabase()
+            );
+
             $indicies[] = $index;
         }
         
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
-        
-        $valueResolver->setStatement($statement);
-        $valueResolver->setResultSet($result);
-        $valueResolver->setStatementParameters($parameters);
+        $this->valueResolver->setStatement($statement);
+        $this->valueResolver->setResultSet($result);
+        $this->valueResolver->setStatementParameters($parameters);
         
         /* @var $condition Value */
         $condition = $statement->getCondition();
@@ -61,9 +82,9 @@ class UpdateExecutor extends Executor
         foreach ($tableResource->getIterator() as $rowId => $row) {
             $row = $tableResource->convertDataRowToStringRow($row);
             
-            $valueResolver->setSourceRow($row);
+            $this->valueResolver->setSourceRow($row);
             
-            $conditionResult = $valueResolver->resolveValue($condition);
+            $conditionResult = $this->valueResolver->resolveValue($condition);
             
             if ($conditionResult) {
                 $newRow = array();
@@ -73,7 +94,7 @@ class UpdateExecutor extends Executor
                     $columnName = (string)$dataChange->getColumn();
                     
                     $newValue = $dataChange->getValue();
-                    $newValue = $valueResolver->resolveValue($newValue);
+                    $newValue = $this->valueResolver->resolveValue($newValue);
                     
                     $newRow[$columnName] = $newValue;
                 }

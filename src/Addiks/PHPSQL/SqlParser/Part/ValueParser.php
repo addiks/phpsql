@@ -14,12 +14,12 @@ namespace Addiks\PHPSQL\SqlParser\Part;
 use Addiks\PHPSQL\Entity\Job\Part\Value as ValueJob;
 
 use Addiks\PHPSQL\SqlParser\Part\FlowControl\CaseParser;
-use Addiks\PHPSQL\SqlParser\Part\Condition;
-use Addiks\PHPSQL\SqlParser\Part\Condition\Like;
-use Addiks\PHPSQL\SqlParser\Part\Condition\Enum;
+use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
+use Addiks\PHPSQL\SqlParser\Part\ConditionParser\LikeConditionParser;
+use Addiks\PHPSQL\SqlParser\Part\ConditionParser\EnumConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\Part\FunctionParser;
-use Addiks\PHPSQL\SqlParser\Part\Parenthesis;
+use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;
 
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
@@ -35,26 +35,26 @@ class ValueParser extends SqlParser
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         
-        /* @var $parenthesisParser Parenthesis */
-        $this->factorize($parenthesisParser);
+        /* @var $parenthesisParser ParenthesisParser */
+        $parenthesisParser = $this->getSqlParserByClassname(ParenthesisParser::class);
         
         /* @var $functionParser FunctionParser */
-        $this->factorize($functionParser);
+        $functionParser = $this->getSqlParserByClassname(FunctionParser::class);
         
-        /* @var $conditionParser Condition */
-        $this->factorize($conditionParser);
+        /* @var $conditionParser ConditionParser */
+        $conditionParser = $this->getSqlParserByClassname(ConditionParser::class);
         
-        /* @var $enumConditionParser Enum */
-        $this->factorize($enumConditionParser);
+        /* @var $enumConditionParser EnumConditionParser */
+        $enumConditionParser = $this->getSqlParserByClassname(EnumConditionParser::class);
         
-        /* @var $likeConditionParser Like */
-        $this->factorize($likeConditionParser);
+        /* @var $likeConditionParser LikeConditionParser */
+        $likeConditionParser = $this->getSqlParserByClassname(LikeConditionParser::class);
         
         /* @var $columnParser ColumnParser */
-        $this->factorize($columnParser);
+        $columnParser = $this->getSqlParserByClassname(ColumnParser::class);
         
         /* @var $caseParser CaseParser */
-        $this->factorize($caseParser);
+        $caseParser = $this->getSqlParserByClassname(CaseParser::class);
         
         switch(true){
             
@@ -83,11 +83,10 @@ class ValueParser extends SqlParser
     public function convertSqlToJob(SQLTokenIterator $tokens)
     {
         
-        /* @var $valueJob ValueJob */
-        $this->factorize($valueJob);
+        $valueJob = new ValueJob();
         
-        /* @var $enumConditionParser Enum */
-        $this->factorize($enumConditionParser);
+        /* @var $enumConditionParser EnumConditionParser */
+        $enumConditionParser = $this->getSqlParserByClassname(EnumConditionParser::class);
         
         if (!$this->parsePlainValue($tokens, $valueJob)) {
             throw new MalformedSql("Missing valid value!", $tokens);
@@ -106,11 +105,11 @@ class ValueParser extends SqlParser
     public function parsePlainOperator(SQLTokenIterator $tokens, ValueJob $valueJob)
     {
         
-        /* @var $conditionParser Condition */
-        $this->factorize($conditionParser);
+        /* @var $conditionParser ConditionParser */
+        $conditionParser = $this->getSqlParserByClassname(ConditionParser::class);
         
-        /* @var $likeConditionParser Like */
-        $this->factorize($likeConditionParser);
+        /* @var $likeConditionParser LikeConditionParser */
+        $likeConditionParser = $this->getSqlParserByClassname(LikeConditionParser::class);
         
         switch(true){
             
@@ -132,17 +131,17 @@ class ValueParser extends SqlParser
     public function parsePlainValue(SQLTokenIterator $tokens, ValueJob $valueJob)
     {
         
-        /* @var $parenthesisParser Parenthesis */
-        $this->factorize($parenthesisParser);
+        /* @var $parenthesisParser ParenthesisParser */
+        $parenthesisParser = $this->getSqlParserByClassname(ParenthesisParser::class);
         
         /* @var $functionParser FunctionParser */
-        $this->factorize($functionParser);
+        $functionParser = $this->getSqlParserByClassname(FunctionParser::class);
         
         /* @var $columnParser ColumnParser */
-        $this->factorize($columnParser);
+        $columnParser = $this->getSqlParserByClassname(ColumnParser::class);
         
         /* @var $caseParser CaseParser */
-        $this->factorize($caseParser);
+        $caseParser = $this->getSqlParserByClassname(CaseParser::class);
         
         switch(true){
             

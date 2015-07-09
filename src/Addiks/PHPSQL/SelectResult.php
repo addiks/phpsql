@@ -11,13 +11,15 @@
 
 namespace Addiks\PHPSQL;
 
+use ErrorException;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\CustomIterator;
-use ErrorException;
+use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 
 /**
  * This is an dynamic result-set specific for SELECT statements.
@@ -27,20 +29,25 @@ class SelectResult implements ResultInterface, \IteratorAggregate
 {
 
     use BinaryConverterTrait;
-    
+
+    const FILEPATH_GROUPBY_HASHTABLE = "Temporary/GroupByHashTables/%s";
+
     public function __construct(
+        FilesystemInterface $filesystem,
+        SchemaManager $schemaManager,
+        ValueResolver $valueResolver,
         SelectStatement $statement,
         array $statementParameters = array(),
         array $resultSpecificValues = array(),
         $schemaId = null
     ) {
-
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
+        $this->filesystem = $filesystem;
+        $this->schemaManager = $schemaManager;
+        $this->valueResolver = $valueResolver;
         
         $this->statementParameters = $statementParameters;
         
-        $defaultSchema = $databaseResource->getSchema();
+        $defaultSchema = $schemaManager->getSchema();
         
         if (!is_null($statement->getJoinDefinition())) {
             foreach ($statement->getJoinDefinition()->getTables() as $joinTable) {
@@ -58,11 +65,11 @@ class SelectResult implements ResultInterface, \IteratorAggregate
                 }
                 
                 if (!is_null($dataSource->getDatabase())) {
-                    if (!$databaseResource->schemaExists($dataSource->getDatabase())) {
+                    if (!$schemaManager->schemaExists($dataSource->getDatabase())) {
                         throw new Conflict("Database '{$dataSource->getDatabase()}' does not exist!");
                     }
                     
-                    $schema = $databaseResource->getSchema($dataSource->getDatabase());
+                    $schema = $schemaManager->getSchema($dataSource->getDatabase());
                     
                 } else {
                     $schema = $defaultSchema;
@@ -78,22 +85,17 @@ class SelectResult implements ResultInterface, \IteratorAggregate
         $this->setResultSpecificValues($resultSpecificValues);
         $this->schemaId = $schemaId;
         
-        /* @var $storages \Addiks\PHPSQL\Storages */
-        $this->factorize($storages);
-        
-        $this->storages = $storages;
-        
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
-        
         $valueResolver->setStatement($statement);
         $valueResolver->setResultSet($this);
         
-        $this->valueResolver = $valueResolver;
-        
     }
-    
-    private $storages;
+
+    private $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
     
     private $schemaId;
 
@@ -263,18 +265,15 @@ class SelectResult implements ResultInterface, \IteratorAggregate
         if (is_null($this->getGroupByHashTable())) {
             return array();
         }
-        
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
             
-        $valueResolver->setSourceRow($this->currentIteratorUnresolved());
+        $this->valueResolver->setSourceRow($this->currentIteratorUnresolved());
             
         $groupingValue = "";
         foreach ($this->getStatement()->getGroupings() as $groupingDataset) {
             /* @var $value Value */
             $value = $groupingDataset['value'];
         
-            $value = $valueResolver->resolveValue($value);
+            $value = $this->valueResolver->resolveValue($value);
         
             $value = str_pad($value, 64, "\0", STR_PAD_LEFT);
             $value = substr($value, 0, 64);
@@ -298,9 +297,6 @@ class SelectResult implements ResultInterface, \IteratorAggregate
     public function rewindIterator()
     {
         
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
-        
         /* @var $statement SelectStatement */
         $statement = $this->getStatement();
         
@@ -309,14 +305,11 @@ class SelectResult implements ResultInterface, \IteratorAggregate
             $this->resultRow = array();
             
             foreach ($statement->getColumns() as $alias => $value) {
-                $this->resultRow[$alias] = (string)$valueResolver->resolveValue($value);
+                $this->resultRow[$alias] = (string)$this->valueResolver->resolveValue($value);
             }
             
             return;
         }
-        
-        /* @var $databaseResource Database */
-        $this->factorize($databaseResource);
         
         foreach ($statement->getJoinDefinition()->getTables() as $joinTable) {
             /* @var $joinTable Table */
@@ -339,13 +332,12 @@ class SelectResult implements ResultInterface, \IteratorAggregate
             
             $tableName = $dataSource->getTable();
             
-            if (!$databaseResource->getSchema($database)->tableExists($tableName)) {
+            if (!$this->schemaManager->getSchema($database)->tableExists($tableName)) {
                 throw new InvalidArgument("Table '{$dataSource}' does not exist!");
             }
         }
         
-        /* @var $joinIterator JoinIterator */
-        $this->factorize($joinIterator, [$statement]);
+        $joinIterator = new JoinIterator($statement);
 
         $this->joinIterator = $joinIterator;
         
@@ -360,22 +352,23 @@ class SelectResult implements ResultInterface, \IteratorAggregate
             $keyLength = count($statement->getGroupings())*64;
             $uniqid = uniqid();
             
-            /* @var $groupingHashTable HashTable */
-            $this->factorize($groupingHashTable, [$this->getStorage("Temporary/GroupByHashTables/{$uniqid}"), $keyLength]);
-            
-            $groupingHashTable->getStorage()->setIsTemporary(true);
+            $groupingHashTableFilepath = sprintf(self::FILEPATH_GROUPBY_HASHTABLE, $uniqid);
+            $groupingHashTableFile = $this->filesystem->getFile($groupingHashTableFilepath);
+            $groupingHashTableFile->setIsTemporary(true);
+
+            $groupingHashTable = new HashTable($groupingHashTableFile, $keyLength);
             
             while ($this->validIterator()) {
                 $sourceRow = $this->currentIterator();
                 
-                $valueResolver->setSourceRow($sourceRow);
+                $this->valueResolver->setSourceRow($sourceRow);
                 
                 $groupingValue = "";
                 foreach ($statement->getGroupings() as $groupingDataset) {
                     /* @var $value Value */
                     $value = $groupingDataset['value'];
                     
-                    $value = $valueResolver->resolveValue($value);
+                    $value = $this->valueResolver->resolveValue($value);
                     
                     $value = str_pad($value, 64, "\0", STR_PAD_LEFT);
                     $value = substr($value, 0, 64);
@@ -490,15 +483,12 @@ class SelectResult implements ResultInterface, \IteratorAggregate
         if (is_null($conditionJob)) {
             return true;
         }
-    
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
         
-        $valueResolver->setSourceRow($this->currentIteratorUnresolved());
-        $valueResolver->setStatementParameters($this->getStatementParameters());
-        $valueResolver->resetParameterCurrentIndex();
+        $this->valueResolver->setSourceRow($this->currentIteratorUnresolved());
+        $this->valueResolver->setStatementParameters($this->getStatementParameters());
+        $this->valueResolver->resetParameterCurrentIndex();
         
-        $result = $valueResolver->resolveValue($conditionJob);
+        $result = $this->valueResolver->resolveValue($conditionJob);
     
         return $result;
     }
@@ -513,17 +503,14 @@ class SelectResult implements ResultInterface, \IteratorAggregate
         /* @var $groupingHashTable HashTable */
         $groupingHashTable = $this->getGroupByHashTable();
             
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
-            
-        $valueResolver->setSourceRow($this->currentIteratorUnresolved());
+        $this->valueResolver->setSourceRow($this->currentIteratorUnresolved());
             
         $groupingValue = "";
         foreach ($this->getStatement()->getGroupings() as $groupingDataset) {
             /* @var $value Value */
             $value = $groupingDataset['value'];
     
-            $value = $valueResolver->resolveValue($value);
+            $value = $this->valueResolver->resolveValue($value);
     
             $value = str_pad($value, 64, "\0", STR_PAD_LEFT);
             $value = substr($value, 0, 64);

@@ -50,9 +50,7 @@ class CreateDatabaseExecutor implements StatementExecutorInterface
         
         ### CREATE RESULTSET
         
-        /* @var $result Temporary */
-        $this->factorize($result);
-        
+        $result = new TemporaryResult();
         $result->setIsSuccess($this->schemaManager->schemaExists($name));
         
         return $result;

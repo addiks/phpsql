@@ -84,6 +84,7 @@
 
         <service id="addiks.phpsql.statement_executer.delete" class="Addiks\PHPSQL\StatementExecutor\DeleteExecutor">
             <argument type="service" id="addiks.phpsql.value_resolver" >
+            <argument type="service" id="addiks.phpsql.table_manager" >
         </service>
 
         <service id="addiks.phpsql.statement_executer.describe" class="Addiks\PHPSQL\StatementExecutor\DescribeExecutor">
@@ -98,6 +99,8 @@
 
         <service id="addiks.phpsql.statement_executer.insert" class="Addiks\PHPSQL\StatementExecutor\InsertExecutor">
             <argument type="service" id="addiks.phpsql.value_resolver" >
+            <argument type="service" id="addiks.phpsql.table_manager" >
+            <argument type="service" id="addiks.phpsql.statement_executer.select" >
         </service>
 
         <service id="addiks.phpsql.statement_executer.select" class="Addiks\PHPSQL\StatementExecutor\SelectExecutor">
@@ -115,6 +118,7 @@
 
         <service id="addiks.phpsql.statement_executer.update" class="Addiks\PHPSQL\StatementExecutor\UpdateExecutor">
             <argument type="service" id="addiks.phpsql.value_resolver" >
+            <argument type="service" id="addiks.phpsql.table_manager" >
         </service>
 
         <service id="addiks.phpsql.statement_executer.use" class="Addiks\PHPSQL\StatementExecutor\UseExecutor">

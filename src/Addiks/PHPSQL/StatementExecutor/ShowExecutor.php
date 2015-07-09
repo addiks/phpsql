@@ -69,9 +69,7 @@ class ShowExecutor extends Executor
     protected function executeShowTables(ShowJob $statement, array $parameters = array())
     {
             
-        /* @var $result Temporary */
-        $this->factorize($result, [['TABLE']]);
-        
+        $result = new TemporaryResult(['TABLE']);
         $list = $this->schemaManager->getSchema($statement->getDatabase())->listTables();
         sort($list);
         
@@ -87,9 +85,7 @@ class ShowExecutor extends Executor
     protected function executeShowDatabases(ShowJob $statement, array $parameters = array())
     {
             
-        /* @var $result Temporary */
-        $this->factorize($result, [['DATABASE']]);
-        
+        $result = new TemporaryResult(['DATABASE']);
         $list = $this->schemaManager->listSchemas();
         sort($list);
         

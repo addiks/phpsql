@@ -21,16 +21,48 @@ use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Countable;
 use SeekableIterator;
+use Addiks\PHPSQL\Entity\Index\QuickSort;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 
 /**
  * The purspose of this component is to iterate sorted over one data-source.
  * the sortion can be done with (sometimes temporary) indexes/iterators.
  *
- * TODO: this iterator can currently on iterate over one index, implement the rest!
+ * TODO: this iterator can currently only iterate over one index, implement the rest!
  *
  */
 class SortedResourceIterator implements Countable, SeekableIterator
 {
+
+    public function __construct(
+        $resource,
+        FilesystemInterface $filesystem,
+        ValueResolver $valueResolver
+    ) {
+        $this->filesystem = $filesystem;
+        $this->valueResolver = $valueResolver;
+        if ($resource instanceof Table) {
+            $this->setResourceTable($resource);
+        } elseif ($resource instanceof ResultInterface) {
+            $this->setResourceResult($resource);
+        } else {
+            throw new ErrorException("Resource for SortedResourceIterator has to be Table or ResultInterface!");
+        }
+    }
+
+    private $filesystem;
+
+    public function getFilesystem()
+    {
+        return $this->filesystem;
+    }
+
+    private $valueResolver;
+
+    public function getValueResolver()
+    {
+        return $this->valueResolver;
+    }
 
     private $resource;
 
@@ -56,18 +88,6 @@ class SortedResourceIterator implements Countable, SeekableIterator
         $this->iterator = $iterator;
     }
     
-    private $storagesResource;
-    
-    public function __construct()
-    {
-        parent::__construct();
-        
-        /* @var $storages \Addiks\PHPSQL\Storages */
-        $this->factorize($storages);
-        
-        $this->storagesResource = $storages;
-    }
-    
     public function getSortIndexByColumns(array $orderColumns)
     {
         
@@ -77,8 +97,7 @@ class SortedResourceIterator implements Countable, SeekableIterator
         
         $insertionSortStorage->setIsTemporary(true);
         
-        /* @var $columnPage Column */
-        $this->factorize($columnPage);
+        $columnPage = new ColumnPage();
             
         $columnPages = array();
         foreach ($orderColumns as $columnIndex => $columnDataset) {
@@ -103,8 +122,7 @@ class SortedResourceIterator implements Countable, SeekableIterator
             ];
         }
         
-        /* @var $sortIndex QuickSort */
-        $this->factorize($sortIndex, [$insertionSortStorage, $columnPages]);
+        $sortIndex = new QuickSort($insertionSortStorage, $columnPages);
         
         return $sortIndex;
     }
@@ -116,8 +134,8 @@ class SortedResourceIterator implements Countable, SeekableIterator
         $sortIndex = $this->getSortIndexByColumns($orderColumns);
         
         /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
-        
+        $valueResolver = $this->valueResolver;
+
         $columnPage = false;
         
         $indexAlreadyBuilt = false;

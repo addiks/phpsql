@@ -26,9 +26,7 @@ class SetExecutor extends Executor
         
         # ...
         
-        /* @var $result Temporary */
-        $this->factorize($result);
-        
+        $result = new TemporaryResult();
         return $result;
     }
 }

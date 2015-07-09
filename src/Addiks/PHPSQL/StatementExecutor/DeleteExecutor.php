@@ -90,7 +90,11 @@ class DeleteExecutor extends Executor
                 
                 if (!is_null($primaryIndexId)) {
                     /* @var $index Index */
-                    $this->factorize($index, [$primaryIndexId, $tableSpecifier->getTable(), $tableSpecifier->getDatabase()]);
+                    $index = $this->tableManager->getIndex(
+                        $primaryIndexId,
+                        $tableSpecifier->getTable(),
+                        $tableSpecifier->getDatabase()
+                    );
                     
                     // TODO: try to extract begin/end values from conditions
                     $beginValue = null;
@@ -134,7 +138,11 @@ class DeleteExecutor extends Executor
                         /* @var $indexPage Index */
                         
                         /* @var $indexResource Index */
-                        $this->factorize($indexResource, [$indexId, $tableSpecifier->getTable(), $tableSpecifier->getDatabase()]);
+                        $indexResource = $this->tableManager->getIndex(
+                            $indexId,
+                            $tableSpecifier->getTable(),
+                            $tableSpecifier->getDatabase()
+                        );
                         
                         $indexResource->remove($tableResource->getRowData($rowId), $this->decstr($rowId));
                     }

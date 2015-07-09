@@ -132,8 +132,7 @@ class PDO extends BasePDO
     public function prepare($statement, $driver_options = null)
     {
     
-        /* @var $statementResource Statement */
-        $this->factorize($statementResource, [$statement]);
+        $statementResource = new Statement($statement);
         
         return $statementResource;
     }

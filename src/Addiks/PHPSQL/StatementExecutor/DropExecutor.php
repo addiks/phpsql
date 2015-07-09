@@ -59,18 +59,13 @@ class DropExecutor extends Executor
         /* @var $databaseSchema Schema */
         $databaseSchema = $this->schemaManager->getSchema();
         
-        /* @var $result Result */
-        $this->factorize($result, ["SHOW_DATABASES"]);
-        
         foreach ($statement->getSubjects() as $subject) {
             $this->schemaManager->removeSchema($subject);
         }
         
         ### RESULT
         
-        /* @var $result Temporary */
-        $this->factorize($result);
-        
+        $result = new TemporaryResult();
         $result->setIsSuccess(true);
         
         foreach ($statement->getSubjects() as $subject) {
@@ -92,9 +87,7 @@ class DropExecutor extends Executor
         
         $databaseSchema = $this->schemaManager->getSchema();
         
-        /* @var $result Temporary */
-        $this->factorize($result);
-        
+        $result = new TemporaryResult();
         $result->setIsSuccess(!$databaseSchema->tableExists($tableName));
         
         return $result;
@@ -103,9 +96,7 @@ class DropExecutor extends Executor
     protected function executeDropView(Drop $statement, array $parameters = array())
     {
         
-        /* @var $result Temporary */
-        $this->factorize($result);
-        
+        $result = new TemporaryResult();
         return $result;
     }
 }

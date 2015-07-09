@@ -11,6 +11,8 @@
 
 namespace Addiks\PHPSQL\Executor;
 
+use ErrorException;
+use Exception;
 use Addiks\PHPSQL\Index;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Table;
@@ -18,34 +20,61 @@ use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
-use ErrorException;
-use Exception;
+use Addiks\PHPSQL\Entity\Result\TemporaryResult;
+use Addiks\PHPSQL\Service\StatementExecutor\SelectExecutor;
 
 class InsertExecutor extends Executor
 {
     
     use BinaryConverterTrait;
 
+    public function __construct(
+        ValueResolver $valueResolver,
+        TableManager $tableManager,
+        SelectExecutor $selectExecutor
+    ) {
+        $this->valueResolver = $valueResolver;
+        $this->tableManager = $tableManager;
+        $this->selectExecutor = $selectExecutor;
+    }
+
+    protected $valueResolver;
+
+    public function getValueResolver()
+    {
+        return $this->valueResolver;
+    }
+
+    protected $tableManager;
+
+    public function getTableManager()
+    {
+        return $this->tableManager;
+    }
+
+    protected $selectExecutor;
+    
+    public function getSelectExecutor()
+    {
+        return $this->selectExecutor;
+    }
+    
     protected function executeConcreteJob($statement, array $parameters = array())
     {
         /* @var $statement Insert */
         
-        /* @var $result Temporary */
-        $this->factorize($result);
-        
+        $result = new TemporaryResult();
+
         $tableName = (string)$statement->getTable();
         
         /* @var $table Table */
-        $this->factorize($table, [$tableName]);
+        $table = $this->tableManager->getTable($tableName);
         
         /* @var $tableSchema TableSchema */
         $tableSchema = $table->getTableSchema();
         
-        /* @var $valueResolver ValueResolver */
-        $this->factorize($valueResolver);
-        
-        $valueResolver->setStatement($statement);
-        $valueResolver->setStatementParameters($parameters);
+        $this->valueResolver->setStatement($statement);
+        $this->valueResolver->setStatementParameters($parameters);
         
         ### BUILD COLUMN MAP
         
@@ -67,8 +96,8 @@ class InsertExecutor extends Executor
             /* @var $indexPage Index */
             
             /* @var $index Index */
-            $this->factorize($index, [$indexId, $tableName]);
-            
+            $index = $this->tableManager->getIndex($indexId, $tableName);
+
             $indices[$indexId] = $index;
         }
         
@@ -80,10 +109,7 @@ class InsertExecutor extends Executor
             
             case $statement->getDataSource() instanceof Select:
                 
-                /* @var $selectExecutor Select */
-                $this->factorize($selectExecutor);
-                
-                $subResult = $selectExecutor->executeJob($statement->getDataSource(), $parameters);
+                $subResult = $this->selectExecutor->executeJob($statement->getDataSource(), $parameters);
                 
                 foreach ($subResult as $subResultRow) {
                     $rowData = array();
@@ -122,7 +148,7 @@ class InsertExecutor extends Executor
                         
                         if (isset($sourceRow[$columnName])) {
                             $value = $sourceRow[$columnName];
-                            $value = $valueResolver->resolveValue($value);
+                            $value = $this->valueResolver->resolveValue($value);
                         } else {
                             $value = null;
                         }

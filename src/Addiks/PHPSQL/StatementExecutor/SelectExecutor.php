@@ -26,9 +26,8 @@ class SelectExecutor extends Executor
     {
         /* @var $statement SelectStatement */
         
-        /* @var $result SelectResult */
-        $this->factorize($result, [$statement, $parameters]);
-        
+        $result = new SelectResult($statement, $parameters);
+
         return $result;
     }
 }

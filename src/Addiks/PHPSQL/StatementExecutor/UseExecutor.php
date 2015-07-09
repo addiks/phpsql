@@ -38,9 +38,7 @@ class UseExecutor extends Executor
         
         $this->schemaManager->setCurrentlyUsedDatabaseId($statement->getDatabase());
         
-        /* @var $result Temporary */
-        $this->factorize($result);
-        
+        $result = new TemporaryResult();
         $result->setIsSuccess($this->schemaManager->getCurrentlyUsedDatabaseId() === $statement->getDatabase());
         
         return $result;
