@@ -22,9 +22,22 @@ use Addiks\PHPSQL\SQLTokenIterator;
 
 class ConditionParser extends Part
 {
-    
+
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens, &$checkFlags = 0)
     {
+        
         $previousIndex = $tokens->getIndex();
         
         $operator = $this->parseCondition($tokens);
@@ -36,20 +49,16 @@ class ConditionParser extends Part
     public function convertSqlToJob(SQLTokenIterator $tokens)
     {
         
-        /* @var $conditionJob ConditionJob */
-        $this->factorize($conditionJob);
-        
         $condition = $this->parseCondition($tokens);
         if (is_null($condition)) {
             throw new MalformedSql("Missing valid operator in condition!", $tokens);
         }
+
+        $conditionJob = new ConditionJob();
         $conditionJob->setOperator($condition);
         
-        /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
-        
-        if ($valueParser->canParseTokens($tokens)) {
-            $conditionJob->setLastParameter($valueParser->convertSqlToJob($tokens));
+        if ($this->valueParser->canParseTokens($tokens)) {
+            $conditionJob->setLastParameter($this->valueParser->convertSqlToJob($tokens));
             
         }
         

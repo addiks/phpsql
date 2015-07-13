@@ -12,34 +12,23 @@
 namespace Addiks\PHPSQL\SqlParser;
 
 use Addiks\PHPSQL\Entity\Job\Part\ConditionJob;
-
 use Addiks\PHPSQL\SqlParser\Part\FunctionParser;
-
 use Addiks\PHPSQL\SqlParser\Part\Condition;
-
 use Addiks\PHPSQL\Value\Enum\Sql\Select\SpecialFlags;
-
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
-
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
-
 use Addiks\PHPSQL\SqlParser\Part\JoinDefinition;
-
 use Addiks\Analyser\Service\TokenParser\Expression\FunctionCallParser;
-
 use Addiks\PHPSQL\SqlParser\Part\Parenthesis;
-
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
-
 use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
-
 use Addiks\PHPSQL\SqlParser;
-
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
 
 use Addiks\PHPSQL\SQLTokenIterator;
+use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;
 
 /**
  * This class converts a tokenized sql-select-statement into an job-entity.
@@ -49,6 +38,78 @@ use Addiks\PHPSQL\SQLTokenIterator;
 class SelectSqlParser extends SqlParser
 {
     
+    protected $parenthesisParser;
+
+    public function getParenthesisParser()
+    {
+        return $this->parenthesisParser;
+    }
+
+    public function setParenthesisParser(ParenthesisParser $parenthesisParser)
+    {
+        $this->parenthesisParser = $parenthesisParser;
+    }
+
+    protected $functionParser;
+
+    public function getFunctionParser()
+    {
+        return $this->functionParser;
+    }
+
+    public function setFunctionParser(FunctionParser $functionParser)
+    {
+        $this->functionParser = $functionParser;
+    }
+
+    protected $joinParser;
+
+    public function getJoinParser()
+    {
+        return $this->joinParser;
+    }
+
+    public function setJoinParser(JoinDefinitionParser $joinParser)
+    {
+        $this->joinParser = $joinParser;
+    }
+
+    protected $conditionParser;
+
+    public function getConditionParser()
+    {
+        return $this->conditionParser;
+    }
+
+    public function setConditionParser(ConditionParser $conditionParser)
+    {
+        $this->conditionParser = $conditionParser;
+    }
+
+    protected $columnParser;
+
+    public function getColumnParser()
+    {
+        return $this->columnParser;
+    }
+
+    public function setColumnParser(ColumnParser $columnParser)
+    {
+        $this->columnParser = $columnParser;
+    }
+
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         return is_int($tokens->isTokenNum(SqlToken::T_SELECT(), TokenIterator::CURRENT))
@@ -65,26 +126,7 @@ class SelectSqlParser extends SqlParser
             throw new ErrorException("Tried to convert select-sql to job when sql-token-iterator does not point to T_SELECT!");
         }
         
-        /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
-        
-        /* @var $parenthesisParser Parenthesis */
-        $this->factorize($parenthesisParser);
-        
-        /* @var $functionParser FunctionCallParser */
-        $this->factorize($functionParser);
-        
-        /* @var $joinParser JoinDefinition */
-        $this->factorize($joinParser);
-        
-        /* @var $columnParser ColumnParser */
-        $this->factorize($columnParser);
-        
-        /* @var $tableSpecifierParser TableParser */
-        $this->factorize($tableSpecifierParser);
-        
-        /* @var $entitySelect SelectStatement */
-        $this->factorize($entitySelect);
+        $entitySelect = new SelectStatement();
         
         ### SPECIAL FLAGS
         
@@ -144,12 +186,6 @@ class SelectSqlParser extends SqlParser
         
         ### COLLECT TABLES
         
-        /* @var $tableSpecifierParser TableParser */
-        $this->factorize($tableSpecifierParser);
-        
-        /* @var $conditionParser Condition */
-        $this->factorize($conditionParser);
-        
         if ($tokens->seekTokenNum(SqlToken::T_FROM())) {
             if (!$joinParser->canParseTokens($tokens)) {
                 throw new MalformedSql("Missing valid join definition after FROM in SELECT statement!", $tokens);
@@ -201,9 +237,7 @@ class SelectSqlParser extends SqlParser
                 throw new MalformedSql("Missing condition for WHERE clause in SELECT statement!", $tokens);
             }
                 
-            /* @var $condition ConditionJob */
-            $this->factorize($condition);
-                
+            $condition = new ConditionJob();
             $condition->setFirstParameter($valueParser->convertSqlToJob($tokens));
                 
             $entitySelect->setResultFilter($condition);
@@ -250,8 +284,6 @@ class SelectSqlParser extends SqlParser
         ### PROCEDURE
         
         if ($tokens->seekTokenNum(SqlToken::T_PROCEDURE())) {
-            /* @var $functionParser FunctionParser */
-            $this->factorize($functionParser);
             
             if (!$functionParser->canParseTokens($tokens)) {
                 throw new MalformedSql("Missing valid procedure specifier after PROCEDURE!", $tokens);

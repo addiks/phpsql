@@ -12,20 +12,53 @@
 namespace Addiks\PHPSQL\SqlParser\Part;
 
 use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
-
 use Addiks\PHPSQL\SqlParser\Part;
-
 use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
-
 use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser\SelectSqlParser;
-use Addiks\PHPSQL\SqlParser\Part\Condition\Parameter;
+use Addiks\PHPSQL\SqlParser\Part\Condition\ParameterConditionParser;
 
 class FunctionParser extends Part
 {
     
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
+    protected $selectParser;
+
+    public function getSelectParser()
+    {
+        return $this->selectParser;
+    }
+
+    public function setSelectParser(SelectSqlParser $selectParser)
+    {
+        $this->selectParser = $selectParser;
+    }
+
+    protected $parameterConditionParser;
+
+    public function getParameterParser()
+    {
+        return $this->parameterConditionParser;
+    }
+
+    public function setParameterParser(ParameterConditionParser $parameterConditionParser)
+    {
+        $this->parameterConditionParser = $parameterConditionParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         $indexBefore = $tokens->getIndex();
@@ -50,20 +83,9 @@ class FunctionParser extends Part
             throw new ErrorException("Tried to convert sql function to job entity when token index is not at function!");
         }
         
-        /* @var $selectParser SelectSqlParser */
-        $this->factorize($selectParser);
-        
-        /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
-        
-        /* @var $parameterConditionParser Parameter */
-        $this->factorize($parameterConditionParser);
-        
-        /* @var $functionJob FunctionJob */
-        $this->factorize($functionJob);
-        
         $tokens->seekIndex($tokens->getExclusiveTokenIndex());
         
+        $functionJob = new FunctionJob();
         $functionJob->setName($tokens->getCurrentTokenString());
         
         if (!$tokens->seekTokenText('(')) {
@@ -72,17 +94,17 @@ class FunctionParser extends Part
         if (!$tokens->seekTokenText(')')) {
             do {
                 try {
-                    while ($parameterConditionParser->canParseTokens($tokens)) {
-                        $functionJob->addParameter($parameterConditionParser->convertSqlToJob($tokens));
+                    while ($this->parameterConditionParser->canParseTokens($tokens)) {
+                        $functionJob->addParameter($this->parameterConditionParser->convertSqlToJob($tokens));
                     }
                     switch(true){
                         
-                        case $valueParser->canParseTokens($tokens):
-                            $functionJob->addArgumentValue($valueParser->convertSqlToJob($tokens));
+                        case $this->valueParser->canParseTokens($tokens):
+                            $functionJob->addArgumentValue($this->valueParser->convertSqlToJob($tokens));
                             break;
                         
-                        case $selectParser->canParseTokens($tokens):
-                            $functionJob->addArgumentValue($selectParser->convertSqlToJob($tokens));
+                        case $this->selectParser->canParseTokens($tokens):
+                            $functionJob->addArgumentValue($this->selectParser->convertSqlToJob($tokens));
                             break;
                             
                         case $tokens->seekTokenText('*'):
@@ -92,8 +114,8 @@ class FunctionParser extends Part
                         default:
                             throw new MalformedSql("Invalid argument defintion in function call!", $tokens);
                     }
-                    while ($parameterConditionParser->canParseTokens($tokens)) {
-                        $functionJob->addParameter($parameterConditionParser->convertSqlToJob($tokens));
+                    while ($this->parameterConditionParser->canParseTokens($tokens)) {
+                        $functionJob->addParameter($this->parameterConditionParser->convertSqlToJob($tokens));
                     }
                 } catch (\ErrorException $exception) {
                     throw new MalformedSql($exception->getMessage(), $tokens);

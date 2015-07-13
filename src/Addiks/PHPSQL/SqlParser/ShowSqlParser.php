@@ -12,7 +12,6 @@
 namespace Addiks\PHPSQL\SqlParser;
 
 use Addiks\PHPSQL\Value\Enum\Sql\Show\ShowType;
-
 use Addiks\PHPSQL\Entity\Job\Statement\ShowStatement;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\SQLTokenIterator;
@@ -26,7 +25,7 @@ class ShowSqlParser extends SqlParser
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         return is_int($tokens->isTokenNum(SqlToken::T_SHOW(), TokenIterator::CURRENT))
-             || is_int($tokens->isTokenNum(SqlToken::T_SHOW(), TokenIterator::NEXT));
+            || is_int($tokens->isTokenNum(SqlToken::T_SHOW(), TokenIterator::NEXT));
     }
     
     public function convertSqlToJob(SQLTokenIterator $tokens)
@@ -38,8 +37,7 @@ class ShowSqlParser extends SqlParser
             throw new ErrorException("Tried to convert sql-show to job-entity when tokeniterator does not point to T_SHOW!");
         }
         
-        /* @var $showJob ShowStatement */
-        $this->factorize($showJob);
+        $showJob = new ShowStatement();
         
         switch(true){
 

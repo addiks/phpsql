@@ -36,6 +36,78 @@ use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
 class CreateSqlParser extends SqlParser
 {
     
+    protected $conditionParser;
+
+    public function getConditionParser()
+    {
+        return $this->conditionParser;
+    }
+
+    public function setConditionParser(ConditionParser $conditionParser)
+    {
+        $this->conditionParser = $conditionParser;
+    }
+
+    protected $tableParser;
+
+    public function getTableParser()
+    {
+        return $this->tableParser;
+    }
+
+    public function setTableParser(TableParser $tableParser)
+    {
+        $this->tableParser = $tableParser;
+    }
+
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
+    protected $selectParser;
+
+    public function getSelectParser()
+    {
+        return $this->selectParser;
+    }
+
+    public function setSelectParser(SelectSqlParser $selectParser)
+    {
+        $this->selectParser = $selectParser;
+    }
+
+    protected $columnParser;
+
+    public function getColumnParser()
+    {
+        return $this->columnParser;
+    }
+
+    public function setColumnParser(ColumnParser $columnParser)
+    {
+        $this->columnParser = $columnParser;
+    }
+
+    protected $columnDefinitonParser;
+
+    public function getColumnDefinitionParser()
+    {
+        return $this->columnDefinitonParser;
+    }
+
+    public function setColumnDefinitionParser(ColumnDefinitionParser $columnDefinitonParser)
+    {
+        $this->columnDefinitonParser = $columnDefinitonParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         return is_int($tokens->isTokenNum(SqlToken::T_CREATE(), TokenIterator::CURRENT))
@@ -48,7 +120,7 @@ class CreateSqlParser extends SqlParser
      */
     public function convertSqlToJob(SQLTokenIterator $tokens)
     {
-        
+
         $tokens->seekTokenNum(SqlToken::T_CREATE());
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_CREATE()) {
             throw new ErrorException("Tried to parse create-statement when token-iterator is not at T_CREATE!");
@@ -87,20 +159,14 @@ class CreateSqlParser extends SqlParser
             $ifNotExist = false;
         }
         
-        /* @var $valueParser ValueParser */
-        $this->getSqlParserByClass(ValueParser::class);
-        
-        if (!$valueParser->canParseTokens($tokens)) {
+        if (!$this->valueParser->canParseTokens($tokens)) {
             throw new MalformedSql("Missing name of database to create!", $tokens);
         }
         
-        /* @var $createJob CreateDatabaseStatement */
-        $this->factorize($createJob);
+        $databaseName = $this->valueParser->convertSqlToJob($tokens);
         
+        $createJob = new CreateDatabaseStatement();
         $createJob->setIfNotExists($ifNotExist);
-        
-        $databaseName = $valueParser->convertSqlToJob($tokens);
-        
         $createJob->setName($databaseName);
         
         return $createJob;
@@ -115,21 +181,6 @@ class CreateSqlParser extends SqlParser
     protected function parseCreateTable(SQLTokenIterator $tokens)
     {
         
-        /* @var $selectParser SelectSqlParser */
-        $selectParser = $this->getSqlParserByClass(SelectSqlParser::class);
-
-        /* @var $tableParser TableParser */
-        $tableParser = $this->getSqlParserByClass(TableParser::class);
-
-        /* @var $columnDefinitonParser ColumnDefinitionParser */
-        $columnDefinitonParser = $this->getSqlParserByClass(ColumnDefinitionParser::class);
-
-        /* @var $columnParser ColumnParser */
-        $columnParser = $this->getSqlParserByClass(ColumnParser::class);
-
-        /* @var $conditionParser ConditionParser */
-        $conditionParser = $this->getSqlParserByClass(ConditionParser::class);
-
         $createTableJob = new CreateTableStatement();
         $createTableJob->setIsTemporaryTable(is_int($tokens->isTokenNum(SqlToken::T_TEMPORARY(), TokenIterator::PREVIOUS)));
         
@@ -158,13 +209,13 @@ class CreateSqlParser extends SqlParser
         
         # LIKE other table?
         if ($tokens->seekTokenNum(SqlToken::T_LIKE())) {
-            if (!$tableParser->canParseTokens($tokens)) {
+            if (!$this->tableParser->canParseTokens($tokens)) {
                 throw new MalformedSql("Missing valid table-specifier for 'CREATE TABLE LIKE' statement!", $tokens);
             }
-            $createTableJob->setLikeTable($tableParser->convertSqlToJob($tokens));
+            $createTableJob->setLikeTable($this->tableParser->convertSqlToJob($tokens));
             
-        } elseif ($selectParser->canParseTokens($tokens)) {
-            $createTableJob->setFromSelectStatement($selectParser->convertSqlToJob($tokens));
+        } elseif ($this->selectParser->canParseTokens($tokens)) {
+            $createTableJob->setFromSelectStatement($this->selectParser->convertSqlToJob($tokens));
             
         # normal column definition
         } else {
@@ -172,16 +223,14 @@ class CreateSqlParser extends SqlParser
                 switch(true){
                     
                     # normal column definition
-                    case $columnDefinitonParser->canParseTokens($tokens):
-                        $createTableJob->addColumnDefinition($columnDefinitonParser->convertSqlToJob($tokens));
+                    case $this->columnDefinitonParser->canParseTokens($tokens):
+                        $createTableJob->addColumnDefinition($this->columnDefinitonParser->convertSqlToJob($tokens));
                         break;
                         
                     # [CONSTRAINT [$keyName]] PRIMARY KEY [$keyType] ($column[, $column, ...])
                     case $tokens->seekTokenNum(SqlToken::T_PRIMARY(), TokenIterator::NEXT, [T_STRING, SqlToken::T_CONSTRAINT()]):
                             
-                        /* @var $indexJob IndexPart */
-                        $this->factorize($indexJob);
-                        
+                        $indexJob = new IndexPart();
                         $indexJob->setIsPrimary(true);
                         
                         if ($tokens->isTokenNum(SqlToken::T_CONSTRAINT(), TokenIterator::PREVIOUS, [T_STRING])
@@ -206,10 +255,10 @@ class CreateSqlParser extends SqlParser
                         # columns in index
                         if ($tokens->seekTokenText('(')) {
                             do {
-                                if (!$columnParser->canParseTokens($tokens)) {
+                                if (!$this->columnParser->canParseTokens($tokens)) {
                                     throw new MalformedSql("Invalid column in column-list for defining index!", $tokens);
                                 }
-                                $indexJob->addColumn($columnParser->convertSqlToJob($tokens));
+                                $indexJob->addColumn($this->columnParser->convertSqlToJob($tokens));
                             } while ($tokens->seekTokenText(','));
                             
                             if (!$tokens->seekTokenText(')')) {
@@ -242,10 +291,10 @@ class CreateSqlParser extends SqlParser
                         # columns in index
                         if ($tokens->seekTokenText('(')) {
                             do {
-                                if (!$columnParser->canParseTokens($tokens)) {
+                                if (!$this->columnParser->canParseTokens($tokens)) {
                                     throw new MalformedSql("Invalid column in column-list for defining index!", $tokens);
                                 }
-                                $indexJob->addColumn($columnParser->convertSqlToJob($tokens));
+                                $indexJob->addColumn($this->columnParser->convertSqlToJob($tokens));
                             } while ($tokens->seekTokenText(','));
                         
                             if (!$tokens->seekTokenText(')')) {
@@ -303,10 +352,10 @@ class CreateSqlParser extends SqlParser
                         # columns in index
                         if ($tokens->seekTokenText('(')) {
                             do {
-                                if (!$columnParser->canParseTokens($tokens)) {
+                                if (!$this->columnParser->canParseTokens($tokens)) {
                                     throw new MalformedSql("Invalid column in column-list for defining index!", $tokens);
                                 }
-                                $indexJob->addColumn($columnParser->convertSqlToJob($tokens));
+                                $indexJob->addColumn($this->columnParser->convertSqlToJob($tokens));
                             } while ($tokens->seekTokenText(','));
                         
                             if (!$tokens->seekTokenText(')')) {
@@ -341,10 +390,10 @@ class CreateSqlParser extends SqlParser
                         # columns in index
                         if ($tokens->seekTokenText('(')) {
                             do {
-                                if (!$columnParser->canParseTokens($tokens)) {
+                                if (!$this->columnParser->canParseTokens($tokens)) {
                                     throw new MalformedSql("Invalid column in column-list for defining index!", $tokens);
                                 }
-                                $indexJob->addColumn($columnParser->convertSqlToJob($tokens));
+                                $indexJob->addColumn($this->columnParser->convertSqlToJob($tokens));
                             } while ($tokens->seekTokenText(','));
                                 
                             if (!$tokens->seekTokenText(')')) {
@@ -356,18 +405,18 @@ class CreateSqlParser extends SqlParser
                             throw new MalformedSql("Missing reference-definition in foreign-constraint-definition!", $tokens);
                         }
                         
-                        if (!$tableParser->canParseTokens($tokens)) {
+                        if (!$this->tableParser->canParseTokens($tokens)) {
                             throw new MalformedSql("Missing table-definition in foreign-constraint-definition!", $tokens);
                         }
-                        $fkTable = $tableParser->convertSqlToJob($tokens);
+                        $fkTable = $this->tableParser->convertSqlToJob($tokens);
                         
                         # columns in index
                         if ($tokens->seekTokenText('(')) {
                             do {
-                                if (!$columnParser->canParseTokens($tokens)) {
+                                if (!$this->columnParser->canParseTokens($tokens)) {
                                     throw new MalformedSql("Invalid column in column-list for defining index!", $tokens);
                                 }
-                                $fkColumn = $columnParser->convertSqlToJob($tokens);
+                                $fkColumn = $this->columnParser->convertSqlToJob($tokens);
                                 $fkColumn->setTable($fkTable);
                                 $indexJob->addForeignKey($fkColumn);
                             } while ($tokens->seekTokenText(','));
@@ -441,10 +490,10 @@ class CreateSqlParser extends SqlParser
                         
                     # CHECK (expression)
                     case $tokens->seekTokenNum(SqlToken::T_CHECK()):
-                        if (!$conditionParser->canParseTokens($tokens)) {
+                        if (!$this->conditionParser->canParseTokens($tokens)) {
                             throw new MalformedSql("Invalid CHECK condition statement!", $tokens);
                         }
-                        $createTableJob->addCheck($conditionParser->convertSqlToJob($tokens));
+                        $createTableJob->addCheck($this->conditionParser->convertSqlToJob($tokens));
                         break;
                     
                     default:
@@ -604,10 +653,10 @@ class CreateSqlParser extends SqlParser
                         throw new MalformedSql("Missing opening parenthesis for union-table-definition!", $tokens);
                     }
                     do {
-                        if (!$tableParser->canParseTokens($tokens)) {
+                        if (!$this->tableParser->canParseTokens($tokens)) {
                             throw new MalformedSql("Invalid table in table-list for defining union tables!", $tokens);
                         }
-                        $createTableJob->addUnionTable($tableParser->convertSqlToJob($tokens));
+                        $createTableJob->addUnionTable($this->tableParser->convertSqlToJob($tokens));
                     } while ($tokens->seekTokenText(','));
                         
                     if (!$tokens->seekTokenText(')')) {
@@ -669,15 +718,6 @@ class CreateSqlParser extends SqlParser
     protected function parseCreateIndex(SQLTokenIterator $tokens)
     {
         
-        /* @var $tableParser TableParser */
-        $tableParser = $this->getSqlParserByClass(TableParser::class);
-
-        /* @var $columnParser ColumnParser */
-        $columnParser = $this->getSqlParserByClass(ColumnParser::class);
-
-        /* @var $valueParser ValueParser */
-        $this->getSqlParserByClass(ValueParser::class);
-        
         /* @var $entity CreateIndexStatement */
         $entity = new CreateIndexStatement();
         
@@ -725,11 +765,11 @@ class CreateSqlParser extends SqlParser
             throw new MalformedSql("Missing T_ON for CREATE INDEX statement!", $tokens);
         }
         
-        if (!$tableParser->canParseTokens($tokens)) {
+        if (!$this->tableParser->canParseTokens($tokens)) {
             throw new MalformedSql("Missing valid table-specifier for CREATE INDEX statement!", $tokens);
         }
         
-        $entity->setTable($tableParser->convertSqlToJob($tokens));
+        $entity->setTable($this->tableParser->convertSqlToJob($tokens));
         
         ### COLUMNS
         
@@ -738,19 +778,19 @@ class CreateSqlParser extends SqlParser
         }
         
         do {
-            if (!$columnParser->canParseTokens($tokens)) {
+            if (!$this->columnParser->canParseTokens($tokens)) {
                 throw new MalformedSql("Missing valid column-specifier in CREATE INDEX statement!", $tokens);
             }
             
-            $column = $columnParser->convertSqlToJob($tokens);
+            $column = $this->columnParser->convertSqlToJob($tokens);
             
             $length = null;
             if ($tokens->seekTokenText('(')) {
-                if (!$valueParser->canParseTokens($tokens)) {
+                if (!$this->valueParser->canParseTokens($tokens)) {
                     throw new MalformedSql("Missing valid column-length in CREATE INDEX statement!", $tokens);
                 }
                 
-                $length = $valueParser->convertSqlToJob($tokens);
+                $length = $this->valueParser->convertSqlToJob($tokens);
                 
                 if (!$tokens->seekTokenText(')')) {
                     throw new MalformedSql("Missing closing parenthesis holding column-length in CREATE INDEX statement!", $tokens);

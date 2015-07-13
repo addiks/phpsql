@@ -14,15 +14,25 @@ namespace Addiks\PHPSQL\SqlParser\Part\Condition;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
-
 use Addiks\PHPSQL\SQLTokenIterator;
-
 use Addiks\PHPSQL\SqlParser;
 use Addiks\PHPSQL\Value\Enum\Sql\Condition\Parameter as ParameterValue;
 
-class Parameter extends SqlParser
+class ParameterConditionParser extends SqlParser
 {
     
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         try {
@@ -34,7 +44,6 @@ class Parameter extends SqlParser
     
     public function convertSqlToJob(SQLTokenIterator $tokens)
     {
-        $valueParser = $this->getSqlParserByClass(ValueParser::class);
         
         $parameterCondition = new ParameterConditionJob();
         
@@ -54,10 +63,10 @@ class Parameter extends SqlParser
         
         switch($parameter){
             case Parameter::SEPARATOR:
-                if (!$valueParser->canParseTokens($tokens)) {
+                if (!$this->valueParser->canParseTokens($tokens)) {
                     throw new MalformedSql("Missing valid value after parameter-condition {$parameterCondition->getParameter()->getValue()}!", $tokens);
                 }
-                $parameterCondition->setValue($valueParser->convertSqlToJob($tokens));
+                $parameterCondition->setValue($this->valueParser->convertSqlToJob($tokens));
                 break;
         }
         

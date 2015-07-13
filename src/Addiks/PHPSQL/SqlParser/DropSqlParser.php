@@ -16,9 +16,7 @@ use Addiks\PHPSQL\Entity\Job\Statement\DropStatement;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
-
 use Addiks\PHPSQL\SQLTokenIterator;
-
 use Addiks\PHPSQL\SqlParser;
 
 class DropSqlParser extends SqlParser
@@ -27,7 +25,7 @@ class DropSqlParser extends SqlParser
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         return is_int($tokens->isTokenNum(SqlToken::T_DROP(), TokenIterator::CURRENT))
-             || is_int($tokens->isTokenNum(SqlToken::T_DROP(), TokenIterator::NEXT));
+            || is_int($tokens->isTokenNum(SqlToken::T_DROP(), TokenIterator::NEXT));
     }
     
     public function convertSqlToJob(SQLTokenIterator $tokens)
@@ -39,8 +37,7 @@ class DropSqlParser extends SqlParser
             throw new ErrorException("Tried to parse sql-drop when token-iterator does not point to T_DROP!");
         }
         
-        /* @var $dropJob DropStatement */
-        $this->factorize($dropJob);
+        $dropJob = new DropStatement();
         
         if ($tokens->seekTokenNum(SqlToken::T_TEMPORARY())) {
             $dropJob->setIsTemporary(true);

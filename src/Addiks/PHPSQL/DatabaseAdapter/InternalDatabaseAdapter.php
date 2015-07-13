@@ -127,14 +127,12 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
     
     public function query($statementString, array $parameters = array(), SQLTokenIterator $tokens = null)
     {
-
-    #	$this->log($statementString, $parameters);
         
         if ($this->getIsStatementLogActive()) {
             $this->logQuery($statementString);
         }
         
-        $result = new TemporaryResult();
+        $result = null;
             
         try {
             $this->valueResolver->setStatementParameters($parameters);
@@ -162,6 +160,10 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
             throw $exception;
         }
         
+        if (is_null($result)) {
+            $result = new TemporaryResult();
+        }
+
         return $result;
     }
     

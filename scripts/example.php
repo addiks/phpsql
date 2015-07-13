@@ -26,7 +26,8 @@ $loader = new XmlFileLoader($container, new FileLocator(__DIR__));
 $loader->load(BASEDIR.'/services.xml');
 
 // create an in-memory database called "some_database_example"
-$pdo = new PDO("inmemory:some_example_database");
+$container->setParameter('addiks.phpsql.dsn', "inmemory:some_example_database");
+$pdo = $container->get("addiks.phpsql.pdo");
 
 // create a few tables inside that database
 // (the ENGINE definition will be ignored)

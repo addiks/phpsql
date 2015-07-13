@@ -8,6 +8,9 @@ namespace Addiks\PHPSQL;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\DatabaseAdapter\DatabaseAdapterInterface;
+use Addiks\PHPSQL\Value\Database\Dsn;
+use Addiks\PHPSQL\Value\Database\Dsn\InmemoryDsn;
+use Addiks\PHPSQL\Value\Database\Dsn\InternalDsn;
 
 /**
  *
@@ -21,14 +24,13 @@ class Database
             $dsnValue = InmemoryDsn::factory($dsn);
 
         } elseif (substr($dsn, 0, 9) === "internal:") {
-            $dsnValue = InternalDSN::factory($dsn);
+            $dsnValue = InternalDsn::factory($dsn);
 
         } else {
             throw new ErrorException("Internal PDO cannot handle this DSN: {$dsn}");
         }
         
         $this->dsn = $dsnValue;
-        
     }
 
     protected $dsn;
@@ -70,9 +72,7 @@ class Database
     
     public function addDatabaseAdapter(DatabaseAdapterInterface $adapter)
     {
-        
         $type = $adapter->getTypeName();
-        
         $this->databaseAdapters[$type] = $adapter;
     }
     
@@ -83,7 +83,7 @@ class Database
 
     public function getFilesystem()
     {
-        return $this->getDatabaseAdapter()->
+        return $this->getDatabaseAdapter()->getFilesystem();
     }
     
     /**

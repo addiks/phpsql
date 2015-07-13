@@ -12,18 +12,27 @@
 namespace Addiks\PHPSQL\SqlParser;
 
 use Addiks\PHPSQL\Entity\Job\Statement\SetStatement;
-
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
-
 use Addiks\PHPSQL\SQLTokenIterator;
-
 use Addiks\PHPSQL\SqlParser;
 
 class SetSqlParser extends SqlParser
 {
     
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         return is_int($tokens->isTokenNum(SqlToken::T_SET(), TokenIterator::CURRENT))
@@ -39,11 +48,7 @@ class SetSqlParser extends SqlParser
             throw new ErrorException("Tried to parse SET statement when token-iterator is not at T_SET!");
         }
         
-        /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
-        
-        /* @var $setJob SetStatement */
-        $this->factorize($setJob);
+        $setJob = new SetStatement();
         
         if (!$tokens->seekTokenNum(T_STRING)) {
             throw new MalformedSql("Missing configuration name for SET statement!", $tokens);
@@ -53,11 +58,11 @@ class SetSqlParser extends SqlParser
         
         $tokens->seekTokenText('=');
         
-        if (!$valueParser->canParseTokens($tokens)) {
+        if (!$this->valueParser->canParseTokens($tokens)) {
             throw new MalformedSql("Missing valid value definition for SET statement!", $tokens);
         }
         
-        $setJob->setValue($valueParser->convertSqlToJob($tokens));
+        $setJob->setValue($this->valueParser->convertSqlToJob($tokens));
         
         return $setJob;
     }

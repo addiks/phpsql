@@ -11,42 +11,90 @@
 
 namespace Addiks\PHPSQL\SqlParser\Part;
 
-use Addiks\PHPSQL\Entity\Job\Part\Parenthesis as ParenthesisPart;
-
-use Addiks\PHPSQL\Entity\Job\Part\Join;
-
+use Addiks\PHPSQL\Entity\Job\Part\ParenthesisParser;
+use Addiks\PHPSQL\Entity\Job\Part\JoinJob;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
-
 use Addiks\PHPSQL\SqlParser\SelectSqlParser;
-
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
-
 use Addiks\PHPSQL\SqlParser\Part;
-
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\TokenIterator;
-
+use Addiks\PHPSQL\Entity\Job\Part\Join\TableJoin;
 use Addiks\PHPSQL\SQLTokenIterator;
 
-class JoinDefinition extends Part
+class JoinDefinitionParser extends Part
 {
     
+    protected $tableParser;
+
+    public function getTableParser()
+    {
+        return $this->tableParser;
+    }
+
+    public function setTableParser(TableParser $tableParser)
+    {
+        $this->tableParser = $tableParser;
+    }
+
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
+    protected $selectParser;
+
+    public function getSelectParser()
+    {
+        return $this->selectParser;
+    }
+
+    public function setSelectParser(SelectSqlParser $selectParser)
+    {
+        $this->selectParser = $selectParser;
+    }
+
+    protected $columnParser;
+
+    public function getColumnParser()
+    {
+        return $this->columnParser;
+    }
+
+    public function setColumnParser(ColumnParser $columnParser)
+    {
+        $this->columnParser = $columnParser;
+    }
+
+    protected $parenthesisParser;
+
+    public function getParenthesisParser()
+    {
+        return $this->parenthesisParser;
+    }
+
+    public function setParenthesisParser(ParenthesisParser $parenthesisParser)
+    {
+        $this->parenthesisParser = $parenthesisParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         $previousIndex = $tokens->getIndex();
         
-        /* @var $tableParser TableParser */
-        $this->factorize($tableParser);
-        
-        /* @var $selectParser SelectSqlParser */
-        $this->factorize($selectParser);
-        
         if ($tokens->seekTokenText('(')) {
-            $return = $selectParser->canParseTokens($tokens);
+            $return = $this->selectParser->canParseTokens($tokens);
             
         } else {
-            $return = $tableParser->canParseTokens($tokens);
+            $return = $this->tableParser->canParseTokens($tokens);
         }
         
         $tokens->seekIndex($previousIndex);
@@ -56,20 +104,10 @@ class JoinDefinition extends Part
     public function convertSqlToJob(SQLTokenIterator $tokens)
     {
         
-        /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
-        
-        /* @var $columnParser ColumnParser */
-        $this->factorize($columnParser);
-        
-        /* @var $joinJob Join */
-        $this->factorize($joinJob);
-        
-        /* @var $tableJoin \Addiks\PHPSQL\Entity\Job\Part\Join\Table */
-        $this->factorize($tableJoin);
-        
+        $tableJoin = new TableJoin();
         $tableJoin->setDataSource($this->parseTableSource($tokens));
         
+        $joinJob = new JoinJob();
         $joinJob->addTable(clone $tableJoin);
         
         while (!is_null($joinData = $this->parseJoinOperator($tokens))) {
@@ -78,19 +116,19 @@ class JoinDefinition extends Part
             $tableJoin->setIsRight((bool)$joinData['isRight']);
             
             if ($tokens->seekTokenNum(SqlToken::T_ON())) {
-                if (!$valueParser->canParseTokens($tokens)) {
+                if (!$this->valueParser->canParseTokens($tokens)) {
                     throw new MalformedSql("Missing valid condition after ON for JOIN!", $tokens);
                 }
-                $tableJoin->setCondition($valueParser->convertSqlToJob($tokens));
+                $tableJoin->setCondition($this->valueParser->convertSqlToJob($tokens));
                 
             } elseif ($tokens->seekTokenNum(SqlToken::T_USING())) {
                 if ($tokens->seekTokenText('(')) {
                     throw new MalformedSql("Missing begin parenthesis after USING for JOIN!", $tokens);
                 }
-                if (!$columnParser->canParseTokens($tokens)) {
+                if (!$this->columnParser->canParseTokens($tokens)) {
                     throw new MalformedSql("Missing valid column specifier after USING for JOIN!", $tokens);
                 }
-                $tableJoin->setUsingColumnCondition($columnParser->convertSqlToJob($tokens));
+                $tableJoin->setUsingColumnCondition($this->columnParser->convertSqlToJob($tokens));
                 if ($tokens->seekTokenText(')')) {
                     throw new MalformedSql("Missing ending parenthesis after USING for JOIN!", $tokens);
                 }
@@ -150,26 +188,19 @@ class JoinDefinition extends Part
     protected function parseTableSource(SQLTokenIterator $tokens)
     {
         
-        /* @var $tableParser TableParser */
-        $this->factorize($tableParser);
-        
-        /* @var $parenthesisParser Parenthesis */
-        $this->factorize($parenthesisParser);
-        
-        /* @var $parenthesis ParenthesisPart */
-        $this->factorize($parenthesis);
+        $parenthesis = new ParenthesisPart();
         
         switch(true){
             
-            case $tableParser->canParseTokens($tokens):
-                $parenthesis->setContain($tableParser->convertSqlToJob($tokens));
+            case $this->tableParser->canParseTokens($tokens):
+                $parenthesis->setContain($this->tableParser->convertSqlToJob($tokens));
                 if ($tokens->seekTokenNum(T_STRING, TokenIterator::NEXT, [SqlToken::T_AS()])) {
                     $parenthesis->setAlias($tokens->getCurrentTokenString());
                 }
                 return $parenthesis;
                 
-            case $parenthesisParser->canParseTokens($tokens):
-                $parenthesisJob = $parenthesisParser->convertSqlToJob($tokens);
+            case $this->parenthesisParser->canParseTokens($tokens):
+                $parenthesisJob = $this->parenthesisParser->convertSqlToJob($tokens);
                 
                 if ($tokens->seekTokenNum(T_STRING, TokenIterator::NEXT, [SqlToken::T_AS()])) {
                     $parenthesis->setAlias($tokens->getCurrentTokenString());

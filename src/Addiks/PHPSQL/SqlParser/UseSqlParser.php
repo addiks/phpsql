@@ -12,22 +12,32 @@
 namespace Addiks\PHPSQL\SqlParser;
 
 use Addiks\PHPSQL\Entity\Job\Statement\UseStatement;
-
 use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
-
 use Addiks\PHPSQL\SQLTokenIterator;
-
 use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\SqlParser\Part\Specifier\DatabaseParser;
 
 class UseSqlParser extends SqlParser
 {
     
+    protected $databaseParser;
+
+    public function getDatabaseParser()
+    {
+        return $this->databaseParser;
+    }
+
+    public function setDatabaseParser(DatabaseParser $databaseParser)
+    {
+        $this->databaseParser = $databaseParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         return is_int($tokens->isTokenNum(SqlToken::T_USE(), TokenIterator::CURRENT))
-             || is_int($tokens->isTokenNum(SqlToken::T_USE(), TokenIterator::NEXT));
+            || is_int($tokens->isTokenNum(SqlToken::T_USE(), TokenIterator::NEXT));
     }
     
     public function convertSqlToJob(SQLTokenIterator $tokens)
@@ -39,17 +49,13 @@ class UseSqlParser extends SqlParser
             throw new MalformedSql("Tried to parse USE statement when token-iterator does not point to T_USE!", $tokens);
         }
         
-        /* @var $useJob UseStatement */
-        $this->factorize($useJob);
-        
-        /* @var $databaseParser Database */
-        $this->factorize($databaseParser);
-        
-        if (!$databaseParser->canParseTokens($tokens)) {
+        $useJob = new UseStatement();
+
+        if (!$this->databaseParser->canParseTokens($tokens)) {
             throw new MalformedSql("Missing database-specifier for USE statement!", $tokens);
         }
         
-        $useJob->setDatabase($databaseParser->convertSqlToJob($tokens));
+        $useJob->setDatabase($this->databaseParser->convertSqlToJob($tokens));
         
         return $useJob;
     }

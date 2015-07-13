@@ -56,10 +56,12 @@ class PDO extends BasePDO
         $this->dsn = $dsnValue;
         $this->options = $options;
 
-        if (!is_null($database)) {
-            $this->databaseResource = $database;
-            $this->databaseResource->setCurrentDatabaseType($dsnValue->getDriverName());
+        if (is_null($database)) {
+            $database = new Database($dsnValue);
         }
+
+        $this->databaseResource = $database;
+        $this->databaseResource->setCurrentDatabaseType($dsnValue->getDriverName());
     }
     
     /**

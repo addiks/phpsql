@@ -17,7 +17,7 @@ use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser;
 
-class Like extends SqlParser
+class LikeConditionParser extends SqlParser
 {
     
     public function canParseTokens(SQLTokenIterator $tokens, &$skipChecks = 0)

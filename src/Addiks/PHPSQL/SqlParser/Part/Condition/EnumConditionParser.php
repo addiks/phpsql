@@ -16,10 +16,23 @@ use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\SQLTokenIterator;
+use Addiks\PHPSQL\SqlParser\Part\ValueParser;
 
-class Enum extends Part
+class EnumConditionParser extends Part
 {
     
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens, &$checkFlags = 0)
     {
         $previousIndex = $tokens->getIndex();
@@ -42,9 +55,6 @@ class Enum extends Part
             throw new ErrorException("Missing IN after string when tried to parse IN-condition! (was 'canParseTokens' not used?)");
         }
         
-        /* @var $valueParser ValueParser */
-        $valueParser = $this->getSqlParserByClass(ValueParser::class);
-        
         $enumConditionJob = new EnumConditionJob();
         $enumConditionJob->setIsNegated($tokens->isTokenNum(SqlToken::T_NOT(), TokenIterator::PREVIOUS));
         
@@ -53,10 +63,10 @@ class Enum extends Part
         }
         
         do {
-            if (!$valueParser->canParseTokens($tokens)) {
+            if (!$this->valueParser->canParseTokens($tokens)) {
                 throw new MalformedSql("Missing valid value in value-listing for IN condition!", $tokens);
             }
-            $enumConditionJob->addValue($valueParser->convertSqlToJob($tokens));
+            $enumConditionJob->addValue($this->valueParser->convertSqlToJob($tokens));
         } while ($tokens->seekTokenText(','));
         
         if (!$tokens->seekTokenText(')')) {

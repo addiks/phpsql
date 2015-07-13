@@ -23,6 +23,18 @@ use Addiks\PHPSQL\SqlParser\Part\ValueParser;
 class ColumnDefinitionParser extends SqlParser
 {
     
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         $indexBefore = $tokens->getIndex();
@@ -53,11 +65,7 @@ class ColumnDefinitionParser extends SqlParser
     public function convertSqlToJob(SQLTokenIterator $tokens)
     {
         
-        /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
-        
-        /* @var $columnDefinition ColumnDefinitionJob */
-        $this->factorize($columnDefinition);
+        $columnDefinition = new ColumnDefinitionJob();
         
         $tokens->seekTokens([T_STRING, T_CONSTANT_ENCAPSED_STRING]);
         
@@ -89,10 +97,10 @@ class ColumnDefinitionParser extends SqlParser
         if ($tokens->seekTokenText('(')) {
             if ($dataType === DataType::ENUM() || $dataType === DataType::SET()) {
                 do {
-                    if (!$valueParser->canParseTokens($tokens)) {
+                    if (!$this->valueParser->canParseTokens($tokens)) {
                         throw new MalformedSql("Invalid value in ENUM!", $tokens);
                     }
-                    $columnDefinition->addEnumValue($valueParser->convertSqlToJob($tokens));
+                    $columnDefinition->addEnumValue($this->valueParser->convertSqlToJob($tokens));
                 } while ($tokens->seekTokenText(','));
                 
             } else {
@@ -128,10 +136,10 @@ class ColumnDefinitionParser extends SqlParser
                     break;
                         
                 case $tokens->seekTokenNum(SqlToken::T_DEFAULT()):
-                    if (!$valueParser->canParseTokens($tokens)) {
+                    if (!$this->valueParser->canParseTokens($tokens)) {
                         throw new MalformedSql("Missing valid default value for column definition!", $tokens);
                     }
-                    $columnDefinition->setDefaultValue($valueParser->convertSqlToJob($tokens));
+                    $columnDefinition->setDefaultValue($this->valueParser->convertSqlToJob($tokens));
                     break;
                         
                 case $tokens->seekTokenNum(SqlToken::T_UNIQUE()):
@@ -183,8 +191,8 @@ class ColumnDefinitionParser extends SqlParser
                     switch(true){
                         case $tokens->seekTokenNum(SqlToken::T_UPDATE()):
                             switch(true){
-                                case $valueParser->canParseTokens($tokens):
-                                    $columnDefinition->setOnUpdate($valueParser->convertSqlToJob($tokens));
+                                case $this->valueParser->canParseTokens($tokens):
+                                    $columnDefinition->setOnUpdate($this->valueParser->convertSqlToJob($tokens));
                                     break;
                                 
                                 default:
@@ -194,8 +202,8 @@ class ColumnDefinitionParser extends SqlParser
                         
                         case $tokens->seekTokenNum(SqlToken::T_DELETE()):
                             switch(true){
-                                case $valueParser->canParseTokens($tokens):
-                                    $columnDefinition->setOnDelete($valueParser->convertSqlToJob($tokens));
+                                case $this->valueParser->canParseTokens($tokens):
+                                    $columnDefinition->setOnDelete($this->valueParser->convertSqlToJob($tokens));
                                     break;
                                 
                                 default:

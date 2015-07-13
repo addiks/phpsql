@@ -13,14 +13,15 @@ namespace Addiks\PHPSQL\DatabaseAdapter;
 
 use Addiks\PHPSQL\DatabaseAdapter\InternalDatabaseAdapter;
 use Addiks\PHPSQL\Filesystem\InmemoryFilesystem;
+use Addiks\PHPSQL\SqlParser;
 
 class InmemoryDatabaseAdapter extends InternalDatabaseAdapter
 {
 
-    public function __construct()
+    public function __construct(SqlParser $sqlParser)
     {
         $this->filesystem = new InmemoryFilesystem();
-        parent::__construct();
+        parent::__construct($sqlParser);
     }
 
     public function getTypeName()

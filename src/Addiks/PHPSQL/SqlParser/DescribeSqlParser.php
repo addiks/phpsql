@@ -12,20 +12,28 @@
 namespace Addiks\PHPSQL\SqlParser;
 
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
-
 use Addiks\PHPSQL\Entity\Job\Statement\DescribeStatement;
-
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
-
 use Addiks\PHPSQL\SQLTokenIterator;
-
 use Addiks\PHPSQL\SqlParser;
 
 class DescribeSqlParser extends SqlParser
 {
     
+    protected $tableParser;
+
+    public function getTableParser()
+    {
+        return $this->tableParser;
+    }
+
+    public function setTableParser(TableParser $tableParser)
+    {
+        $this->tableParser = $tableParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         return is_int($tokens->isTokenNum(SqlToken::T_DESCRIBE(), TokenIterator::NEXT))
@@ -44,17 +52,12 @@ class DescribeSqlParser extends SqlParser
             throw new ErrorException("Tried to parse DESCRIBE statement when token-iterator does not point to DESC or DESCRIBE!");
         }
         
-        /* @var $tableParser TableParser */
-        $this->factorize($tableParser);
-        
-        if (!$tableParser->canParseTokens($tokens)) {
+        if (!$this->tableParser->canParseTokens($tokens)) {
             throw new MalformedSql("Missing table-specifier for DESCRIBE statement!", $tokens);
         }
         
-        /* @var $describeJob DescribeStatement */
-        $this->factorize($describeJob);
-        
-        $describeJob->setTable($tableParser->convertSqlToJob($tokens));
+        $describeJob = new DescribeStatement();
+        $describeJob->setTable($this->tableParser->convertSqlToJob($tokens));
         
         if ($tokens->seekTokenText('wild')) {
             $describeJob->setIsWild(true);

@@ -20,7 +20,19 @@ use Addiks\PHPSQL\Entity\Job\Part\FlowControl\CaseJob;
 
 class CaseParser extends SqlParser
 {
-    
+
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         return is_int($tokens->isTokenNum(SqlToken::T_CASE(), TokenIterator::NEXT))
@@ -30,9 +42,6 @@ class CaseParser extends SqlParser
     public function convertSqlToJob(SQLTokenIterator $tokens)
     {
         
-        /* @var $valueParser ValueParser */
-        $valueParser = $this->getSqlParserByClass(ValueParser::class);
-        
         $tokens->seekTokenNum(SqlToken::T_CASE());
         
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_CASE()) {
@@ -41,25 +50,25 @@ class CaseParser extends SqlParser
         
         $caseJob = new CaseJob();
         
-        if (!$tokens->isTokenNum(SqlToken::T_WHEN()) && $valueParser->canParseTokens($tokens)) {
-            $caseJob->setCaseValue($valueParser->convertSqlToJob($tokens));
+        if (!$tokens->isTokenNum(SqlToken::T_WHEN()) && $this->valueParser->canParseTokens($tokens)) {
+            $caseJob->setCaseValue($this->valueParser->convertSqlToJob($tokens));
         }
         
         do {
             if (!$tokens->seekTokenNum(SqlToken::T_WHEN())) {
                 throw new MalformedSql("Missing WHEN in CASE statement!", $tokens);
             }
-            if (!$valueParser->canParseTokens($tokens)) {
+            if (!$this->valueParser->canParseTokens($tokens)) {
                 throw new MalformedSql("Missing valid when-value in CASE statement!", $tokens);
             }
-            $whenValue = $valueParser->convertSqlToJob($tokens);
+            $whenValue = $this->valueParser->convertSqlToJob($tokens);
             
             if (!$tokens->seekTokenNum(SqlToken::T_THEN())) {
                 throw new MalformedSql("Missing THEN in CASE statement!", $tokens);
             }
             switch(true){
-                case $valueParser->canParseTokens($tokens):
-                    $thenExpression = $valueParser->convertSqlToJob($tokens);
+                case $this->valueParser->canParseTokens($tokens):
+                    $thenExpression = $this->valueParser->convertSqlToJob($tokens);
                     break;
                 
                 default:
@@ -71,8 +80,8 @@ class CaseParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_ELSE())) {
             switch(true){
-                case $valueParser->canParseTokens($tokens):
-                    $caseJob->setElseStatement($valueParser->convertSqlToJob($tokens));
+                case $this->valueParser->canParseTokens($tokens):
+                    $caseJob->setElseStatement($this->valueParser->convertSqlToJob($tokens));
                     break;
                 
                 default:

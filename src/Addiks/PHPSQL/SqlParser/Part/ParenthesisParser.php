@@ -21,6 +21,30 @@ use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 class ParenthesisParser extends Part
 {
     
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
+    protected $selectParser;
+
+    public function getSelectParser()
+    {
+        return $this->selectParser;
+    }
+
+    public function setSelectParser(SelectSqlParser $selectParser)
+    {
+        $this->selectParser = $selectParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens, $from = TokenIterator::NEXT)
     {
         return is_int($tokens->isTokenText('(', $from));
@@ -33,23 +57,17 @@ class ParenthesisParser extends Part
             throw new ErrorException("Tried to parse sql-parenthesis when token-iterator does not point to paranthesis ('(' sign)!");
         }
         
-        /* @var $subQueryParser Select */
-        $this->factorize($subQueryParser);
-        
-        /* @var $valueParser ValueParser */
-        $this->factorize($valueParser);
-        
         /* @var $parenthesis Parenthesis */
-        $this->factorize($parenthesis);
+        $parenthesis = new Parenthesis();
         
         switch(true){
             
-            case $subQueryParser->canParseTokens($tokens):
-                $parenthesis->setContain($subQueryParser->convertSqlToJob($tokens));
+            case $this->selectParser->canParseTokens($tokens):
+                $parenthesis->setContain($this->selectParser->convertSqlToJob($tokens));
                 break;
                 
-            case $valueParser->canParseTokens($tokens):
-                $parenthesis->setContain($valueParser->convertSqlToJob($tokens));
+            case $this->valueParser->canParseTokens($tokens):
+                $parenthesis->setContain($this->valueParser->convertSqlToJob($tokens));
                 break;
         }
         
@@ -62,9 +80,8 @@ class ParenthesisParser extends Part
         }
         
         if ($parenthesis->getContain() instanceof Select && $tokens->isTokenNum(SqlToken::T_UNION())) {
-            /* @var $unionSelect Select */
-            $this->factorize($unionSelect);
-            
+            $unionSelect = new Select();
+
             while ($tokens->seekTokenNum(SqlToken::T_UNION())) {
                 /* @var $lastUnionedSelect Select */
                 $lastUnionedSelect = $parenthesis->getContain();
@@ -82,10 +99,10 @@ class ParenthesisParser extends Part
                     
                 $isUnionInParenthesis = $tokens->seekTokenText('(');
                     
-                if (!$subQueryParser->canParseTokens($tokens)) {
+                if (!$this->selectParser->canParseTokens($tokens)) {
                     throw new MalformedSql("Missing following SELECT statement after UNION in SELECT statement!", $tokens);
                 }
-                $lastUnionedSelect->setUnionSelect($subQueryParser->convertSqlToJob($tokens), $isUnionDistinct);
+                $lastUnionedSelect->setUnionSelect($this->selectParser->convertSqlToJob($tokens), $isUnionDistinct);
                     
                 if ($isUnionInParenthesis && !$tokens->seekTokenText(')')) {
                     throw new MalformedSql("Missing ending parenthesis after UNION in SELECT statement!", $tokens);
@@ -97,14 +114,12 @@ class ParenthesisParser extends Part
             ### APPENDED CONDITION (HAVING)
             
             if ($tokens->seekTokenNum(SqlToken::T_HAVING())) {
-                if (!$valueParser->canParseTokens($tokens)) {
+                if (!$this->valueParser->canParseTokens($tokens)) {
                     throw new MalformedSql("Missing condition for WHERE clause in SELECT statement!", $tokens);
                 }
             
-                /* @var $condition Condition */
-                $this->factorize($condition);
-            
-                $condition->setFirstParameter($valueParser->convertSqlToJob($tokens));
+                $condition = new Condition();
+                $condition->setFirstParameter($this->valueParser->convertSqlToJob($tokens));
             
                 $unionSelect->setResultFilter($condition);
             }
@@ -116,11 +131,11 @@ class ParenthesisParser extends Part
                     throw new MalformedSql("Missing BY after ORDER on SELECT statement!", $tokens);
                 }
                 do {
-                    if (!$valueParser->canParseTokens($tokens)) {
+                    if (!$this->valueParser->canParseTokens($tokens)) {
                         throw new MalformedSql("Missing value for ORDER BY part on SELECT statement!", $tokens);
                     }
                 
-                    $orderValue = $valueParser->convertSqlToJob($tokens);
+                    $orderValue = $this->valueParser->convertSqlToJob($tokens);
                     if ($tokens->seekTokenNum(SqlToken::T_DESC())) {
                         $unionSelect->addOrderColumn($orderValue, SqlToken::T_DESC());
                     
