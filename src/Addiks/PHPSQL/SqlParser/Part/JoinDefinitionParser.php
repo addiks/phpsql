@@ -11,7 +11,6 @@
 
 namespace Addiks\PHPSQL\SqlParser\Part;
 
-use Addiks\PHPSQL\Entity\Job\Part\ParenthesisParser;
 use Addiks\PHPSQL\Entity\Job\Part\JoinJob;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\SelectSqlParser;
@@ -22,6 +21,7 @@ use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\Entity\Job\Part\Join\TableJoin;
 use Addiks\PHPSQL\SQLTokenIterator;
+use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;
 
 class JoinDefinitionParser extends Part
 {

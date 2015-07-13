@@ -29,6 +29,8 @@ use Addiks\PHPSQL\TokenIterator;
 
 use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;
+use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
+use Addiks\PHPSQL\SqlParser\Part\JoinDefinitionParser;
 
 /**
  * This class converts a tokenized sql-select-statement into an job-entity.

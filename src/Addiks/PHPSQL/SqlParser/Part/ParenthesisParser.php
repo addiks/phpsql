@@ -17,6 +17,7 @@ use Addiks\PHPSQL\SqlParser;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
+use Addiks\PHPSQL\SqlParser\SelectSqlParser;
 
 class ParenthesisParser extends Part
 {

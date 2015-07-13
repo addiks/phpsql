@@ -126,7 +126,6 @@ class SqlParser
     
     public function addSqlParser(self $sqlParser)
     {
-        $sqlParser->setParentSqlParser($this);
         $this->sqlParser[get_class($sqlParser)] = $sqlParser;
     }
 
@@ -226,10 +225,10 @@ class SqlParser
             $dropParser,
             $insertParser,
             $selectParser,
-            $setSqlParser,
-            $showSqlParser,
-            $updateSqlParser,
-            $useSqlParser,
+            $setParser,
+            $showParser,
+            $updateParser,
+            $useParser,
         ] as $sqlParser) {
             $this->addSqlParser($sqlParser);
         }

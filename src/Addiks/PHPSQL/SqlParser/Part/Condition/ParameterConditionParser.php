@@ -17,6 +17,7 @@ use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser;
 use Addiks\PHPSQL\Value\Enum\Sql\Condition\Parameter as ParameterValue;
+use Addiks\PHPSQL\SqlParser\Part\ValueParser;
 
 class ParameterConditionParser extends SqlParser
 {

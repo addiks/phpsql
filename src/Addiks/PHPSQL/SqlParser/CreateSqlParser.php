@@ -18,7 +18,6 @@ use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateTableStatement;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
 use Addiks\PHPSQL\Value\Enum\Sql\IndexType;
 use Addiks\PHPSQL\Entity\Job\Part\Index as IndexPart;
-use Addiks\PHPSQL\Entity\Job\Statement\Create\Index;
 use Addiks\PHPSQL\SqlParser\Part\Condition;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\Part\ColumnDefinition;
@@ -272,8 +271,8 @@ class CreateSqlParser extends SqlParser
                     # KEY|INDEX [index_name] [index_type] (index_col_name,...)
                     case $tokens->seekTokenNum(SqlToken::T_INDEX()):
                     case $tokens->seekTokenNUm(SqlToken::T_KEY()):
-                        /* @var $indexJob Index */
-                        $indexJob = new Index();
+                        /* @var $indexJob IndexPart */
+                        $indexJob = new IndexPart();
                         
                         if ($tokens->seekTokenNum(T_STRING)) {
                             $indexJob->setName($tokens->getCurrentTokenString());
@@ -368,8 +367,8 @@ class CreateSqlParser extends SqlParser
                         
                     # [CONSTRAINT [$symbol]] FOREIGN KEY [$name] ($column[, $column, ...]) [$reference]
                     case $tokens->seekTokenNum(SqlToken::T_FOREIGN(), TokenIterator::NEXT, [T_STRING, SqlToken::T_CONSTRAINT()]):
-                        /* @var $indexJob Index */
-                        $indexJob = new Index();
+                        /* @var $indexJob IndexPart */
+                        $indexJob = new IndexPart();
                         
                         if ($tokens->isTokenNum(SqlToken::T_CONSTRAINT(), TokenIterator::PREVIOUS, [T_STRING])
                         && $tokens->seekTokenNum(T_STRING, TokenIterator::PREVIOUS)) {

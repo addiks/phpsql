@@ -11,12 +11,11 @@
 
 namespace Addiks\PHPSQL\SqlParser\Part;
 
-use Addiks\PHPSQL\Entity\Job\Part\Value as ValueJob;
-
+use Addiks\PHPSQL\Entity\Job\Part\ValuePart as ValueJob;
 use Addiks\PHPSQL\SqlParser\Part\FlowControl\CaseParser;
 use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
-use Addiks\PHPSQL\SqlParser\Part\ConditionParser\LikeConditionParser;
-use Addiks\PHPSQL\SqlParser\Part\ConditionParser\EnumConditionParser;
+use Addiks\PHPSQL\SqlParser\Part\Condition\LikeConditionParser;
+use Addiks\PHPSQL\SqlParser\Part\Condition\EnumConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\Part\FunctionParser;
 use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;

@@ -19,6 +19,8 @@ use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
+use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 
 class UpdateSqlParser extends SqlParser
 {
