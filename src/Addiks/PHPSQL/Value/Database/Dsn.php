@@ -11,6 +11,8 @@
 namespace Addiks\PHPSQL\Value\Database;
 
 use Addiks\PHPSQL\Value\Text\Line;
+use Addiks\PHPSQL\Value\Database\Dsn\InmemoryDsn;
+use Addiks\PHPSQL\Value\Database\Dsn\InternalDsn;
 
 /**
  * The "Data Source Name".
@@ -48,5 +50,22 @@ abstract class Dsn extends Line
         $driver = reset($value);
         
         return $driver;
+    }
+
+    public function factorizeDSN($dsn)
+    {
+        $dsnValue = null;
+
+        if (substr($dsn, 0, 9) === "inmemory:") {
+            $dsnValue = InmemoryDsn::factory($dsn);
+
+        } elseif (substr($dsn, 0, 9) === "internal:") {
+            $dsnValue = InternalDsn::factory($dsn);
+
+        } else {
+            throw new ErrorException("Internal PDO cannot handle this DSN: {$dsn}");
+        }
+
+        return $dsnValue;
     }
 }

@@ -13,7 +13,6 @@ namespace Addiks\PHPSQL\Filesystem;
 
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
-use Addiks\PHPSQL\Value\Text\Filepath;
 
 /**
  * Emulates a file-system completely in-memory.
@@ -38,7 +37,7 @@ class InmemoryFilesystem implements FilesystemInterface
      */
     protected $fileResources = array();
 
-    protected function getInternalFileHandle(Filepath $filePath)
+    protected function getInternalFileHandle($filePath)
     {
         if ($this->fileIsDir($filePath)) {
             throw new ErrorException("Requested file is a folder ('{$filePath}')!");
@@ -49,7 +48,7 @@ class InmemoryFilesystem implements FilesystemInterface
         return $this->fileResources[$filePath];
     }
 
-    public function getFileContents(Filepath $filePath)
+    public function getFileContents($filePath)
     {
         $fileHandle = $this->getInternalFileHandle($filePath);
         fseek($fileHandle, 0, SEEK_END);
@@ -59,7 +58,7 @@ class InmemoryFilesystem implements FilesystemInterface
         return $content;
     }
     
-    public function putFileContents(Filepath $filePath, $content, $flags = 0)
+    public function putFileContents($filePath, $content, $flags = 0)
     {
         $fileHandle = $this->getInternalFileHandle($filePath);
         $byteCount = strlen($content);
@@ -68,7 +67,7 @@ class InmemoryFilesystem implements FilesystemInterface
         fwrite($fileHandle, $content);
     }
     
-    public function getFile(Filepath $filePath, $mode)
+    public function getFile($filePath, $mode)
     {
         $resourceProxy = null;
 
@@ -80,7 +79,7 @@ class InmemoryFilesystem implements FilesystemInterface
         return $resourceProxy;
     }
 
-    public function fileOpen(Filepath $filePath, $mode)
+    public function fileOpen($filePath, $mode)
     {
         return $this->getFileProxy($filePath, $mode);
     }

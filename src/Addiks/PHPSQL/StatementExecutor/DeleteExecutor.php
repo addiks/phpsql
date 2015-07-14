@@ -9,13 +9,18 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\SqlParser\DeleteSqlParser;
+use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\BinaryConverterTrait;
 
-class DeleteExecutor extends Executor
+class DeleteExecutor implements StatementExecutorInterface
 {
     
     use BinaryConverterTrait;
@@ -42,9 +47,14 @@ class DeleteExecutor extends Executor
         return $this->tableManager;
     }
     
-    protected function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
     {
-        /* @var $statement Delete */
+        return $statement instanceof DeleteSqlParser;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
+    {
+        /* @var $statement DeleteSqlParser */
         
         $result = new TemporaryResult();
         

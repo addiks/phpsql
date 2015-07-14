@@ -9,7 +9,7 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Value\Enum\Page\Index\Type;
 use Addiks\PHPSQL\Entity\Exception\Conflict;
@@ -21,6 +21,9 @@ use Addiks\PHPSQL\Entity\Page\Schema\Index;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateIndexStatement;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\TableManager;
 
 class CreateIndexExecutor implements StatementExecutorInterface
 {
@@ -38,9 +41,14 @@ class CreateIndexExecutor implements StatementExecutorInterface
         return $this->tableManager;
     }
     
-    public function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
     {
-        /* @var $statement Index */
+        return $statement instanceof CreateIndexStatement;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
+    {
+        /* @var $statement CreateIndexStatement */
         
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTable();

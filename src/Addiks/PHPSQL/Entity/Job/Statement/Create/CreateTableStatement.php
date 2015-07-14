@@ -20,7 +20,7 @@ use Addiks\PHPSQL\Entity\Job\Part\Index;
 use Addiks\PHPSQL\Entity\Job\Statement\Select;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Entity\Job\Statement\Create;
-use Addiks\PHPSQL\Executor\CreateTableExecutor;
+use Addiks\PHPSQL\StatementExecutor\CreateTableExecutor;
 
 /**
  *

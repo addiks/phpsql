@@ -9,24 +9,26 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Value\Enum\Sql\Show\ShowType;
-
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Job\Statement\ShowStatement as ShowJob;
+use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
+use Addiks\PHPSQL\Entity\Job\StatementJob\ShowStatement;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
+use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\Schema\SchemaManager;
 
-class ShowExecutor extends Executor
+class ShowExecutor implements StatementExecutorInterface
 {
     
     public function __construct(
-        FilesystemInterface $filesystem,
-        ValueResolver $valueResolver,
         SchemaManager $schemaManager
     ) {
-        parent::__construct($filesystem, $valueResolver);
         $this->schemaManager = $schemaManager;
     }
 
@@ -37,9 +39,14 @@ class ShowExecutor extends Executor
         return $this->schemaManager;
     }
     
-    protected function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
     {
-        /* @var $statement Show */
+        return $statement instanceof ShowStatement;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
+    {
+        /* @var $statement ShowStatement */
         
         switch($statement->getType()){
             case ShowType::DATABASES():

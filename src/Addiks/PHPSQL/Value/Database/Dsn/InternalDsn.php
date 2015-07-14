@@ -12,9 +12,7 @@
 namespace Addiks\PHPSQL\Value\Database\Dsn;
 
 use ErrorException;
-
 use Addiks\PHPSQL\Value\Database\Dsn;
-
 use Addiks\PHPSQL\Database;
 
 class InternalDsn extends Dsn

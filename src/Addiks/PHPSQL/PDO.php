@@ -18,6 +18,7 @@ use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\DatabaseAdapter\InmemoryDatabaseAdapter;
 use Addiks\PHPSQL\DatabaseAdapter\InternalDatabaseAdapter;
 use PDO as BasePDO;
+use Addiks\PHPSQL\Value\Database\Dsn;
 
 /**
  * Takes place of the original \PDO class in PHP for providing a connection to the internal database.
@@ -43,25 +44,18 @@ class PDO extends BasePDO
         $options = array(),
         Database $database = null
     ) {
-        if (substr($dsn, 0, 9) === "inmemory:") {
-            $dsnValue = InmemoryDsn::factory($dsn);
-
-        } elseif (substr($dsn, 0, 9) === "internal:") {
-            $dsnValue = InternalDSN::factory($dsn);
-
-        } else {
-            throw new ErrorException("Internal PDO cannot handle this DSN: {$dsn}");
+        if (!$dsn instanceof Dsn) {
+            $dsn = Dsn::factorizeDSN($dsn);
         }
-        
-        $this->dsn = $dsnValue;
-        $this->options = $options;
 
         if (is_null($database)) {
-            $database = new Database($dsnValue);
+            $database = new Database($dsn);
         }
 
+        $this->dsn = $dsn;
+        $this->options = $options;
         $this->databaseResource = $database;
-        $this->databaseResource->setCurrentDatabaseType($dsnValue->getDriverName());
+        $this->databaseResource->setCurrentDatabaseType($dsn->getDriverName());
     }
     
     /**

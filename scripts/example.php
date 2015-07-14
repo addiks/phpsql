@@ -20,15 +20,7 @@ function __autoload($className)
     }
 }
 
-require_once(BASEDIR."/vendor/autoload.php");
-
-$container = new ContainerBuilder();
-$loader = new XmlFileLoader($container, new FileLocator(__DIR__));
-$loader->load(BASEDIR.'/services.xml');
-
-// create an in-memory database called "some_database_example"
-$container->setParameter('addiks.phpsql.dsn', "inmemory:some_example_database");
-$pdo = $container->get("addiks.phpsql.pdo");
+$pdo = new PDO("inmemory:some_example_database");
 
 try{
 

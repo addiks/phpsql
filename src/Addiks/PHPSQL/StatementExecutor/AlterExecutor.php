@@ -12,14 +12,15 @@
 namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Value\Enum\Sql\Alter\DataChange\AlterAttributeType;
-
 use Addiks\PHPSQL\Entity\Result\Temporary;
-
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\TableManager;
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
+use Addiks\PHPSQL\Entity\Job\StatementJob\AlterStatement;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Schema\SchemaManager;
 
 class AlterExecutor implements StatementExecutorInterface
 {
@@ -46,9 +47,14 @@ class AlterExecutor implements StatementExecutorInterface
         return $this->tableManager;
     }
     
-    protected function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
     {
-        /* @var $statement Alter */
+        return $statement instanceof AlterStatement;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
+    {
+        /* @var $statement AlterStatement */
         
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTable();

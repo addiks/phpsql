@@ -12,13 +12,9 @@
 namespace Addiks\PHPSQL\Entity\Job\Part;
 
 use Addiks\PHPSQL\Value\Enum\Sql\ForeignKey\ReferenceOption;
-
 use Addiks\PHPSQL\Value\Enum\Sql\ForeignKey\MatchType;
-
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
-
 use Addiks\PHPSQL\Value\Enum\Sql\IndexType;
-
 use Addiks\PHPSQL\Entity\Job\Part;
 
 class Index extends Part
@@ -137,7 +133,7 @@ class Index extends Part
     
     private $foreignKeys;
     
-    public function addForeignKey(Column $column)
+    public function addForeignKey(ColumnSpecifier $column)
     {
         $this->foreignKeys[] = $column;
     }

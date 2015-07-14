@@ -9,15 +9,18 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Executor;
-
 use Addiks\PHPSQL\Entity\Result\Temporary;
-
 use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
+use Addiks\PHPSQL\Entity\Job\StatementJob\UpdateStatement;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\TableManager;
 
-class UpdateExecutor extends Executor
+class UpdateExecutor implements StatementExecutorInterface
 {
     
     public function __construct(
@@ -42,9 +45,14 @@ class UpdateExecutor extends Executor
         return $this->tableManager;
     }
     
-    protected function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
     {
-        /* @var $statement Update */
+        return $statement instanceof UpdateStatement;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
+    {
+        /* @var $statement UpdateStatement */
         
         $result = new TemporaryResult();
         // TODO: multiple tables or not?

@@ -9,15 +9,16 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Executor;
-
 use Addiks\PHPSQL\Entity\Result\Temporary;
-
 use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Entity\Job\StatementJob\DropStatement;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Schema\SchemaManager;
 
-class UseExecutor extends Executor
+class UseExecutor implements StatementExecutorInterface
 {
     
     public function __construct(SchemaManager $schemaManager)
@@ -32,9 +33,14 @@ class UseExecutor extends Executor
         return $this->schemaManager;
     }
     
-    protected function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
     {
-        /* @var $statement Drop */
+        return $statement instanceof DropStatement;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
+    {
+        /* @var $statement DropStatement */
         
         $this->schemaManager->setCurrentlyUsedDatabaseId($statement->getDatabase());
         

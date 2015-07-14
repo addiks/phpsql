@@ -9,22 +9,28 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Executor;
-
 use Addiks\PHPSQL\Entity\Result\Temporary;
-
 use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
+use Addiks\PHPSQL\Entity\Job\StatementJob\SetStatement;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
 
-class SetExecutor extends Executor
+class SetExecutor implements StatementExecutorInterface
 {
     
-    protected function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
     {
-        /* @var $statement Set */
+        return $statement instanceof SetStatement;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
+    {
+        /* @var $statement SetStatement */
         
-        # ...
+        # TODO: implement this
         
         $result = new TemporaryResult();
         return $result;

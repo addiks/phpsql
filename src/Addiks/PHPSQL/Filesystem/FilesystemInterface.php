@@ -12,18 +12,17 @@
 namespace Addiks\PHPSQL\Filesystem;
 
 use Addiks\PHPSQL\Filesystem;
-use Addiks\PHPSQL\Value\Text\Filepath;
 
 interface FilesystemInterface
 {
     
-    public function getFileContents(Filepath $filePath);
+    public function getFileContents($filePath);
     
-    public function putFileContents(Filepath $filePath, $content, $flags = 0);
+    public function putFileContents($filePath, $content, $flags = 0);
     
-    public function getFile(Filepath $filePath, $mode);
+    public function getFile($filePath, $mode);
 
-    public function fileOpen(Filepath $filePath, $mode);
+    public function fileOpen($filePath, $mode);
     
     public function fileClose($handle);
     

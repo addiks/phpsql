@@ -9,6 +9,7 @@ use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Value\Specifier\DatabaseSpecifier;
 use Addiks\PHPSQL\Table;
 use Addiks\PHPSQL\Index;
+use Addiks\PHPSQL\Schema\SchemaManager;
 
 class TableManager
 {

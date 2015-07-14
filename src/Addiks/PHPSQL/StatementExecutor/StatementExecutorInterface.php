@@ -5,7 +5,11 @@
 
 namespace Addiks\PHPSQL\StatementExecutor;
 
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+
 interface StatementExecutorInterface
 {
-    public function executeJob(Statement $statement, array $parameters = array());
+    public function canExecuteJob(StatementJob $statement);
+
+    public function executeJob(StatementJob $statement, array $parameters = array());
 }

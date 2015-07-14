@@ -9,7 +9,7 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
 use ErrorException;
 use Addiks\PHPSQL\Table;
@@ -33,6 +33,10 @@ use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Index as IndexResource;
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateTableStatement;
+use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\TableManager;
 
 class CreateTableExecutor implements StatementExecutorInterface
 {
@@ -59,9 +63,14 @@ class CreateTableExecutor implements StatementExecutorInterface
         return $this->tableManager;
     }
     
-    protected function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
     {
-        /* @var $statement Table */
+        return $statement instanceof CreateTableStatement;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
+    {
+        /* @var $statement CreateTableStatement */
         
         /* @var $databaseSchema Schema */
         $databaseSchema = $this->schemaManager->getSchema();

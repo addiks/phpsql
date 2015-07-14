@@ -11,6 +11,8 @@ use Addiks\PHPSQL\DatabaseAdapter\DatabaseAdapterInterface;
 use Addiks\PHPSQL\Value\Database\Dsn;
 use Addiks\PHPSQL\Value\Database\Dsn\InmemoryDsn;
 use Addiks\PHPSQL\Value\Database\Dsn\InternalDsn;
+use Addiks\PHPSQL\DatabaseAdapter\InmemoryDatabaseAdapter;
+use Addiks\PHPSQL\DatabaseAdapter\InternalDatabaseAdapter;
 
 /**
  *
@@ -18,19 +20,17 @@ use Addiks\PHPSQL\Value\Database\Dsn\InternalDsn;
 class Database
 {
 
-    public function __construct($dsn)
+    public function __construct($dsn, $doInitDatabaseAdapters=true)
     {
-        if (substr($dsn, 0, 9) === "inmemory:") {
-            $dsnValue = InmemoryDsn::factory($dsn);
-
-        } elseif (substr($dsn, 0, 9) === "internal:") {
-            $dsnValue = InternalDsn::factory($dsn);
-
-        } else {
-            throw new ErrorException("Internal PDO cannot handle this DSN: {$dsn}");
+        if (!$dsn instanceof Dsn) {
+            $dsn = Dsn::factorizeDSN($dsn);
         }
         
-        $this->dsn = $dsnValue;
+        $this->dsn = $dsn;
+
+        if ($doInitDatabaseAdapters) {
+            $this->initDatabaseAdapters();
+        }
     }
 
     protected $dsn;
@@ -127,5 +127,11 @@ class Database
         }
         
         return $result;
+    }
+
+    public function initDatabaseAdapters()
+    {
+        $this->addDatabaseAdapter(new InmemoryDatabaseAdapter());
+        $this->addDatabaseAdapter(new InternalDatabaseAdapter());
     }
 }

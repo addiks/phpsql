@@ -31,6 +31,8 @@ use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\SqlParser\SelectSqlParser;
 use Addiks\PHPSQL\SqlParser\Part\ColumnDefinitionParser;
 use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
+use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
+use Addiks\PHPSQL\Value\Enum\Sql\ForeignKey\ReferenceOption;
 
 class CreateSqlParser extends SqlParser
 {
@@ -372,8 +374,8 @@ class CreateSqlParser extends SqlParser
                         
                         if ($tokens->isTokenNum(SqlToken::T_CONSTRAINT(), TokenIterator::PREVIOUS, [T_STRING])
                         && $tokens->seekTokenNum(T_STRING, TokenIterator::PREVIOUS)) {
-                            $indexJob->setContraintSymbol($tokens->getPreviousTokenString());
-                            $tokens->seekTokenNum(SqlToken::T_PRIMARY());
+                            $indexJob->setContraintSymbol($tokens->getCurrentTokenString());
+                            $tokens->seekTokenNum(SqlToken::T_FOREIGN());
                         }
                         
                         if (!$tokens->seekTokenNum(SqlToken::T_KEY())) {
@@ -416,7 +418,7 @@ class CreateSqlParser extends SqlParser
                                     throw new MalformedSql("Invalid column in column-list for defining index!", $tokens);
                                 }
                                 $fkColumn = $this->columnParser->convertSqlToJob($tokens);
-                                $fkColumn->setTable($fkTable);
+                                $fkColumn = ColumnSpecifier::factory($fkTable.'.'.$fkColumn->getColumn());
                                 $indexJob->addForeignKey($fkColumn);
                             } while ($tokens->seekTokenText(','));
                                 
@@ -441,44 +443,69 @@ class CreateSqlParser extends SqlParser
                             }
                         }
                         
-                        if ($tokens->seekTokenNum(SqlToken::T_ON())) {
+                        while ($tokens->seekTokenNum(SqlToken::T_ON())) {
                             switch(true){
+
                                 case $tokens->seekTokenNum(SqlToken::T_DELETE()):
                                     switch(true){
+
                                         case $tokens->seekTokenNum(SqlToken::T_RESTRICT()):
-                                            $indexJob->setForeignKeyOnDeleteReferenceOption(ReferenceOption::RESTRICT());
+                                            $option = ReferenceOption::RESTRICT();
                                             break;
+
                                         case $tokens->seekTokenNum(SqlToken::T_CASCADE()):
-                                            $indexJob->setForeignKeyOnDeleteReferenceOption(ReferenceOption::CASCADE());
+                                            $option = ReferenceOption::CASCADE();
                                             break;
-                                        case $tokens->seekTokenNum(SqlToken::T_SET()) && $tokens->seekTokenNum(SqlToken::T_NULL()):
-                                            $indexJob->setForeignKeyOnDeleteReferenceOption(ReferenceOption::SET_NULL());
+
+                                        case $tokens->seekTokenNum(SqlToken::T_SET())
+                                          && $tokens->seekTokenNum(SqlToken::T_NULL()):
+                                            $option = ReferenceOption::SET_NULL();
                                             break;
-                                        case $tokens->seekTokenNum(SqlToken::T_NO()) && $tokens->seekTokenText("ACTION"):
-                                            $indexJob->setForeignKeyOnDeleteReferenceOption(ReferenceOption::NO_ACTION());
+
+                                        case $tokens->seekTokenNum(SqlToken::T_NO())
+                                          && $tokens->seekTokenText("ACTION"):
+                                            $option = ReferenceOption::NO_ACTION();
                                             break;
+
                                         default:
-                                            throw new MalformedSql("Invalid reference-option for foreign key ON DELETE option!", $tokens);
+                                            throw new MalformedSql(
+                                                "Invalid reference-option for foreign key ON DELETE option!",
+                                                $tokens
+                                            );
                                     }
+                                    $indexJob->setForeignKeyOnDeleteReferenceOption($option);
                                     break;
+
                                 case $tokens->seekTokenNum(SqlToken::T_UPDATE()):
                                     switch(true){
+
                                         case $tokens->seekTokenNum(SqlToken::T_RESTRICT()):
-                                            $indexJob->setForeignKeyOnUpdateReferenceOption(ReferenceOption::RESTRICT());
+                                            $option = ReferenceOption::RESTRICT();
                                             break;
+
                                         case $tokens->seekTokenNum(SqlToken::T_CASCADE()):
-                                            $indexJob->setForeignKeyOnUpdateReferenceOption(ReferenceOption::CASCADE());
+                                            $option = ReferenceOption::CASCADE();
                                             break;
-                                        case $tokens->seekTokenNum(SqlToken::T_SET()) && $tokens->seekTokenNum(SqlToken::T_NULL()):
-                                            $indexJob->setForeignKeyOnUpdateReferenceOption(ReferenceOption::SET_NULL());
+
+                                        case $tokens->seekTokenNum(SqlToken::T_SET())
+                                          && $tokens->seekTokenNum(SqlToken::T_NULL()):
+                                            $option = ReferenceOption::SET_NULL();
                                             break;
-                                        case $tokens->seekTokenNum(SqlToken::T_NO()) && $tokens->seekTokenText("ACTION"):
-                                            $indexJob->setForeignKeyOnUpdateReferenceOption(ReferenceOption::NO_ACTION());
+
+                                        case $tokens->seekTokenNum(SqlToken::T_NO())
+                                          && $tokens->seekTokenText("ACTION"):
+                                            $option = ReferenceOption::NO_ACTION();
                                             break;
+
                                         default:
-                                            throw new MalformedSql("Invalid reference-option for foreign key ON UPDATE option!", $tokens);
+                                            throw new MalformedSql(
+                                                "Invalid reference-option for foreign key ON UPDATE option!",
+                                                $tokens
+                                            );
                                     }
+                                    $indexJob->setForeignKeyOnUpdateReferenceOption($option);
                                     break;
+
                                 default:
                                     throw new MalformedSql("Invalid ON event for foreign key (allowed are UPDATE and DELETE)!", $tokens);
                             }

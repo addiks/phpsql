@@ -9,20 +9,24 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Entity\Job\Statement\Select as SelectStatement;
-
 use Addiks\PHPSQL\Database;
-
 use Addiks\PHPSQL\SelectResult;
-
 use Addiks\PHPSQL\Executor;
+use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
 
-class SelectExecutor extends Executor
+class SelectExecutor implements StatementExecutorInterface
 {
     
-    protected function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
+    {
+        return $statement instanceof SelectStatement;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
     {
         /* @var $statement SelectStatement */
         

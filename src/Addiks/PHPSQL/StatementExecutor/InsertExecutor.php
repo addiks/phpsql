@@ -9,7 +9,7 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
 use ErrorException;
 use Exception;
@@ -21,9 +21,12 @@ use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
-use Addiks\PHPSQL\Service\StatementExecutor\SelectExecutor;
+use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Entity\Job\StatementJob\InsertStatement;
+use Addiks\PHPSQL\TableManager;
 
-class InsertExecutor extends Executor
+class InsertExecutor implements StatementExecutorInterface
 {
     
     use BinaryConverterTrait;
@@ -59,9 +62,14 @@ class InsertExecutor extends Executor
         return $this->selectExecutor;
     }
     
-    protected function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
     {
-        /* @var $statement Insert */
+        return $statement instanceof InsertStatement;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
+    {
+        /* @var $statement InsertStatement */
         
         $result = new TemporaryResult();
 

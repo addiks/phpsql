@@ -14,6 +14,10 @@ namespace Addiks\PHPSQL\StatementExecutor;
 use Addiks\PHPSQL\StatementExecutor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateDatabaseStatement;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\Schema\SchemaManager;
 
 class CreateDatabaseExecutor implements StatementExecutorInterface
 {
@@ -40,9 +44,14 @@ class CreateDatabaseExecutor implements StatementExecutorInterface
         return $this->valueResolver;
     }
 
-    protected function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
     {
-        /* @var $statement Database */
+        return $statement instanceof CreateDatabaseStatement;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
+    {
+        /* @var $statement CreateDatabaseStatement */
         
         $name = $this->valueResolver->resolveValue($statement->getName());
         

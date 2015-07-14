@@ -12,22 +12,21 @@
 namespace Addiks\PHPSQL\Filesystem;
 
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
-use Addiks\PHPSQL\Value\Text\Filepath;
 
 class RealFilesystem implements FilesystemInterface
 {
     
-    public function getFileContents(Filepath $filePath)
+    public function getFileContents($filePath)
     {
         return file_get_contents($filePath);
     }
     
-    public function putFileContents(Filepath $filePath, $content, $flags = 0)
+    public function putFileContents($filePath, $content, $flags = 0)
     {
         file_put_contents($filePath, $content, $flags);
     }
     
-    public function getFile(Filepath $filePath, $mode)
+    public function getFile($filePath, $mode)
     {
         $resourceProxy = null;
 
@@ -39,7 +38,7 @@ class RealFilesystem implements FilesystemInterface
         return $resourceProxy;
     }
 
-    public function fileOpen(Filepath $filePath, $mode)
+    public function fileOpen($filePath, $mode)
     {
         
         $handle = fopen($filePath, $mode);

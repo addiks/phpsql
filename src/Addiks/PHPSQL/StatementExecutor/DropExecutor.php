@@ -9,23 +9,23 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Executor;
+namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Executor;
-
 use Addiks\PHPSQL\Entity\Result\Temporary;
-
 use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Entity\Job\StatementJob\DropStatement;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
+use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\Schema\SchemaManager;
 
-class DropExecutor extends Executor
+class DropExecutor implements StatementExecutorInterface
 {
     
     public function __construct(
-        FilesystemInterface $filesystem,
-        ValueResolver $valueResolver,
         SchemaManager $schemaManager
     ) {
-        parent::__construct($filesystem, $valueResolver);
         $this->schemaManager = $schemaManager;
     }
 
@@ -36,9 +36,14 @@ class DropExecutor extends Executor
         return $this->schemaManager;
     }
     
-    protected function executeConcreteJob($statement, array $parameters = array())
+    public function canExecuteJob(StatementJob $statement)
     {
-        /* @var $statement Drop */
+        return $statement instanceof DropStatement;
+    }
+
+    public function executeJob(StatementJob $statement, array $parameters = array())
+    {
+        /* @var $statement DropStatement */
         
         switch($statement->getType()){
             case Drop::TYPE_DATABASE:

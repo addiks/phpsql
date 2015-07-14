@@ -18,10 +18,13 @@ use Addiks\PHPSQL\SqlParser;
 class InmemoryDatabaseAdapter extends InternalDatabaseAdapter
 {
 
-    public function __construct(SqlParser $sqlParser)
+    public function getFilesystem()
     {
-        $this->filesystem = new InmemoryFilesystem();
-        parent::__construct($sqlParser);
+        if (is_null($this->filesystem)) {
+            $this->filesystem = new InmemoryFilesystem();
+        }
+
+        return $this->filesystem;
     }
 
     public function getTypeName()

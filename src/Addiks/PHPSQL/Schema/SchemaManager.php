@@ -7,6 +7,7 @@ namespace Addiks\PHPSQL\Schema;
 use Addiks\PHPSQL\Schema\Meta\InformationSchema;
 use Addiks\PHPSQL\Entity\Schema;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
+use Addiks\PHPSQL\Value\Database\Dsn\InternalDsn;
 
 class SchemaManager
 {
@@ -34,6 +35,30 @@ class SchemaManager
         return $this->filesystem;
     }
 
+    private $currentDatabaseId = SchemaManager::DATABASE_ID_DEFAULT;
+    
+    public function getCurrentlyUsedDatabaseId()
+    {
+        return $this->currentDatabaseId;
+    }
+    
+    public function setCurrentlyUsedDatabaseId($schemaId)
+    {
+        
+        $pattern = InternalDsn::PATTERN;
+        if (!preg_match("/{$pattern}/is", $schemaId)) {
+            throw new InvalidArgument("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
+        }
+        
+        if (!$this->schemaExists($schemaId)) {
+            throw new Conflict("Database '{$schemaId}' does not exist!");
+        }
+        
+        $this->currentDatabaseId = $schemaId;
+        
+        return true;
+    }
+    
     protected $schemas = array();
 
     /**
@@ -55,7 +80,7 @@ class SchemaManager
             $this->createSchema(self::DATABASE_ID_DEFAULT);
         }
         
-        $pattern = Internal::PATTERN;
+        $pattern = InternalDsn::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
             throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
@@ -94,7 +119,7 @@ class SchemaManager
     public function schemaExists($schemaId)
     {
         
-        $pattern = Internal::PATTERN;
+        $pattern = InternalDsn::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
             throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
@@ -109,7 +134,7 @@ class SchemaManager
     public function createSchema($schemaId)
     {
         
-        $pattern = Internal::PATTERN;
+        $pattern = InternalDsn::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
             throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
@@ -131,7 +156,7 @@ class SchemaManager
     public function removeSchema($schemaId)
     {
         
-        $pattern = Internal::PATTERN;
+        $pattern = InternalDsn::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
             throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }

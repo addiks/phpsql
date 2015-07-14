@@ -41,24 +41,25 @@ use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
 use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\Part\ColumnDefinitionParser;
+use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
+use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\StatementExecutor;
 
 class InternalDatabaseAdapter implements DatabaseAdapterInterface
 {
 
-    public function __construct(SqlParser $sqlParser) {
-        if (is_null($this->filesystem)) {
-            $this->filesystem = new RealFilesystem();
+    /**
+     * @var SqlParser
+     */
+    protected $sqlParser;
+
+    public function getSqlParser()
+    {
+        if (is_null($this->sqlParser)) {
+            $this->sqlParser = new SqlParser();
         }
 
-        if (is_null($this->schemaManager)) {
-            $this->schemaManager = new SchemaManager($this->filesystem);
-        }
-
-        if (is_null($this->valueResolver)) {
-            $this->valueResolver = new ValueResolver();
-        }
-
-        $this->sqlParser = $sqlParser;
+        return $this->sqlParser;
     }
 
     /**
@@ -68,6 +69,10 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
 
     public function getFilesystem()
     {
+        if (is_null($this->filesystem)) {
+            $this->filesystem = new RealFilesystem();
+        }
+
         return $this->filesystem;
     }
 
@@ -78,18 +83,57 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
 
     public function getSchemaManager()
     {
+        if (is_null($this->schemaManager)) {
+            $this->schemaManager = new SchemaManager(
+                $this->getFilesystem()
+            );
+        }
+
         return $this->schemaManager;
     }
-
-    /**
-     * @var SqlParser
-     */
-    protected $sqlParser;
 
     /**
      * @var ValueResolver
      */
     protected $valueResolver;
+
+    public function getValueResolver()
+    {
+        if (is_null($this->valueResolver)) {
+            $this->valueResolver = new ValueResolver();
+        }
+
+        return $this->valueResolver;
+    }
+
+    protected $tableManager;
+
+    public function getTableManager()
+    {
+        if (is_null($this->tableManager)) {
+            $this->tableManager = new TableManager(
+                $this->getFilesystem(),
+                $this->getSchemaManager()
+            );
+        }
+
+        return $this->tableManager;
+    }
+
+    protected $statementExecutor;
+
+    public function getStatementExecutor()
+    {
+        if (is_null($this->statementExecutor)) {
+            $this->statementExecutor = new StatementExecutor(
+                $this->getSchemaManager(),
+                $this->getTableManager(),
+                $this->getValueResolver()
+            );
+        }
+
+        return $this->statementExecutor;
+    }
 
     /**
      * @var array
@@ -135,16 +179,16 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
         $result = null;
             
         try {
-            $this->valueResolver->setStatementParameters($parameters);
+            $this->getValueResolver()->setStatementParameters($parameters);
             
             if (is_null($tokens)) {
                 $tokens = new SQLTokenIterator($statementString);
             }
             
-            $jobs = $this->sqlParser->convertSqlToJob($tokens);
+            $jobs = $this->getSqlParser()->convertSqlToJob($tokens);
             
             foreach ($jobs as $statement) {
-                /* @var $statement Statement */
+                /* @var $statement StatementJob */
                 
                 $result = $this->queryStatement($statement, $parameters);
             }
@@ -167,28 +211,18 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
         return $result;
     }
     
-    public function queryStatement(Statement $statement, array $parameters = array())
+    public function queryStatement(StatementJob $statement, array $parameters = array())
     {
         
         if ($this->getIsStatementLogActive()) {
             $this->logStatement($statement);
         }
         
-        $executorClass = $statement->getExecutorClass();
-        
-        if (!isset($this->executors[$executorClass])) {
-            $this->executors[$executorClass] = new $executorClass(
-                $this->filesystem,
-                $this->schemaManager,
-                $this->valueResolver
-            );
-        }
-
-        $result = $this->executors[$executorClass]->executeJob($statement, $parameters);
+        $result = $this->getStatementExecutor()->executeJob($statement, $parameters);
         
         return $result;
     }
-    
+
     ### LOGGING
 
     private $isStatementLogActive = false;
