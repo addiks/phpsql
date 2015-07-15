@@ -11,12 +11,12 @@
 
 namespace Addiks\PHPSQL;
 
-use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Table\InternalTable;
 use Addiks\PHPSQL\CustomIterator;
 use IteratorAggregate;
 use Countable;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 /**
  * This represents a table.
@@ -24,6 +24,8 @@ use Countable;
 class Table implements IteratorAggregate, Countable, TableInterface
 {
     
+    const FILEPATH_AUTOINCREMENT = "%s/Tables/%s/autoIncrement.int";
+
     public function __construct(
         SchemaManager $schemaManager,
         FilesystemInterface $filesystem,
@@ -219,15 +221,21 @@ class Table implements IteratorAggregate, Countable, TableInterface
     ### HELPER
     
     /**
-     * @return Storage
+     * @return File
      */
-    protected function getAutoIncrementStorage()
+    protected function getAutoIncrementFile()
     {
     
-        /* @var $storage Storage */
-        $storage = $this->getTableAutoIncrementIdStorage($this->getTableName(), $this->getDBSchemaId());
+        $filePath = sprintf(
+            self::FILEPATH_AUTOINCREMENT,
+            $this->getDBSchemaId(),
+            $this->getTableName()
+        );
+
+        /* @var $file FileResourceProxy */
+        $file = $this->filesystem->getFile($filePath);
     
-        return $storage;
+        return $file;
     }
     
     public function incrementAutoIncrementId()
@@ -236,21 +244,20 @@ class Table implements IteratorAggregate, Countable, TableInterface
         $currentValue = (int)$this->getAutoIncrementId();
         $currentValue++;
     
-        $storage = $this->getAutoIncrementStorage();
-        $storage->setData((string)$currentValue);
+        $file = $this->getAutoIncrementFile();
+        $file->setData((string)$currentValue);
     }
     
     public function getAutoIncrementId()
     {
+        /* @var $file FileResourceProxy */
+        $file = $this->getAutoIncrementFile();
     
-        /* @var $storage Storage */
-        $storage = $this->getAutoIncrementStorage();
-    
-        if ($storage->getLength() <= 0) {
-            $storage->setData("1");
+        if ($file->getLength() <= 0) {
+            $file->setData("1");
         }
     
-        return $storage->getData();
+        return $file->getData();
     }
     
     /**

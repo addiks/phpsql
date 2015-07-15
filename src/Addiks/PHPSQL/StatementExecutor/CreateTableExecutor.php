@@ -13,7 +13,6 @@ namespace Addiks\PHPSQL\StatementExecutor;
 
 use ErrorException;
 use Addiks\PHPSQL\Table;
-use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Value\Enum\Page\Index\ForeignKeyMethod;
 use Addiks\PHPSQL\Entity\Page\Schema\Index;
 use Addiks\PHPSQL\Value\Text\Annotation;
@@ -175,9 +174,6 @@ class CreateTableExecutor implements StatementExecutorInterface
             
             $method = ForeignKeyMethod::factory($index->getForeignKeyOnUpdateReferenceOption()->getName());
             $indexSchemaPage->setForeignKeyOnUpdateMethod($method);
-            
-            /* @var $indexStorage Storage */
-            $indexStorage = $this->getIndexStorage($index->getName(), $statement->getName());
             
             $keyLength = 0;
             $columns = array();

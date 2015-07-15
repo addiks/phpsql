@@ -67,7 +67,7 @@ class InmemoryFilesystem implements FilesystemInterface
         fwrite($fileHandle, $content);
     }
     
-    public function getFile($filePath, $mode)
+    public function getFile($filePath, $mode = "a+")
     {
         $resourceProxy = null;
 

@@ -11,8 +11,6 @@
 
 namespace Addiks\PHPSQL\Entity\Index;
 
-use Addiks\PHPSQL\Entity\Storage;
-
 interface IndexInterface
 {
     

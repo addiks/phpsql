@@ -92,10 +92,9 @@ class SortedResourceIterator implements Countable, SeekableIterator
     {
         
         $uniqid = uniqid();
-        $storagePath = "TempTables/{$uniqid}";
-        $insertionSortStorage = $this->getCache($storagePath);
-        
-        $insertionSortStorage->setIsTemporary(true);
+        $filePath = "TempTables/{$uniqid}";
+        $insertionSortFile = $this->getCache($filePath);
+        $insertionSortFile->setIsTemporary(true);
         
         $columnPage = new ColumnPage();
             
@@ -122,7 +121,7 @@ class SortedResourceIterator implements Countable, SeekableIterator
             ];
         }
         
-        $sortIndex = new QuickSort($insertionSortStorage, $columnPages);
+        $sortIndex = new QuickSort($insertionSortFile, $columnPages);
         
         return $sortIndex;
     }

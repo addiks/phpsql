@@ -172,7 +172,7 @@ class CreateTableStatement extends CreateStatement
     }
     
     /**
-     * This is used in MySQL by the MyISAM storage to determine how big the table can get before its 'full'.
+     * This is used in MySQL by the MyISAM engine to determine how big the table can get before its 'full'.
      * Such a limitation does not exist in the internal database, but nonetheless this attribute exists,
      * so it will be stored to enhance compatibility.
      * @var int
@@ -303,7 +303,7 @@ class CreateTableStatement extends CreateStatement
      * Not used.
      * In MyISAM this is used to encrypt data-files.
      * In this internal database this makes no sense,
-     * because the table-data would be stored with the password together in the storage.
+     * because the table-data would be stored with the password together in the schema.
      * @var string
      */
     private $password;
@@ -373,7 +373,7 @@ class CreateTableStatement extends CreateStatement
     }
     
     /**
-     * This value is not used because everything is stored in the storage system.
+     * This value is not used because everything is stored in the file system.
      * The path will be stored anyway just to get it later.
      * @var string
      */
@@ -390,7 +390,7 @@ class CreateTableStatement extends CreateStatement
     }
     
     /**
-     * This value is not used because everything is stored in the storage system.
+     * This value is not used because everything is stored in the file system.
      * The path will be stored anyway just to get it later.
      * @var string
      */

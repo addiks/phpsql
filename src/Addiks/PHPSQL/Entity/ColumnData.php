@@ -15,22 +15,22 @@ use Addiks\PHPSQL\Entity\Page\Column;
 use Addiks\PHPSQL\Entity;
 use ErrorException;
 use Addiks\PHPSQL\CustomIterator;
-use Addiks\PHPSQL\Entity\Storage;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 class ColumnData extends Entity implements \Countable, \IteratorAggregate
 {
     
-    public function __construct(Storage $storage, Column $columnPage)
+    public function __construct(FileResourceProxy $file, Column $columnPage)
     {
-        $this->storage = $storage;
+        $this->file = $file;
         $this->columnSchema = $columnPage;
     }
     
-    private $storage;
+    private $file;
     
-    public function getStorage()
+    public function getfile()
     {
-        return $this->storage;
+        return $this->file;
     }
     
     private $columnSchema;
@@ -49,8 +49,8 @@ class ColumnData extends Entity implements \Countable, \IteratorAggregate
     public function getIterator()
     {
         
-        /* @var $storage Storage */
-        $storage = $this->getStorage();
+        /* @var $file file */
+        $file = $this->getfile();
         
         /* @var $columnSchema Column */
         $columnSchema = $this->getColumnSchema();
@@ -61,34 +61,34 @@ class ColumnData extends Entity implements \Countable, \IteratorAggregate
             'rewind'  => function () use (&$index) {
                 $index = 0;
             },
-            'valid'   => function () use (&$index, $storage, $columnSchema) {
-                $beforeSeek = ftell($storage->getHandle());
+            'valid'   => function () use (&$index, $file, $columnSchema) {
+                $beforeSeek = ftell($file->getHandle());
                 
-                fseek($storage->getHandle(), ($index*($columnSchema->getCellSize()+1)));
+                fseek($file->getHandle(), ($index*($columnSchema->getCellSize()+1)));
                 
-                $flags = ord(fread($storage->getHandle(), 1));
+                $flags = ord(fread($file->getHandle(), 1));
                 
-                $data = fread($storage->getHandle(), $columnSchema->getCellSize());
+                $data = fread($file->getHandle(), $columnSchema->getCellSize());
                 
-                fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
+                fseek($file->getHandle(), $beforeSeek, SEEK_SET);
                 return strlen($data) === $columnSchema->getCellSize();
             },
-            'current' => function (&$index, $storage, $columnSchema) {
-                $beforeSeek = ftell($storage->getHandle());
+            'current' => function (&$index, $file, $columnSchema) {
+                $beforeSeek = ftell($file->getHandle());
                 
-                fseek($storage->getHandle(), ($index*($columnSchema->getCellSize()+1)));
+                fseek($file->getHandle(), ($index*($columnSchema->getCellSize()+1)));
                 
-                $flags = ord(fread($storage->getHandle(), 1));
+                $flags = ord(fread($file->getHandle(), 1));
                 
                 $isNull = $flags & ColumnData::FLAG_ISNULL === ColumnData::FLAG_ISNULL;
                 
                 if ($isNull) {
-                    fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
+                    fseek($file->getHandle(), $beforeSeek, SEEK_SET);
                     return null;
                     
                 } else {
-                    $data = fread($storage->getHandle(), $columnSchema->getCellSize());
-                    fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
+                    $data = fread($file->getHandle(), $columnSchema->getCellSize());
+                    fseek($file->getHandle(), $beforeSeek, SEEK_SET);
                     return $data;
                 }
                 
@@ -105,19 +105,19 @@ class ColumnData extends Entity implements \Countable, \IteratorAggregate
     public function count()
     {
         
-        /* @var $storage Storage */
-        $storage = $this->getStorage();
+        /* @var $file file */
+        $file = $this->getfile();
         
         /* @var $columnSchema Column */
         $columnSchema = $this->getColumnSchema();
         
-        $beforeSeek = ftell($storage->getHandle());
+        $beforeSeek = ftell($file->getHandle());
         
-        fseek($storage->getHandle(), 0, SEEK_END);
+        fseek($file->getHandle(), 0, SEEK_END);
         
-        $count = floor(ftell($storage->getHandle()) / ($columnSchema->getCellSize()+1)) -1;
+        $count = floor(ftell($file->getHandle()) / ($columnSchema->getCellSize()+1)) -1;
         
-        fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
+        fseek($file->getHandle(), $beforeSeek, SEEK_SET);
         
         return $count;
     }
@@ -125,59 +125,59 @@ class ColumnData extends Entity implements \Countable, \IteratorAggregate
     public function getCellData($index)
     {
         
-        /* @var $storage Storage */
-        $storage = $this->getStorage();
+        /* @var $file file */
+        $file = $this->getfile();
         
         /* @var $columnSchema Column */
         $columnSchema = $this->getColumnSchema();
         
-        $beforeSeek = ftell($storage->getHandle());
+        $beforeSeek = ftell($file->getHandle());
         
-        fseek($storage->getHandle(), ($index*($columnSchema->getCellSize()+1)));
+        fseek($file->getHandle(), ($index*($columnSchema->getCellSize()+1)));
         
-        $flags = ord(fread($storage->getHandle(), 1));
+        $flags = ord(fread($file->getHandle(), 1));
         
         $isNull = $flags & ColumnData::FLAG_ISNULL === ColumnData::FLAG_ISNULL;
         
         if ($isNull) {
-            fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
+            fseek($file->getHandle(), $beforeSeek, SEEK_SET);
             return null;
         }
         
-        $data = fread($storage->getHandle(), $columnSchema->getCellSize());
+        $data = fread($file->getHandle(), $columnSchema->getCellSize());
         
         if (strlen($data) <= 0) {
             return null;
         }
         
         if (strlen($data) !== $columnSchema->getCellSize()) {
-            fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
+            fseek($file->getHandle(), $beforeSeek, SEEK_SET);
             throw new ErrorException("No or corrupted cell-data at index '{$index}'!");
         }
         
         $data = trim($data, "\0");
         
-        fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
+        fseek($file->getHandle(), $beforeSeek, SEEK_SET);
         return $data;
     }
     
     public function setCellData($index, $data)
     {
         
-        /* @var $storage Storage */
-        $storage = $this->getStorage();
+        /* @var $file file */
+        $file = $this->getfile();
         
         /* @var $columnSchema Column */
         $columnSchema = $this->getColumnSchema();
         
-        $beforeSeek = ftell($storage->getHandle());
+        $beforeSeek = ftell($file->getHandle());
         
         $isNull = is_null($data);
         
         $data = str_pad($data, $columnSchema->getCellSize(), "\0", STR_PAD_LEFT);
         $data = substr($data, 0, $columnSchema->getCellSize());
         
-        fseek($storage->getHandle(), ($index*($columnSchema->getCellSize()+1)));
+        fseek($file->getHandle(), ($index*($columnSchema->getCellSize()+1)));
         
         $flags = 0;
         
@@ -185,10 +185,10 @@ class ColumnData extends Entity implements \Countable, \IteratorAggregate
             $flags = $flags ^ ColumnData::FLAG_ISNULL;
         }
         
-        fwrite($storage->getHandle(), chr($flags));
-        fwrite($storage->getHandle(), $data);
+        fwrite($file->getHandle(), chr($flags));
+        fwrite($file->getHandle(), $data);
         
-        fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
+        fseek($file->getHandle(), $beforeSeek, SEEK_SET);
     }
     
     public function addCellData($data)
@@ -200,8 +200,8 @@ class ColumnData extends Entity implements \Countable, \IteratorAggregate
     public function insertCellDataBetween($index, $cellData)
     {
         
-        /* @var $storage Storage */
-        $storage = $this->getStorage();
+        /* @var $file file */
+        $file = $this->getfile();
         
         /* @var $columnSchema Column */
         $columnSchema = $this->getColumnSchema();
@@ -217,24 +217,24 @@ class ColumnData extends Entity implements \Countable, \IteratorAggregate
             $flags = $flags ^ ColumnData::FLAG_ISNULL;
         }
         
-        $data  = substr($storage->getData(), 0, $index * ($columnSchema->getCellSize()+1));
+        $data  = substr($file->getData(), 0, $index * ($columnSchema->getCellSize()+1));
         $data .= chr($flags);
         $data .= $cellData;
-        $data .= substr($storage->getData(), $index * ($columnSchema->getCellSize()+1));
+        $data .= substr($file->getData(), $index * ($columnSchema->getCellSize()+1));
         
-        $storage->setData($data);
+        $file->setData($data);
     }
     
     public function removeCell($index)
     {
         
-        /* @var $storage Storage */
-        $storage = $this->getStorage();
+        /* @var $file file */
+        $file = $this->getfile();
         
         /* @var $columnSchema Column */
         $columnSchema = $this->getColumnSchema();
         
-        $handle = $storage->getHandle();
+        $handle = $file->getHandle();
         
         $seekBefore = ftell($handle);
         
@@ -253,17 +253,17 @@ class ColumnData extends Entity implements \Countable, \IteratorAggregate
     {
         return;
         
-        /* @var $storage Storage */
-        $storage = $this->getStorage();
+        /* @var $file file */
+        $file = $this->getfile();
         
         /* @var $columnSchema Column */
         $columnSchema = $this->getColumnSchema();
         
-        $beforeSeek = ftell($storage->getHandle());
+        $beforeSeek = ftell($file->getHandle());
         
-        fseek($storage->getHandle(), ($indexCount*($columnSchema->getCellSize()+1))-1);
-        fwrite($storage->getHandle(), "\0");
+        fseek($file->getHandle(), ($indexCount*($columnSchema->getCellSize()+1))-1);
+        fwrite($file->getHandle(), "\0");
         
-        fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
+        fseek($file->getHandle(), $beforeSeek, SEEK_SET);
     }
 }

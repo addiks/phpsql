@@ -172,10 +172,6 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
     public function query($statementString, array $parameters = array(), SQLTokenIterator $tokens = null)
     {
         
-        if ($this->getIsStatementLogActive()) {
-            $this->logQuery($statementString);
-        }
-        
         $result = null;
             
         try {
@@ -214,46 +210,9 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
     public function queryStatement(StatementJob $statement, array $parameters = array())
     {
         
-        if ($this->getIsStatementLogActive()) {
-            $this->logStatement($statement);
-        }
-        
         $result = $this->getStatementExecutor()->executeJob($statement, $parameters);
         
         return $result;
     }
 
-    ### LOGGING
-
-    private $isStatementLogActive = false;
-    
-    public function setIsStatementLogActive($bool)
-    {
-        $this->isStatementLogActive = (bool)$bool;
-    }
-    
-    public function getIsStatementLogActive()
-    {
-        return $this->isStatementLogActive;
-    }
-
-    protected function logQuery($statement)
-    {
-    
-        $logStorage = $this->getStorage("QueryLog");
-    
-        $date = date("Y-m-d H-i-s", time());
-        
-        fwrite($logStorage->getHandle(), "\n\n{$date}:\n" . $statement);
-    }
-    
-    protected function logStatement(Statement $statement)
-    {
-        
-        $logStorage = $this->getStorage("StatementLog");
-
-        $date = date("Y-m-d H-i-s", time());
-        
-        fwrite($logStorage->getHandle(), "\n\n{$date}:\n" . (string)$statement);
-    }
 }

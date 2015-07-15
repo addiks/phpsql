@@ -33,6 +33,7 @@ class Column extends Entity
 {
     
     use BinaryConverterTrait;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
     
     const PAGE_SIZE = 256;
     
@@ -276,11 +277,11 @@ class Column extends Entity
     ### HELPER
     
     /**
-     * A cell-size keyword to indicate that the value should be stored in its own storage.
-     * @see Storage
+     * A cell-size keyword to indicate that the value should be stored in its own file.
+     * @see FileResourceProxy
      * @var string
      */
-    const LENGTH_STORAGE = "storage";
+    const LENGTH_FILE = "file";
     
     private $cellsizeCache = null;
     
@@ -299,7 +300,7 @@ class Column extends Entity
                 $length = $dataType->getByteLength();
                     
                 if ($dataType->isInFile()) {
-                    throw new ErrorException("Storage-length for data-cells is not implemented yet!");
+                    throw new ErrorException("Size-getter for data-cells stored in file is not implemented yet!");
 
                 } else {
                     $this->cellsizeCache = (int)$length;

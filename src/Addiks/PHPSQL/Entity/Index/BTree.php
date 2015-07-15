@@ -13,10 +13,10 @@ namespace Addiks\PHPSQL\Entity\Index;
 
 use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\CustomIterator;
-use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\Page\BTree\Node;
 use Addiks\PHPSQL\BinaryConverterTrait;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 class BTree extends Entity implements \IteratorAggregate, IndexInterface
 {
@@ -26,7 +26,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         BinaryConverterTrait::strdec as BCTstrdec;
     }
     
-    public function __construct(Storage $storage, $keyLength, $forkRate = 33)
+    public function __construct(FileResourceProxy $file, $keyLength, $forkRate = 33)
     {
         
         if (!is_numeric($keyLength)) {
@@ -43,13 +43,13 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         }
         $forkRate = (int)$forkRate;
         
-        $this->storage = $storage;
+        $this->file = $file;
         $this->setKeyLength($keyLength);
         $this->forkRate = $forkRate;
         
-        // if storage is empty, initialize it
-        if ($storage->getLength()<=1) {
-            $storage->setData(str_pad("", $keyLength*8, "\0"));
+        // if file is empty, initialize it
+        if ($file->getLength()<=1) {
+            $file->setData(str_pad("", $keyLength*8, "\0"));
             
             $rootNode = new Node();
             $rootNode->setKeyLength($keyLength);
@@ -74,7 +74,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             $needle = str_pad($needle, $this->keyLength, "\0", STR_PAD_LEFT);
         }
         
-        if (is_null($this->getDoublesStorage())) {
+        if (is_null($this->getDoublesFile())) {
             $result = $this->getRowIdByValue($needle);
             
             if (is_null($result)) {
@@ -86,7 +86,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         }
         
         $index  = $this->getRowIdByValue($needle);
-        $handle = $this->getDoublesStorage()->getHandle();
+        $handle = $this->getDoublesFile()->getHandle();
         $result = array();
         
         if (!is_null($index)) {
@@ -119,7 +119,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             $rowId = str_pad($rowId, $this->keyLength, "\0", STR_PAD_LEFT);
         }
         
-        if (is_null($this->getDoublesStorage())) {
+        if (is_null($this->getDoublesFile())) {
             return $this->insertValue($value, $rowId);
         }
         
@@ -127,7 +127,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             return;
         }
         
-        $handle = $this->getDoublesStorage()->getHandle();
+        $handle = $this->getDoublesFile()->getHandle();
         
         ### APPEND TO CHAIN
         
@@ -186,12 +186,12 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             $rowId = str_pad($rowId, $this->keyLength, "\0", STR_PAD_LEFT);
         }
         
-        if (is_null($this->getDoublesStorage())) {
+        if (is_null($this->getDoublesFile())) {
             return $this->removeRowId($rowId);
         }
         
         $index  = $this->getRowIdByValue($value);
-        $handle = $this->getDoublesStorage()->getHandle();
+        $handle = $this->getDoublesFile()->getHandle();
         
         do {
             $index = $this->strdec($index);
@@ -715,30 +715,30 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     
     ### HELPER
     
-    private $storage;
+    private $file;
     
     /**
      *
-     * @return Storage
+     * @return FileResourceProxy
      */
-    public function getStorage()
+    public function getFile()
     {
-        return $this->storage;
+        return $this->file;
     }
     
-    private $doublesStorage;
+    private $doublesFile;
     
-    public function getDoublesStorage()
+    public function getDoublesFile()
     {
-        return $this->doublesStorage;
+        return $this->doublesFile;
     }
     
-    public function setDoublesStorage(Storage $storage)
+    public function setDoublesFile(FileResourceProxy $file)
     {
-        $this->doublesStorage = $storage;
+        $this->doublesFile = $file;
         
-        if ($storage->getLength()<=0) {
-            $storage->setData(str_pad("", $this->keyLength*2, "\0"));
+        if ($file->getLength()<=0) {
+            $file->setData(str_pad("", $this->keyLength*2, "\0"));
         }
     }
     
@@ -766,7 +766,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     {
         
         $keyLength = $this->getKeyLength();
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         
         $node = new Node();
         $node->setKeyLength($keyLength);
@@ -813,7 +813,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         }
         
         $keyLength = $this->getKeyLength();
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $seekBefore = ftell($handle);
         
         $node = new Node();
@@ -861,7 +861,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         }
         
         $keyLength = $this->getKeyLength();
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         
         fseek($handle, ($keyLength*2) +($node->getPageSize()*$index), SEEK_SET);
         
@@ -872,7 +872,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     
     protected function deleteNode($index)
     {
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $node = new Node();
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
@@ -906,7 +906,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     {
         
         $keyLength = $this->getKeyLength();
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $beforeSeek = ftell($handle);
         
         $node = new Node();
@@ -923,7 +923,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     protected function getRootReference()
     {
     
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         fseek($handle, 0, SEEK_SET);
     
         $reference = fread($handle, $this->getKeyLength());
@@ -948,7 +948,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             throw new ErrorException("Root-reference cannot be int(0)!");
         }
     
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         fseek($handle, 0, SEEK_SET);
         
         fwrite($handle, $reference);
@@ -995,7 +995,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $seekBefore = ftell($handle);
         
         fseek($handle, ($this->keyLength*2)+($this->getGarbageReference()*$node->getPageSize()));
@@ -1035,7 +1035,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $seekBefore = ftell($handle);
         
         fseek($handle, ($this->keyLength*2)+($this->getGarbageReference()*$node->getPageSize()));
@@ -1069,7 +1069,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $seekBefore = ftell($handle);
         
         fseek($handle, ($this->keyLength*2)+($this->getGarbageReference()*$node->getPageSize()));
@@ -1083,7 +1083,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     protected function getGarbageReference()
     {
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $seekBefore = ftell($handle);
         
         fseek($handle, $this->keyLength, SEEK_SET);
@@ -1114,7 +1114,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             $reference = $this->decstr($reference, $this->getKeyLength());
         }
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $seekBefore = ftell($handle);
         fseek($handle, $this->keyLength, SEEK_SET);
         

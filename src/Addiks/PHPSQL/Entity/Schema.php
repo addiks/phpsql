@@ -12,12 +12,10 @@
 namespace Addiks\PHPSQL\Entity;
 
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Type;
-
-use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Entity\Page\Schema as SchemaPage;
-
 use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\CustomIterator;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 /**
  * This entity manages the schema-information about tables, views, ... in the database.
@@ -31,39 +29,39 @@ use Addiks\PHPSQL\CustomIterator;
 class Schema extends Entity implements SchemaInterface
 {
     
-    public function __construct(Storage $index)
+    public function __construct(FileResourceProxy $file)
     {
         
-        $this->schemaIndexStorage = $index;
+        $this->schemaIndexFile = $file;
     }
     
     /**
-     * The storage containing the schema-index.
+     * The file containing the schema-index.
      * (Array of Schema-Pages describing views/tables/... )
      *
-     * @var Storage
+     * @var FileResourceProxy
      */
-    private $schemaIndexStorage;
+    private $schemaIndexFile;
     
     /**
-     * @return Storage
+     * @return FileResourceProxy
      */
-    protected function getSchemaIndexStorage()
+    protected function getSchemaIndexFile()
     {
-        return $this->schemaIndexStorage;
+        return $this->schemaIndexFile;
     }
     
     public function getSchemaIndexIterator()
     {
         
-        $storage = $this->getSchemaIndexStorage();
+        $file = $this->getSchemaIndexFile();
         
         $iteratorEntity = new SchemaPage();
         
-        $skipDeleted = function () use ($storage) {
+        $skipDeleted = function () use ($file) {
             while (true) {
-                if (trim($data = fread($storage->getHandle(), SchemaPage::PAGE_SIZE), "\0")!=='') {
-                    fseek($storage->getHandle(), 0-strlen($data), SEEK_CUR);
+                if (trim($data = fread($file->getHandle(), SchemaPage::PAGE_SIZE), "\0")!=='') {
+                    fseek($file->getHandle(), 0-strlen($data), SEEK_CUR);
                     break;
                 }
                 if (strlen($data)!==SchemaPage::PAGE_SIZE) {
@@ -73,26 +71,26 @@ class Schema extends Entity implements SchemaInterface
         };
         
         return new CustomIterator(null, [
-            'valid' => function () use ($storage) {
-                $data = fread($storage->getHandle(), SchemaPage::PAGE_SIZE);
-                fseek($storage->getHandle(), 0-strlen($data), SEEK_CUR);
+            'valid' => function () use ($file) {
+                $data = fread($file->getHandle(), SchemaPage::PAGE_SIZE);
+                fseek($file->getHandle(), 0-strlen($data), SEEK_CUR);
                 return strlen($data) === SchemaPage::PAGE_SIZE;
             },
-            'rewind' => function () use ($storage, $skipDeleted) {
-                fseek($storage->getHandle(), 0, SEEK_SET);
+            'rewind' => function () use ($file, $skipDeleted) {
+                fseek($file->getHandle(), 0, SEEK_SET);
                 $skipDeleted();
             },
-            'key' => function () use ($storage) {
-                return (ftell($storage->getHandle()) / SchemaPage::PAGE_SIZE);
+            'key' => function () use ($file) {
+                return (ftell($file->getHandle()) / SchemaPage::PAGE_SIZE);
             },
-            'current' => function () use ($storage, $iteratorEntity) {
-                $data = fread($storage->getHandle(), SchemaPage::PAGE_SIZE);
-                fseek($storage->getHandle(), 0-strlen($data), SEEK_CUR);
+            'current' => function () use ($file, $iteratorEntity) {
+                $data = fread($file->getHandle(), SchemaPage::PAGE_SIZE);
+                fseek($file->getHandle(), 0-strlen($data), SEEK_CUR);
                 $iteratorEntity->setData($data);
                 return $iteratorEntity;
             },
-            'next' => function () use ($storage, $skipDeleted) {
-                fseek($storage->getHandle(), SchemaPage::PAGE_SIZE, SEEK_CUR);
+            'next' => function () use ($file, $skipDeleted) {
+                fseek($file->getHandle(), SchemaPage::PAGE_SIZE, SEEK_CUR);
                 $skipDeleted();
             }
         ]);
@@ -144,7 +142,7 @@ class Schema extends Entity implements SchemaInterface
             $tableId = $this->getTableIndex($tableId);
         }
         
-        $handle = $this->getSchemaIndexStorage()->getHandle();
+        $handle = $this->getSchemaIndexFile()->getHandle();
         
         $beforeSeek = ftell($handle);
         
@@ -167,8 +165,8 @@ class Schema extends Entity implements SchemaInterface
         $schemaPage->setName($name);
         $schemaPage->setType(Type::TABLE());
         
-        $indexStorage = $this->getSchemaIndexStorage();
-        $indexStorage->addData($schemaPage->getData());
+        $indexFile = $this->getSchemaIndexFile();
+        $indexFile->addData($schemaPage->getData());
     }
     
     public function registerTableSchema(SchemaPage $schemaPage)
@@ -191,8 +189,8 @@ class Schema extends Entity implements SchemaInterface
                 throw new ErrorException("Unknown schema-page-type!");
         }
         
-        $indexStorage = $this->getSchemaIndexStorage();
-        $indexStorage->addData($schemaPage->getData());
+        $indexFile = $this->getSchemaIndexFile();
+        $indexFile->addData($schemaPage->getData());
     }
     
     public function unregisterTable($tableName)
@@ -204,12 +202,12 @@ class Schema extends Entity implements SchemaInterface
         
         $index = $this->getTableIndex($tableName);
         
-        $indexStorage = $this->getSchemaIndexStorage();
-        fseek($indexStorage->getHandle(), $index * SchemaPage::PAGE_SIZE, SEEK_SET);
+        $indexFile = $this->getSchemaIndexFile();
+        fseek($indexFile->getHandle(), $index * SchemaPage::PAGE_SIZE, SEEK_SET);
         
-        fwrite($indexStorage->getHandle(), str_pad("", SchemaPage::PAGE_SIZE, "\0"));
+        fwrite($indexFile->getHandle(), str_pad("", SchemaPage::PAGE_SIZE, "\0"));
         
-        fflush($indexStorage->getHandle());
+        fflush($indexFile->getHandle());
     }
     
     ### VIEWS
@@ -257,8 +255,8 @@ class Schema extends Entity implements SchemaInterface
         $schemaPage->setName($name);
         $schemaPage->setType(Type::VIEW());
         
-        $indexStorage = $this->getSchemaIndexStorage();
-        $indexStorage->addData($schemaPage->getData());
+        $indexFile = $this->getSchemaIndexFile();
+        $indexFile->addData($schemaPage->getData());
     }
     
     public function unregisterView($viewName)
@@ -270,8 +268,8 @@ class Schema extends Entity implements SchemaInterface
         
         $index = $this->getViewIndex($viewName);
         
-        $indexStorage = $this->getSchemaIndexStorage();
-        fseek($indexStorage->getHandle(), $index * SchemaPage::PAGE_SIZE, SEEK_SET);
-        fwrite($indexStorage->getHandle(), str_pad("", "\0", Schema::PAGE_SIZE));
+        $indexFile = $this->getSchemaIndexFile();
+        fseek($indexFile->getHandle(), $index * SchemaPage::PAGE_SIZE, SEEK_SET);
+        fwrite($indexFile->getHandle(), str_pad("", "\0", Schema::PAGE_SIZE));
     }
 }

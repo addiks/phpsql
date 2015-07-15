@@ -133,9 +133,9 @@ class SQLTokenIterator extends TokenIterator
                     break;
                     
                 case preg_match("/{$stringWordPattern}/", $statementStringLeft, $matches):
-                #	$word = substr($matches[0], 1, strlen($matches[0])-2);
+                	$word = substr($matches[0], 1, strlen($matches[0])-2);
                     $position += strlen($matches[0]);
-                    $tokenArray[] = [T_STRING, $matches[0], $line];
+                    $tokenArray[] = [T_STRING, $word, $line];
                     $line += substr_count($matches[0], "\n");
                     break;
                         

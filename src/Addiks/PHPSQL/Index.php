@@ -19,10 +19,10 @@ use Addiks\PHPSQL\Entity\Index\BTree;
 use Addiks\PHPSQL\Value\Enum\Page\Index\Engine;
 use Addiks\PHPSQL\Entity\Page\Schema\Index as IndexPage;
 use Addiks\PHPSQL\BinaryConverterTrait;
-use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\CustomIterator;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 /**
  *
@@ -30,9 +30,10 @@ use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 class Index implements \IteratorAggregate
 {
     
-    const FILEPATH_KEY_LENGTH    = "%s/Tables/%s/Indices/%s.keylength";
-    const FILEPATH_INDEX_DATA    = "%s/Tables/%s/Indices/%s.data";
-    const FILEPATH_INDEX_DOUBLES = "%s/Tables/%s/Indices/%s.doubles";
+    const FILEPATH_KEY_LENGTH         = "%s/Tables/%s/Indices/%s.keylength";
+    const FILEPATH_INDEX_DATA         = "%s/Tables/%s/Indices/%s.data";
+    const FILEPATH_INDEX_DOUBLES      = "%s/Tables/%s/Indices/%s.doubles";
+    const FILEPATH_TABLE_COLUMN_INDEX = "%s/Tables/%s/Indices/%s.columnIndex";
 
     use BinaryConverterTrait;
     
@@ -110,7 +111,7 @@ class Index implements \IteratorAggregate
     
     private $keyLengthFile;
     
-    private function getKeyLengthStorage()
+    private function getKeyLengthFile()
     {
         
         if (is_null($this->keyLengthFile)) {
@@ -150,8 +151,15 @@ class Index implements \IteratorAggregate
 
             $indexDataFile = $this->filesystem->getFile($indexDataFilepath);
 
-            /* @var $storage Storage */
-            $storage = $this->getTableColumnIndexStorage($indexPage->getName(), $this->getTableName(), $this->getSchemaId());
+            $filePath = sprintf(
+                self::FILEPATH_TABLE_COLUMN_INDEX,
+                $this->getSchemaId(),
+                $this->getTableName(),
+                $indexPage->getName()
+            );
+
+            /* @var $file FileResourceProxy */
+            $file = $this->filesystem->getFile($filePath);
             
             $indexDoublesFilepath = "";
             $indexDoublesFile = null;
@@ -177,7 +185,7 @@ class Index implements \IteratorAggregate
                     $btree = new BTree($indexDataFile, $this->getIndexPage()->getKeyLength());
                     
                     if (!$indexPage->isUnique()) {
-                        $btree->setDoublesStorage($indexDoublesFile);
+                        $btree->setDoublesFile($indexDoublesFile);
                     }
                     
                     $this->indexBackend = $btree;
@@ -188,7 +196,7 @@ class Index implements \IteratorAggregate
                     $hashtable->setCacheBackend($this->getUsableCacheBackend());
                         
                     if (!$indexPage->isUnique()) {
-                        $hashtable->setDoublesStorage($indexDoublesFile);
+                        $hashtable->setDoublesFile($indexDoublesFile);
                     }
                         
                     $this->indexBackend = $hashtable;
@@ -359,18 +367,18 @@ class Index implements \IteratorAggregate
         $this->getIndexBackend()->remove($useValue, $rowId);
     }
     
-    private $doublesStorage;
+    private $doublesFile;
     
-    public function getDoublesStorage()
+    public function getDoublesFile()
     {
-        return $this->doublesStorage;
+        return $this->doublesFile;
     }
     
-    public function setDoublesStorage(Storage $storage)
+    public function setDoublesFile(FileResourceProxy $file)
     {
-        $this->doublesStorage = $storage;
-        if ($storage->getLength()===0) {
-            $storage->setData(str_pad("", $this->keyLength*2, "\0"));
+        $this->doublesFile = $file;
+        if ($file->getLength()===0) {
+            $file->setData(str_pad("", $this->keyLength*2, "\0"));
         }
     }
     

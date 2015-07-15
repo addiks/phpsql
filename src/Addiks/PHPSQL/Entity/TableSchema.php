@@ -15,7 +15,7 @@ use Addiks\PHPSQL\Entity\Page\Schema\Index;
 use Addiks\PHPSQL\Entity\Page\Column;
 use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\CustomIterator;
-use Addiks\PHPSQL\Entity\Storage;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 class TableSchema extends Entity implements TableSchemaInterface
 {
@@ -32,74 +32,74 @@ class TableSchema extends Entity implements TableSchemaInterface
         return $this->databaseSchema;
     }
 
-    public function __construct(Storage $columnStorage, Storage $indexStorage)
+    public function __construct(FileResourceProxy $columnFile, FileResourceProxy $indexFile)
     {
 
-        $this->columnStorage = $columnStorage;
-        $this->indexStorage = $indexStorage;
+        $this->columnFile = $columnFile;
+        $this->indexFile = $indexFile;
     }
 
     /**
-     * Storage containing information about the columns.
-     * @var Storage
+     * File containing information about the columns.
+     * @var FileResourceProxy
      */
-    private $columnStorage;
+    private $columnFile;
 
     /**
-     * @return Storage
+     * @return FileResourceProxy
      */
-    public function getColumnStorage()
+    public function getcolumnFile()
     {
-        return $this->columnStorage;
+        return $this->columnFile;
     }
 
     /**
-     * Storage containing information about the indicies.
-     * @var Storage
+     * File containing information about the indicies.
+     * @var FileResourceProxy
      */
-    private $indexStorage;
+    private $indexFile;
 
     /**
-     * @return Storage
+     * @return FileResourceProxy
      */
-    public function getIndexStorage()
+    public function getindexFile()
     {
-        return $this->indexStorage;
+        return $this->indexFile;
     }
 
-    public function setIndexStorage(Storage $indexStorage)
+    public function setindexFile(FileResourceProxy $indexFile)
     {
-        $this->indexStorage = $indexStorage;
+        $this->indexFile = $indexFile;
     }
 
     public function getIndexIterator()
     {
 
-        $storage = $this->getIndexStorage();
+        $file = $this->getindexFile();
 
         $iteratorEntity = new Index();
 
         return new CustomIterator(null, [
-            'valid' => function () use ($storage) {
-                $data = fread($storage->getHandle(), Index::PAGE_SIZE);
-                fseek($storage->getHandle(), 0-Index::PAGE_SIZE, SEEK_CUR);
+            'valid' => function () use ($file) {
+                $data = fread($file->getHandle(), Index::PAGE_SIZE);
+                fseek($file->getHandle(), 0-Index::PAGE_SIZE, SEEK_CUR);
                 return strlen($data) === Index::PAGE_SIZE;
             },
-            'rewind' => function () use ($storage) {
-                fseek($storage->getHandle(), 0, SEEK_SET);
+            'rewind' => function () use ($file) {
+                fseek($file->getHandle(), 0, SEEK_SET);
             },
-            'key' => function () use ($storage) {
-                return (ftell($storage->getHandle()) / Index::PAGE_SIZE);
+            'key' => function () use ($file) {
+                return (ftell($file->getHandle()) / Index::PAGE_SIZE);
             },
-            'current' => function () use ($storage, $iteratorEntity) {
-                $data = fread($storage->getHandle(), Index::PAGE_SIZE);
-                fseek($storage->getHandle(), 0-Index::PAGE_SIZE, SEEK_CUR);
+            'current' => function () use ($file, $iteratorEntity) {
+                $data = fread($file->getHandle(), Index::PAGE_SIZE);
+                fseek($file->getHandle(), 0-Index::PAGE_SIZE, SEEK_CUR);
                 $iteratorEntity->setData($data);
-                $iteratorEntity->setId(ftell($storage->getHandle()) / Index::PAGE_SIZE);
+                $iteratorEntity->setId(ftell($file->getHandle()) / Index::PAGE_SIZE);
                 return $iteratorEntity;
             },
-            'next' => function () use ($storage) {
-                fseek($storage->getHandle(), Index::PAGE_SIZE, SEEK_CUR);
+            'next' => function () use ($file) {
+                fseek($file->getHandle(), Index::PAGE_SIZE, SEEK_CUR);
             }
         ]);
     }
@@ -143,7 +143,7 @@ class TableSchema extends Entity implements TableSchemaInterface
     public function addColumnPage(Column $column)
     {
 
-        if ($this->getColumnStorage()->getLength()<=0) {
+        if ($this->getcolumnFile()->getLength()<=0) {
             $writeIndex = 0;
         } else {
             $writeIndex = $this->getLastIndex()+1;
@@ -157,9 +157,9 @@ class TableSchema extends Entity implements TableSchemaInterface
     public function addIndexPage(Index $indexPage)
     {
 
-        $storage = $this->getIndexStorage();
+        $file = $this->getindexFile();
 
-        $handle = $storage->getHandle();
+        $handle = $file->getHandle();
 
         fseek($handle, 0, SEEK_END);
 
@@ -173,13 +173,13 @@ class TableSchema extends Entity implements TableSchemaInterface
     public function getIndexPage($index)
     {
 
-        $storage = $this->getIndexStorage();
+        $file = $this->getindexFile();
 
-        $handle = $storage->getHandle();
+        $handle = $file->getHandle();
 
         fseek($handle, $index*Index::PAGE_SIZE, SEEK_SET);
 
-        $data = fread($storage->getHandle(), Index::PAGE_SIZE);
+        $data = fread($file->getHandle(), Index::PAGE_SIZE);
 
         if (strlen($data) !== Index::PAGE_SIZE) {
             return null;
@@ -195,45 +195,45 @@ class TableSchema extends Entity implements TableSchemaInterface
     public function getColumnIterator()
     {
 
-        $storage = $this->getColumnStorage();
+        $file = $this->getcolumnFile();
 
         $iteratorEntity = new Column();
 
         return new CustomIterator(null, [
-            'rewind' => function () use ($storage) {
-                fseek($storage->getHandle(), 0, SEEK_SET);
+            'rewind' => function () use ($file) {
+                fseek($file->getHandle(), 0, SEEK_SET);
             },
-            'valid' => function () use ($storage) {
+            'valid' => function () use ($file) {
 
-                $beforeSeek = ftell($storage->getHandle());
-                $data = fread($storage->getHandle(), Column::PAGE_SIZE);
-                fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
+                $beforeSeek = ftell($file->getHandle());
+                $data = fread($file->getHandle(), Column::PAGE_SIZE);
+                fseek($file->getHandle(), $beforeSeek, SEEK_SET);
 
                 return strlen($data) === Column::PAGE_SIZE;
             },
-            'key' => function () use ($storage) {
+            'key' => function () use ($file) {
 
-                return (ftell($storage->getHandle()) / Column::PAGE_SIZE);
+                return (ftell($file->getHandle()) / Column::PAGE_SIZE);
             },
-            'current' => function () use ($storage, $iteratorEntity) {
-                $beforeSeek = ftell($storage->getHandle());
-                $data = fread($storage->getHandle(), Column::PAGE_SIZE);
-                fseek($storage->getHandle(), $beforeSeek, SEEK_SET);
+            'current' => function () use ($file, $iteratorEntity) {
+                $beforeSeek = ftell($file->getHandle());
+                $data = fread($file->getHandle(), Column::PAGE_SIZE);
+                fseek($file->getHandle(), $beforeSeek, SEEK_SET);
                 if (strlen($data)!==Column::PAGE_SIZE) {
                     return null;
                 }
                 $iteratorEntity->setData($data);
-                $iteratorEntity->setId(ftell($storage->getHandle()) / Column::PAGE_SIZE);
+                $iteratorEntity->setId(ftell($file->getHandle()) / Column::PAGE_SIZE);
 
                 return clone $iteratorEntity;
             },
-            'next' => function () use ($storage) {
+            'next' => function () use ($file) {
 
                 do {
-                    fseek($storage->getHandle(), Column::PAGE_SIZE, SEEK_CUR);
+                    fseek($file->getHandle(), Column::PAGE_SIZE, SEEK_CUR);
                     
-                    $checkData = fread($storage->getHandle(), Column::PAGE_SIZE);
-                    fseek($storage->getHandle(), 0-strlen($checkData), SEEK_CUR);
+                    $checkData = fread($file->getHandle(), Column::PAGE_SIZE);
+                    fseek($file->getHandle(), 0-strlen($checkData), SEEK_CUR);
                     
                 } while (trim($checkData, "\0")==='' && strlen($checkData) === Column::PAGE_SIZE);
             }
@@ -275,17 +275,17 @@ class TableSchema extends Entity implements TableSchemaInterface
 
     public function getLastIndex()
     {
-        $storage = $this->getColumnStorage();
-        $position = ftell($storage->getHandle());
+        $file = $this->getcolumnFile();
+        $position = ftell($file->getHandle());
 
-        fseek($storage->getHandle(), 0, SEEK_END);
-        $endPosition = ftell($storage->getHandle());
+        fseek($file->getHandle(), 0, SEEK_END);
+        $endPosition = ftell($file->getHandle());
 
         if ($endPosition === 0) {
             return null;
         }
 
-        fseek($storage->getHandle(), $position, SEEK_SET);
+        fseek($file->getHandle(), $position, SEEK_SET);
 
         return (int)(($endPosition) / Column::PAGE_SIZE) -1;
     }
@@ -325,12 +325,12 @@ class TableSchema extends Entity implements TableSchemaInterface
         }
         
         if (!isset($this->columnCache[$index])) {
-            $storage = $this->getColumnStorage();
+            $file = $this->getcolumnFile();
             
             $position = $index * Column::PAGE_SIZE;
             
-            fseek($storage->getHandle(), $position, SEEK_SET);
-            $data = fread($storage->getHandle(), Column::PAGE_SIZE);
+            fseek($file->getHandle(), $position, SEEK_SET);
+            $data = fread($file->getHandle(), Column::PAGE_SIZE);
             
             if (strlen($data) !== Column::PAGE_SIZE) {
                 return null;
@@ -386,21 +386,21 @@ class TableSchema extends Entity implements TableSchemaInterface
         
         $this->columnCache[$index] = $column;
         
-        $storage = $this->getColumnStorage();
+        $file = $this->getcolumnFile();
 
-        flock($storage->getHandle(), LOCK_EX);
-        fseek($storage->getHandle(), Column::PAGE_SIZE * $index, SEEK_SET);
+        flock($file->getHandle(), LOCK_EX);
+        fseek($file->getHandle(), Column::PAGE_SIZE * $index, SEEK_SET);
 
-        fwrite($storage->getHandle(), $column->getData());
+        fwrite($file->getHandle(), $column->getData());
 
-        flock($storage->getHandle(), LOCK_UN);
+        flock($file->getHandle(), LOCK_UN);
     }
     
     public function removeColumn($index)
     {
         
-        $storage = $this->getColumnStorage();
-        $handle = $storage->getHandle();
+        $file = $this->getcolumnFile();
+        $handle = $file->getHandle();
         
         flock($handle, LOCK_EX);
         fseek($handle, Column::PAGE_SIZE * $index, SEEK_SET);

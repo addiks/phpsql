@@ -11,6 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity\Page;
 
+use InvalidArgumentException;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\InsertMethod;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\RowFormat;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Engine;
@@ -56,7 +57,7 @@ class Schema extends Entity
     {
         
         if (!preg_match("/^[a-zA-Z0-9_]{1,64}$/is", $name)) {
-            throw new InvalidArgument("Invalid name '{$name}' given!");
+            throw new InvalidArgumentException("Invalid database name '{$name}' given!");
         }
         $this->name = $name;
     }
@@ -209,7 +210,7 @@ class Schema extends Entity
     {
         
         if (!is_string($data) || strlen($data)!==self::PAGE_SIZE) {
-            throw new \InvalidArgumentException("Invalid page-data '{$data}' given!");
+            throw new InvalidArgumentException("Invalid page-data '{$data}' given!");
         }
         
         $rawName          = substr($data, 0, 64);

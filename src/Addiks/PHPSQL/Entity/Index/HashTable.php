@@ -11,11 +11,11 @@
 
 namespace Addiks\PHPSQL\Entity\Index;
 
+use ErrorException;
 use Addiks\PHPSQL\CacheBackendInterface;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Entity;
-use Addiks\PHPSQL\Entity\Storage;
-use ErrorException;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 /**
  * A hash-table is the most efficient indexing method to work with huge data.
@@ -41,15 +41,15 @@ class HashTable extends Entity implements IndexInterface
     
     use BinaryConverterTrait;
     
-    public function __construct(Storage $storage)
+    public function __construct(FileResourceProxy $file)
     {
         
-        $this->storage = $storage;
-        $this->storagePageCount = ceil(self::HASHTABLE_SIZE / self::REFERENCE_SIZE);
-        $this->usedHashCharCount = ceil(log($this->storagePageCount, 16));
-        $this->doublesBeginSeek = (int)(self::REFERENCE_SIZE * $this->storagePageCount);
+        $this->file = $file;
+        $this->filePageCount = ceil(self::HASHTABLE_SIZE / self::REFERENCE_SIZE);
+        $this->usedHashCharCount = ceil(log($this->filePageCount, 16));
+        $this->doublesBeginSeek = (int)(self::REFERENCE_SIZE * $this->filePageCount);
         
-        if ($storage->getLength() <= 0) {
+        if ($file->getLength() <= 0) {
             $this->clearAll();
         }
     }
@@ -61,26 +61,26 @@ class HashTable extends Entity implements IndexInterface
         return $this->doublesBeginSeek;
     }
     
-    private $storage;
+    private $file;
     
-    public function getStorage()
+    public function getFile()
     {
-        return $this->storage;
+        return $this->file;
     }
     
-    private $storagePageCount;
+    private $filePageCount;
     
-    public function getStoragePageCount()
+    public function getFilePageCount()
     {
         
-        return $this->storagePageCount;
+        return $this->filePageCount;
     }
     
-    public function getDoublesStorage()
+    public function getDoublesFile()
     {
     }
     
-    public function setDoublesStorage(Storage $storage)
+    public function setDoublesFile(FileResourceProxy $file)
     {
     }
     
@@ -95,7 +95,7 @@ class HashTable extends Entity implements IndexInterface
             $value = $this->decstr($value);
         }
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $beforeSeek = ftell($handle);
         $hashIndex = $this->getHashedInteger($value);
         
@@ -128,7 +128,7 @@ class HashTable extends Entity implements IndexInterface
                 $seek = $this->strdec($seek);
                     
                 if (isset($walkedIndicies[$seek])) {
-                    throw new ErrorException("Reference-Loop in HashTable-Doubles-Storage occoured!");
+                    throw new ErrorException("Reference-Loop in HashTable-Doubles-File occoured!");
                 }
                 $walkedIndicies[$seek] = $seek;
                     
@@ -193,7 +193,7 @@ class HashTable extends Entity implements IndexInterface
             $this->getCacheBackend()->add($value, "\0" . $rowId);
         }
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $beforeSeek = ftell($handle);
         $hashSeek = $this->getHashedInteger($value);
         
@@ -221,7 +221,7 @@ class HashTable extends Entity implements IndexInterface
                     
                 if (isset($walkedIndicies[$seek])) {
                     fseek($handle, $beforeSeek, SEEK_SET);
-                    throw new ErrorException("Reference-Loop in HashTable-Doubles-Storage occoured!");
+                    throw new ErrorException("Reference-Loop in HashTable-Doubles-File occoured!");
                 }
                 $walkedIndicies[$seek] = $seek;
                     
@@ -311,7 +311,7 @@ class HashTable extends Entity implements IndexInterface
             $this->getCacheBackend()->set($value, $cachedString);
         }
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $beforeSeek = ftell($handle);
         $hashSeek = $this->getHashedInteger($value);
         
@@ -335,7 +335,7 @@ class HashTable extends Entity implements IndexInterface
                 
             if (isset($walkedIndicies[$seek])) {
                 fseek($handle, $beforeSeek, SEEK_SET);
-                throw new ErrorException("Reference-Loop in HashTable-Doubles-Storage occoured!");
+                throw new ErrorException("Reference-Loop in HashTable-Doubles-File occoured!");
             }
             $walkedIndicies[$seek] = $seek;
                 
@@ -371,7 +371,7 @@ class HashTable extends Entity implements IndexInterface
     public function clearAll()
     {
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         ftruncate($handle, 0);
         fflush($handle);
         fseek($handle, $this->getDoublesBeginSeek(), SEEK_SET);
@@ -396,7 +396,7 @@ class HashTable extends Entity implements IndexInterface
         
         $dec = hexdec($hash);
         
-        $dec = $dec % $this->storagePageCount;
+        $dec = $dec % $this->filePageCount;
         
         return $dec;
     }
@@ -406,7 +406,7 @@ class HashTable extends Entity implements IndexInterface
     public function dumpToArray()
     {
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $beforeSeek = ftell($handle);
         fseek($handle, $this->getDoublesBeginSeek()+1, SEEK_SET);
         
@@ -435,7 +435,7 @@ class HashTable extends Entity implements IndexInterface
     public function dumpToLog($logger)
     {
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $beforeSeek = ftell($handle);
         fseek($handle, $this->getDoublesBeginSeek()+1, SEEK_SET);
         
@@ -457,7 +457,7 @@ class HashTable extends Entity implements IndexInterface
     protected function performSelfTest()
     {
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $beforeSeek = ftell($handle);
 
         fseek($handle, 0, SEEK_END);
@@ -466,7 +466,7 @@ class HashTable extends Entity implements IndexInterface
         
         fseek($handle, 0, SEEK_SET);
             
-        for ($index=0; $index<$this->storagePageCount; $index++) {
+        for ($index=0; $index<$this->filePageCount; $index++) {
             $reference = fread($handle, self::REFERENCE_SIZE);
             if (ltrim($reference, "\0")!=='') {
                 $reference = $this->strdec($reference);

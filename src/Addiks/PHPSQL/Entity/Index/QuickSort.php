@@ -11,11 +11,11 @@
 
 namespace Addiks\PHPSQL\Entity\Index;
 
+use ErrorException;
 use Addiks\PHPSQL\Entity\Page\Column;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Entity;
-use ErrorException;
-use Addiks\PHPSQL\Entity\Storage;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 class QuickSort extends Entity implements \Iterator
 {
@@ -24,11 +24,11 @@ class QuickSort extends Entity implements \Iterator
     
     /**
      *
-     * @param Storage $storage
+     * @param FileResourceProxy $file
      * @param array $columnPages [[(Column)$columnPage, 'ASC'], [$columnPage2, 'DESC'], $columnPage3, ...]
      * @throws ErrorException
      */
-    public function __construct(Storage $storage, array $columnPages)
+    public function __construct(FileResourceProxy $file, array $columnPages)
     {
     
         // rebuild array to have usable keys
@@ -61,19 +61,19 @@ class QuickSort extends Entity implements \Iterator
             ];
         }
     
-        $this->storage = $storage;
+        $this->file = $file;
         $this->columnPages = $usedColumnPages;
         
-        if ($storage->getLength() <= 0) {
-            $storage->setData(str_pad("", $this->getPageSize(), "\0"));
+        if ($file->getLength() <= 0) {
+            $file->setData(str_pad("", $this->getPageSize(), "\0"));
         }
     }
     
-    private $storage;
+    private $file;
     
-    public function getStorage()
+    public function getFile()
     {
-        return $this->storage;
+        return $this->file;
     }
     
     private $columnPages;
@@ -106,7 +106,7 @@ class QuickSort extends Entity implements \Iterator
     public function rewind()
     {
     
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
     
         fseek($handle, $this->getPageSize(), SEEK_SET);
     }
@@ -114,7 +114,7 @@ class QuickSort extends Entity implements \Iterator
     public function valid()
     {
     
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
     
         $beforeIndex = ftell($handle);
     
@@ -132,7 +132,7 @@ class QuickSort extends Entity implements \Iterator
     public function current()
     {
     
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
     
         $beforeIndex = ftell($handle);
     
@@ -146,7 +146,7 @@ class QuickSort extends Entity implements \Iterator
     public function key()
     {
     
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
     
         $index = ftell($handle) / $this->getPageSize();
         
@@ -156,7 +156,7 @@ class QuickSort extends Entity implements \Iterator
     public function next()
     {
     
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
     
         fseek($handle, $this->getPageSize(), SEEK_CUR);
     }
@@ -164,7 +164,7 @@ class QuickSort extends Entity implements \Iterator
     public function count()
     {
     
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         $beforeIndex = ftell($handle);
     
         fseek($handle, 0, SEEK_END);
@@ -185,7 +185,7 @@ class QuickSort extends Entity implements \Iterator
             }
         }
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         
         fseek($handle, 0, SEEK_END);
         
@@ -211,7 +211,7 @@ class QuickSort extends Entity implements \Iterator
             return;
         }
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         
         ### READ
         
@@ -242,7 +242,7 @@ class QuickSort extends Entity implements \Iterator
         $blockIndexAExport = str_replace(["\n", ' ', '"', "'", '.'], "", $blockIndexAExport);
         $blockIndexBExport = str_replace(["\n", ' ', '"', "'", '.'], "", $blockIndexBExport);
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         
         ### READ A
         
@@ -312,7 +312,7 @@ class QuickSort extends Entity implements \Iterator
     protected function getBlockRow($index)
     {
         
-        $handle = $this->getStorage()->getHandle();
+        $handle = $this->getFile()->getHandle();
         
         fseek($handle, $index * $this->getPageSize());
         

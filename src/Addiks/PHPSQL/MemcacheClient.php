@@ -59,7 +59,7 @@ class MemcacheClient implements CacheBackendInterface
      * This method will connect to all known memcache-servers.
      *
      * If no servers are known, it will scan the internal network(s),
-     * and store the result int the internal storage system.
+     * and store the result in a file.
      */
     public function autoConnect()
     {

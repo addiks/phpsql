@@ -13,7 +13,6 @@ namespace Addiks\PHPSQL\Table;
 
 use ErrorException;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
-use Addiks\PHPSQL\Entity\Storage;
 use Addiks\PHPSQL\Entity\TableSchema;
 use Addiks\PHPSQL\Entity\ColumnData;
 use Addiks\PHPSQL\Entity\Job\Part\Value;
@@ -266,7 +265,7 @@ class InternalTable implements TableInterface
             /* @var $columnData ColumnData */
             $columnData = new ColumnData($columnDataFile, $columnSchemaPage);
 
-            if ($columnDataStorage->getLength() <= 0) {
+            if ($columnDataFile->getLength() <= 0) {
                 $columnData->preserveSpace($this->getRowsPerColumnData($columnId));
             }
 
