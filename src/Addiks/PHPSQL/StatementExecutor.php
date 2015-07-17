@@ -48,15 +48,18 @@ class StatementExecutor implements StatementExecutorInterface
 
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
+        $result = null;
+
         foreach ($this->getStatementExecutors() as $statementExecutor) {
             /* @var $statementExecutor */
 
             if ($statementExecutor->canExecuteJob($statement)) {
-                if ($statementExecutor->executeJob($statement, $parameters)) {
-                    break;
-                }
+                $result = $statementExecutor->executeJob($statement, $parameters);
+                break;
             }
         }
+
+        return $result;
     }
 
     protected $statementExecutors = array();

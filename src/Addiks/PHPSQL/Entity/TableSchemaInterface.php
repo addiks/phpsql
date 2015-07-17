@@ -11,8 +11,8 @@
 
 namespace Addiks\PHPSQL\Entity;
 
-use Addiks\PHPSQL\Entity\Page\Schema\Index;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
+use Addiks\PHPSQL\Entity\Page\Schema\IndexPage;
 
 interface TableSchemaInterface
 {
@@ -23,7 +23,7 @@ interface TableSchemaInterface
     public function getIndexIterator();
     public function indexExist($name);
     public function getIndexIdByColumns($columnIds);
-    public function addIndexPage(Index $indexPage);
+    public function addIndexPage(IndexPage $indexPage);
     public function getIndexPage($index);
     public function getLastIndex();
     

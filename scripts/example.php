@@ -8,6 +8,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Addiks\PHPSQL\PDO;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\ResultWriter;
 
 define("BASEDIR", realpath(__DIR__."/.."));
 
@@ -58,7 +59,7 @@ try{
     $pdo->query("ALTER TABLE `cart_item` ADD COLUMN `quantity` FLOAT NOT NULL DEFAULT 1.0");
 
     // Let's have a look on the table 'cart_item'
-    echo (string)$pdo->query("DESCRIBE TABLE `cart_item`");
+    echo (string)new ResultWriter($pdo->query("DESCRIBE `cart_item`")->getResult());
 
 } catch (MalformedSql $exception) {
     echo $exception;

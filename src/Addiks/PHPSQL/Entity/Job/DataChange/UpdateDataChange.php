@@ -9,13 +9,13 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Update;
+namespace Addiks\PHPSQL\Entity\Job\DataChange;
 
 use Addiks\PHPSQL\Entity\Result\Specifier\Column;
 
 use Addiks\PHPSQL\Entity\Job;
 
-class DataChange extends Job
+class UpdateDataChange extends Job
 {
 
     private $column;

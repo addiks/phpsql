@@ -9,11 +9,11 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Insert;
+namespace Addiks\PHPSQL\Entity\Job\DataChange;
 
 use Addiks\PHPSQL\Entity\Job;
 
-class DataChange extends Job
+class InsertDataChange extends Job
 {
     
     private $column;

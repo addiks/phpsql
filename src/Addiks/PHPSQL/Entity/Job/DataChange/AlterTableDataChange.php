@@ -9,16 +9,18 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\Alter;
+namespace Addiks\PHPSQL\Entity\Job\DataChange;
 
 use Addiks\PHPSQL\Entity\Job;
+use Addiks\PHPSQL\Value\Enum\Sql\Alter\DataChange\AlterAttributeType;
+use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 
-class DataChange extends Job
+class AlterTableDataChange extends Job
 {
     
     private $attribute;
     
-    public function setAttribute(Attribute $attribute)
+    public function setAttribute(AlterAttributeType $attribute)
     {
         $this->attribute = $attribute;
     }

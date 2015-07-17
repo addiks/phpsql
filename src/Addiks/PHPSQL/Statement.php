@@ -50,7 +50,7 @@ class Statement
     
     private $result;
     
-    protected function getResult()
+    public function getResult()
     {
         if (is_null($this->result)) {
             return new TemporaryResult();

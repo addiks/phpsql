@@ -11,8 +11,6 @@
 
 namespace Addiks\PHPSQL\SqlParser;
 
-use Addiks\PHPSQL\Value\Enum\Sql\Alter\DataChange\AlterAttributeType;
-use Addiks\PHPSQL\Entity\Job\Statement\AlterStatement;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
@@ -20,7 +18,11 @@ use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
+use Addiks\PHPSQL\Entity\Job\Statement\AlterStatement;
+use Addiks\PHPSQL\SqlParser\Part\ColumnDefinitionParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
+use Addiks\PHPSQL\Entity\Job\DataChange\AlterTableDataChange;
+use Addiks\PHPSQL\Value\Enum\Sql\Alter\DataChange\AlterAttributeType;
 
 class AlterSqlParser extends SqlParser
 {
@@ -61,6 +63,18 @@ class AlterSqlParser extends SqlParser
         $this->columnParser = $columnParser;
     }
 
+    protected $columnDefinitionParser;
+
+    public function setColumnDefinitionParser(ColumnDefinitionParser $columnDefinitionParser)
+    {
+        $this->columnDefinitionParser = $columnDefinitionParser;
+    }
+
+    public function getColumnDefinitionParser()
+    {
+        return $this->columnDefinitionParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         return is_int($tokens->isTokenNum(SqlToken::T_ALTER(), TokenIterator::CURRENT))
@@ -71,7 +85,6 @@ class AlterSqlParser extends SqlParser
     {
 
         $alterJob = new AlterStatement();
-        $columnDefinitionParser = new ColumnDefinition();
         
         $tokens->seekTokenNum(SqlToken::T_ALTER());
         
@@ -91,7 +104,7 @@ class AlterSqlParser extends SqlParser
         
         $alterJob->setTable($this->tableParser->convertSqlToJob($tokens));
         
-        $dataChange = new DataChange();
+        $dataChange = new AlterTableDataChange();
         
         do {
             switch(true){
@@ -105,29 +118,29 @@ class AlterSqlParser extends SqlParser
                             case $tokens->seekTokenNum(SqlToken::T_COLUMN()):
                                 if ($tokens->seekTokenText('(')) {
                                     do {
-                                        if (!$columnDefinitionParser->canParseTokens($tokens)) {
+                                        if (!$this->columnDefinitionParser->canParseTokens($tokens)) {
                                             throw new MalformedSql("Missing column definition after ALTER TABLE ADD COLUMN!", $tokens);
                                         }
                                         $dataChange->setAttribute(AlterAttributeType::ADD());
-                                        $dataChange->setSubjectColumnDefinition($columnDefinitionParser->convertSqlToJob($tokens));
+                                        $dataChange->setSubjectColumnDefinition($this->columnDefinitionParser->convertSqlToJob($tokens));
                                         $alterJob->addDataChange(clone $dataChange);
                                     } while ($tokens->seekTokenText(','));
                                     if (!$tokens->seekTokenText(')')) {
                                         throw new MalformedSql("Missing ending parenthesis after column list", $tokens);
                                     }
                                 } else {
-                                    if (!$columnDefinitionParser->canParseTokens($tokens)) {
+                                    if (!$this->columnDefinitionParser->canParseTokens($tokens)) {
                                         throw new MalformedSql("Missing column definition after ALTER TABLE ADD COLUMN!", $tokens);
                                     }
                                     $dataChange->setAttribute(AlterAttributeType::ADD());
-                                    $dataChange->setSubjectColumnDefinition($columnDefinitionParser->convertSqlToJob($tokens));
+                                    $dataChange->setSubjectColumnDefinition($this->columnDefinitionParser->convertSqlToJob($tokens));
                                     $alterJob->addDataChange(clone $dataChange);
                                 }
                                 break;
                             
-                            case $columnDefinitionParser->canParseTokens($tokens):
+                            case $this->columnDefinitionParser->canParseTokens($tokens):
                                 $dataChange->setAttribute(AlterAttributeType::ADD());
-                                $dataChange->setSubjectColumnDefinition($columnDefinitionParser->convertSqlToJob($tokens));
+                                $dataChange->setSubjectColumnDefinition($this->columnDefinitionParser->convertSqlToJob($tokens));
                                 $alterJob->addDataChange(clone $dataChange);
                                 break;
                                 
@@ -333,10 +346,10 @@ class AlterSqlParser extends SqlParser
                         throw new MalformedSql("Missing column-specification for ALTER TABLE CHANGE COLUMN statement!", $tokens);
                     }
                     $dataChange->setSubject($this->columnParser->convertSqlToJob($tokens));
-                    if (!$columnDefinitionParser->canParseTokens($tokens)) {
+                    if (!$this->columnDefinitionParser->canParseTokens($tokens)) {
                         throw new MalformedSql("Missing valid column-definiton for ALTER TABLE CHANGE COLUMN statement!", $tokens);
                     }
-                    $dataChange->setValue($columnDefinitionParser->convertSqlToJob($tokens));
+                    $dataChange->setValue($this->columnDefinitionParser->convertSqlToJob($tokens));
                     switch(true){
                         case $tokens->seekTokenNum(SqlToken::T_FIRST()):
                             $dataChange->setAttribute(AlterAttributeType::SET_FIRST());
@@ -355,10 +368,10 @@ class AlterSqlParser extends SqlParser
                 case $tokens->seekTokenNum(SqlToken::T_MODIFY()):
                     $alterJob->setAction(Action::MODIFY());
                     $tokens->seekTokenNum(SqlToken::T_COLUMN());
-                    if (!$columnDefinitionParser->canParseTokens($tokens)) {
+                    if (!$this->columnDefinitionParser->canParseTokens($tokens)) {
                         throw new MalformedSql("Missing valid column definition for ALTER TABLE MODIFY COLUMN statement!", $tokens);
                     }
-                    $alterJob->addSubjectColumnDefinition($columnDefinitionParser->convertSqlToJob($tokens));
+                    $alterJob->addSubjectColumnDefinition($this->columnDefinitionParser->convertSqlToJob($tokens));
                     switch(true){
                         case $tokens->seekTokenNum(SqlToken::T_FIRST()):
                             $dataChange->setAttribute(AlterAttributeType::SET_FIRST());

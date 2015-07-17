@@ -194,4 +194,13 @@ class ResultWriter implements IteratorAggregate
             }
         ]);
     }
+
+    public function __toString()
+    {
+        $output = "";
+        foreach ($this->getIterator() as $line) {
+            $output .= $line;
+        }
+        return $output;
+    }
 }

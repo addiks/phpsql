@@ -9,16 +9,16 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\StatementJob;
+namespace Addiks\PHPSQL\Entity\Job\Statement;
 
 use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
-use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Executor\DescribeExecutor;
+use Addiks\PHPSQL\Entity\Job\StatementJob;
 
 /**
  *
  */
-class DescribeStatement extends Statement
+class DescribeStatement extends StatementJob
 {
     
     const EXECUTOR_CLASS = DescribeExecutor::class;

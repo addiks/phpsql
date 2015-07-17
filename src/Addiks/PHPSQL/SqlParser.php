@@ -168,6 +168,7 @@ class SqlParser
         $alterParser->setTableParser($tableParser);
         $alterParser->setColumnParser($columnParser);
         $alterParser->setValueParser($valueParser);
+        $alterParser->setColumnDefinitionParser($columnDefinitionParser);
         $createParser->setConditionParser($conditionParser);
         $createParser->setTableParser($tableParser);
         $createParser->setColumnParser($columnParser);

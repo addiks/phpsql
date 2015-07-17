@@ -190,19 +190,11 @@ class CreateTableExecutor implements StatementExecutorInterface
             
             $indexSchemaPage->setColumns($columns);
             $indexSchemaPage->setKeyLength($keyLength);
+
+            $tableSchema->addIndexPage($indexSchemaPage);
             
-            /* @var $indexResource IndexResource */
-            $indexResource = $this->tableManager->createIndex(
-                $indexSchemaPage,
-                $statement->getName()
-            );
-            
-            $indexResource->getIndexBackend();
         }
     
-        /* @var $tableResource Table */
-        $tableResource = $this->tableManager->createTable($tableSchema);
-        
         ### RESULT
         
         $result = new TemporaryResult();

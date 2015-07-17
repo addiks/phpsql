@@ -9,22 +9,24 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\StatementJob;
+namespace Addiks\PHPSQL\Entity\Job\Statement;
 
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Executor\AlterExecutor;
+use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
+use Addiks\PHPSQL\Entity\Job\DataChange\AlterTableDataChange;
 
 /**
  *
  */
-class AlterStatement extends Statement
+class AlterStatement extends StatementJob
 {
 
     const EXECUTOR_CLASS = AlterExecutor::class;
 
     private $table;
     
-    public function setTable(Table $table)
+    public function setTable(TableSpecifier $table)
     {
         $this->table = $table;
     }
@@ -43,7 +45,7 @@ class AlterStatement extends Statement
     
     private $dataChanges = array();
     
-    public function addDataChange(DataChange $dataChange)
+    public function addDataChange(AlterTableDataChange $dataChange)
     {
         $this->dataChanges[] = $dataChange;
     }

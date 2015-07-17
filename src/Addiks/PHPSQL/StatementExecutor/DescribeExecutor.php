@@ -16,10 +16,11 @@ use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\Entity\Job\StatementJob\DescribeStatement;
+use Addiks\PHPSQL\Entity\Job\Statement\DescribeStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\Entity\Page\ColumnPage;
 
 class DescribeExecutor implements StatementExecutorInterface
 {
@@ -56,7 +57,7 @@ class DescribeExecutor implements StatementExecutorInterface
         }
         
         foreach ($tableSchema->getColumnIterator() as $columnId => $columnPage) {
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
             
             $fieldName = $columnPage->getName();
             

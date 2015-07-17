@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity;
 
-use Addiks\PHPSQL\Entity\Page\Schema\Index;
+use Addiks\PHPSQL\Entity\Page\Schema\IndexPage;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\CustomIterator;
@@ -77,29 +77,29 @@ class TableSchema extends Entity implements TableSchemaInterface
 
         $file = $this->getindexFile();
 
-        $iteratorEntity = new Index();
+        $iteratorEntity = new IndexPage();
 
         return new CustomIterator(null, [
             'valid' => function () use ($file) {
-                $data = $file->read(Index::PAGE_SIZE);
-                $file->seek(0-Index::PAGE_SIZE, SEEK_CUR);
-                return strlen($data) === Index::PAGE_SIZE;
+                $data = $file->read(IndexPage::PAGE_SIZE);
+                $file->seek(0-IndexPage::PAGE_SIZE, SEEK_CUR);
+                return strlen($data) === IndexPage::PAGE_SIZE;
             },
             'rewind' => function () use ($file) {
                 $file->seek(0, SEEK_SET);
             },
             'key' => function () use ($file) {
-                return ($file->tell() / Index::PAGE_SIZE);
+                return ($file->tell() / IndexPage::PAGE_SIZE);
             },
             'current' => function () use ($file, $iteratorEntity) {
-                $data = $file->read(Index::PAGE_SIZE);
-                $file->seek(0-Index::PAGE_SIZE, SEEK_CUR);
+                $data = $file->read(IndexPage::PAGE_SIZE);
+                $file->seek(0-IndexPage::PAGE_SIZE, SEEK_CUR);
                 $iteratorEntity->setData($data);
-                $iteratorEntity->setId($file->tell() / Index::PAGE_SIZE);
+                $iteratorEntity->setId($file->tell() / IndexPage::PAGE_SIZE);
                 return $iteratorEntity;
             },
             'next' => function () use ($file) {
-                $file->seek(Index::PAGE_SIZE, SEEK_CUR);
+                $file->seek(IndexPage::PAGE_SIZE, SEEK_CUR);
             }
         ]);
     }
@@ -108,7 +108,7 @@ class TableSchema extends Entity implements TableSchemaInterface
     {
         
         foreach ($this->getIndexIterator() as $indexId => $indexPage) {
-            /* @var $indexPage Index */
+            /* @var $indexPage IndexPage */
             
             if (count($indexPage->getColumns()) !== count($columnIds)) {
                 continue;
@@ -130,7 +130,7 @@ class TableSchema extends Entity implements TableSchemaInterface
     {
         
         foreach ($this->getIndexIterator() as $indexId => $indexPage) {
-            /* @var $indexPage Index */
+            /* @var $indexPage IndexPage */
             
             if ($indexPage->getName()) {
                 return true;
@@ -154,14 +154,14 @@ class TableSchema extends Entity implements TableSchemaInterface
         return $writeIndex;
     }
 
-    public function addIndexPage(Index $indexPage)
+    public function addIndexPage(IndexPage $indexPage)
     {
 
         $file = $this->getindexFile();
 
         $file->seek(0, SEEK_END);
 
-        $index = $file->tell() / Index::PAGE_SIZE;
+        $index = $file->tell() / IndexPage::PAGE_SIZE;
 
         $file->write($indexPage->getData());
 
@@ -173,15 +173,15 @@ class TableSchema extends Entity implements TableSchemaInterface
 
         $file = $this->getindexFile();
 
-        $file->seek($index*Index::PAGE_SIZE, SEEK_SET);
+        $file->seek($index*IndexPage::PAGE_SIZE, SEEK_SET);
 
-        $data = $file->read(Index::PAGE_SIZE);
+        $data = $file->read(IndexPage::PAGE_SIZE);
 
-        if (strlen($data) !== Index::PAGE_SIZE) {
+        if (strlen($data) !== IndexPage::PAGE_SIZE) {
             return null;
         }
 
-        $indexPage = new Index();
+        $indexPage = new IndexPage();
         $indexPage->setData($data);
         $indexPage->setId($index);
 
@@ -193,7 +193,7 @@ class TableSchema extends Entity implements TableSchemaInterface
 
         $file = $this->getColumnFile();
 
-        $iteratorEntity = new Column();
+        $iteratorEntity = new ColumnPage();
 
         return new CustomIterator(null, [
             'rewind' => function () use ($file) {
@@ -219,7 +219,7 @@ class TableSchema extends Entity implements TableSchemaInterface
                     return null;
                 }
                 $iteratorEntity->setData($data);
-                $iteratorEntity->setId(ftell() / ColumnPage::PAGE_SIZE);
+                $iteratorEntity->setId($file->tell() / ColumnPage::PAGE_SIZE);
 
                 return clone $iteratorEntity;
             },
