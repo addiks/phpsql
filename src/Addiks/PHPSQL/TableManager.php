@@ -10,6 +10,7 @@ use Addiks\PHPSQL\Value\Specifier\DatabaseSpecifier;
 use Addiks\PHPSQL\Table;
 use Addiks\PHPSQL\Index;
 use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Entity\Page\Schema\IndexPage;
 
 class TableManager
 {

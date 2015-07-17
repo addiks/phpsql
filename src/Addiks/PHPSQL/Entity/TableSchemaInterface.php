@@ -12,8 +12,7 @@
 namespace Addiks\PHPSQL\Entity;
 
 use Addiks\PHPSQL\Entity\Page\Schema\Index;
-
-use Addiks\PHPSQL\Entity\Page\Column;
+use Addiks\PHPSQL\Entity\Page\ColumnPage;
 
 interface TableSchemaInterface
 {
@@ -28,7 +27,7 @@ interface TableSchemaInterface
     public function getIndexPage($index);
     public function getLastIndex();
     
-    public function addColumnPage(Column $column);
+    public function addColumnPage(ColumnPage $column);
     public function getColumnIterator();
     public function getColumnIndex($columnName);
     public function getCachedColumnIds();
@@ -37,5 +36,5 @@ interface TableSchemaInterface
     public function listColumns();
     public function getColumn($index);
     public function columnExist($columnName);
-    public function writeColumn($index = null, Column $column);
+    public function writeColumn($index = null, ColumnPage $column);
 }

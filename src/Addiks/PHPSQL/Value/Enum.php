@@ -53,6 +53,17 @@ abstract class Enum extends Value{
 		}
 		
 		$key = static::getByValue($value);
+
+        if (is_null($key)) {
+		    $reflection = new ReflectionClass(get_called_class());
+		
+		    foreach(array_keys($reflection->getConstants()) as $name){
+			    if(strtolower($name) === strtolower($value)){
+				    $key = $name;
+			    }
+		    }
+		
+        }
 		
 		if(is_null($key)){
 			throw new ErrorException("Value '{$value}' does not match enumeration '{$classname}'");

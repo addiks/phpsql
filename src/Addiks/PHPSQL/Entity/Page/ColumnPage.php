@@ -11,10 +11,11 @@
 
 namespace Addiks\PHPSQL\Entity\Page;
 
+use ErrorException;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Entity;
-use ErrorException;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 /**
  * A page in an table-index containing information about a column in the table.
@@ -29,11 +30,10 @@ use ErrorException;
  * __________________
  *             2048bit  256byte
  */
-class Column extends Entity
+class ColumnPage extends Entity
 {
     
     use BinaryConverterTrait;
-use Addiks\PHPSQL\Filesystem\FileResourceProxy;
     
     const PAGE_SIZE = 256;
     

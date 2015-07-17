@@ -60,8 +60,8 @@ class Schema extends Entity implements SchemaInterface
         
         $skipDeleted = function () use ($file) {
             while (true) {
-                if (trim($data = fread($file->getHandle(), SchemaPage::PAGE_SIZE), "\0")!=='') {
-                    fseek($file->getHandle(), 0-strlen($data), SEEK_CUR);
+                if (trim($data = $file->read(SchemaPage::PAGE_SIZE), "\0")!=='') {
+                    $file->seek(0-strlen($data), SEEK_CUR);
                     break;
                 }
                 if (strlen($data)!==SchemaPage::PAGE_SIZE) {
@@ -72,25 +72,25 @@ class Schema extends Entity implements SchemaInterface
         
         return new CustomIterator(null, [
             'valid' => function () use ($file) {
-                $data = fread($file->getHandle(), SchemaPage::PAGE_SIZE);
-                fseek($file->getHandle(), 0-strlen($data), SEEK_CUR);
+                $data = $file->read(SchemaPage::PAGE_SIZE);
+                $file->seek(0-strlen($data), SEEK_CUR);
                 return strlen($data) === SchemaPage::PAGE_SIZE;
             },
             'rewind' => function () use ($file, $skipDeleted) {
-                fseek($file->getHandle(), 0, SEEK_SET);
+                $file->seek(0, SEEK_SET);
                 $skipDeleted();
             },
             'key' => function () use ($file) {
-                return (ftell($file->getHandle()) / SchemaPage::PAGE_SIZE);
+                return ($file->tell() / SchemaPage::PAGE_SIZE);
             },
             'current' => function () use ($file, $iteratorEntity) {
-                $data = fread($file->getHandle(), SchemaPage::PAGE_SIZE);
-                fseek($file->getHandle(), 0-strlen($data), SEEK_CUR);
+                $data = $file->read(SchemaPage::PAGE_SIZE);
+                $file->seek(0-strlen($data), SEEK_CUR);
                 $iteratorEntity->setData($data);
                 return $iteratorEntity;
             },
             'next' => function () use ($file, $skipDeleted) {
-                fseek($file->getHandle(), SchemaPage::PAGE_SIZE, SEEK_CUR);
+                $file->seek(SchemaPage::PAGE_SIZE, SEEK_CUR);
                 $skipDeleted();
             }
         ]);
@@ -142,15 +142,15 @@ class Schema extends Entity implements SchemaInterface
             $tableId = $this->getTableIndex($tableId);
         }
         
-        $handle = $this->getSchemaIndexFile()->getHandle();
+        $file = $this->getSchemaIndexFile();
+
+        $beforeSeek = $file->tell();
         
-        $beforeSeek = ftell($handle);
+        $file->seek($tableId * SchemaPage::PAGE_SIZE, SEEK_SET);
         
-        fseek($handle, $tableId * SchemaPage::PAGE_SIZE, SEEK_SET);
+        $data = $file->read(SchemaPage::PAGE_SIZE);
         
-        $data = fread($handle, SchemaPage::PAGE_SIZE);
-        
-        fseek($handle, $beforeSeek, SEEK_SET);
+        $file->seek($beforeSeek, SEEK_SET);
         
         $entity = new SchemaPage();
         $entity->setData($data);
@@ -203,11 +203,9 @@ class Schema extends Entity implements SchemaInterface
         $index = $this->getTableIndex($tableName);
         
         $indexFile = $this->getSchemaIndexFile();
-        fseek($indexFile->getHandle(), $index * SchemaPage::PAGE_SIZE, SEEK_SET);
-        
-        fwrite($indexFile->getHandle(), str_pad("", SchemaPage::PAGE_SIZE, "\0"));
-        
-        fflush($indexFile->getHandle());
+        $indexFile->seek($index * SchemaPage::PAGE_SIZE, SEEK_SET);
+        $indexFile->write(str_pad("", SchemaPage::PAGE_SIZE, "\0"));
+        $indexFile->flush();
     }
     
     ### VIEWS
@@ -269,7 +267,7 @@ class Schema extends Entity implements SchemaInterface
         $index = $this->getViewIndex($viewName);
         
         $indexFile = $this->getSchemaIndexFile();
-        fseek($indexFile->getHandle(), $index * SchemaPage::PAGE_SIZE, SEEK_SET);
-        fwrite($indexFile->getHandle(), str_pad("", "\0", Schema::PAGE_SIZE));
+        $indexFile->seek($index * SchemaPage::PAGE_SIZE, SEEK_SET);
+        $indexFile->write(str_pad("", "\0", Schema::PAGE_SIZE));
     }
 }

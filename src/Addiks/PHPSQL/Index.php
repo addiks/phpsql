@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL;
 
 use ErrorException;
-use Addiks\PHPSQL\Entity\Page\Column;
+use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Entity\TableSchema;
 use Addiks\PHPSQL\Entity\Index\HashTable;
 use Addiks\PHPSQL\Entity\Index\BTree;

@@ -142,7 +142,7 @@ class CreateTableStatement extends CreateStatement
      */
     private $engine;
     
-    public function setEngine($engine)
+    public function setEngine(Engine $engine)
     {
         $this->engine = $engine;
     }

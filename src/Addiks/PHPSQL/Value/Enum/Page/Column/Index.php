@@ -9,7 +9,7 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Value\Enum\Page\Column;
+namespace Addiks\PHPSQL\Value\Enum\Page\ColumnPage;
 
 use Addiks\PHPSQL\Value\Enum;
 

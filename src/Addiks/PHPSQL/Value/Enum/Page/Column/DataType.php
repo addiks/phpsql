@@ -131,7 +131,7 @@ class DataType extends Enum
 
     public function getSecondByteLength()
     {
-        $bytelength = null;
+        $bytelength = 0;
         $flag = $this->getValue();
 
         $map = array(

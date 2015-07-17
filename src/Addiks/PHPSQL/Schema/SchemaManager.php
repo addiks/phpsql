@@ -8,6 +8,7 @@ use Addiks\PHPSQL\Schema\Meta\InformationSchema;
 use Addiks\PHPSQL\Entity\Schema;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Value\Database\Dsn\InternalDsn;
+use Addiks\PHPSQL\Entity\TableSchema;
 
 class SchemaManager
 {

@@ -20,7 +20,7 @@ use ErrorException;
 /**
  * Holds information about an index for a table.
  */
-class Index extends Entity
+class IndexPage extends Entity
 {
     
     /**

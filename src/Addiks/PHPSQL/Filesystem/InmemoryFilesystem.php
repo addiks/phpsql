@@ -43,7 +43,7 @@ class InmemoryFilesystem implements FilesystemInterface
             throw new ErrorException("Requested file is a folder ('{$filePath}')!");
         }
         if (!isset($this->fileResources[$filePath])) {
-            $this->fileResources = fopen("php://memory", "w+");
+            $this->fileResources[$filePath] = fopen("php://memory", "w+");
         }
         return $this->fileResources[$filePath];
     }

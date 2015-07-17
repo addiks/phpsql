@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity;
 
-use Addiks\PHPSQL\Entity\Page\Column;
+use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Entity;
 use ErrorException;
 use Addiks\PHPSQL\CustomIterator;

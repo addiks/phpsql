@@ -33,6 +33,7 @@ use Addiks\PHPSQL\SqlParser\Part\ColumnDefinitionParser;
 use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
 use Addiks\PHPSQL\Value\Enum\Sql\ForeignKey\ReferenceOption;
+use Addiks\PHPSQL\Value\Enum\Page\Schema\Engine;
 
 class CreateSqlParser extends SqlParser
 {
@@ -543,7 +544,7 @@ class CreateSqlParser extends SqlParser
                     if (!$tokens->seekTokenNum(T_STRING)) {
                         throw new MalformedSql("Missing T_STRING after T_ENGINE!", $tokens);
                     }
-                    $createTableJob->setEngine($tokens->getCurrentTokenString());
+                    $createTableJob->setEngine(Engine::factory($tokens->getCurrentTokenString()));
                     break;
                     
                 case $tokens->seekTokenNum(SqlToken::T_AUTO_INCREMENT()):

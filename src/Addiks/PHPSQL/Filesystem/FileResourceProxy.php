@@ -5,6 +5,8 @@
 
 namespace Addiks\PHPSQL\Filesystem;
 
+use ErrorException;
+
 class FileResourceProxy
 {
 
@@ -13,11 +15,14 @@ class FileResourceProxy
     protected $index = 0;
     protected $isOpen = true;
     
-    public function __construct($resource, $mode)
+    public function __construct($resource, $mode="a+")
     {
 
         if ($resource instanceof self) {
             $resource = $resource->getResource();
+        }
+        if (!is_resource($resource)) {
+            throw new ErrorException("First parameter for FileResourceProxy has to be resource!");
         }
 
         $this->resource = $resource;
@@ -87,11 +92,42 @@ class FileResourceProxy
         return feof($this->resource);
     }
 
+    public function lock($mode)
+    {
+        flock($this->resource, $mode);
+    }
+
     public function readLine()
     {
         $this->checkUsable();
         fseek($this->resource, $this->index, SEEK_SET);
         return fgets($this->resource);
+    }
+
+    public function getData()
+    {
+        $seekBefore = $this->tell();
+        $this->seek(0, SEEK_END);
+        $fileSize = $this->tell();
+        $this->seek(0, SEEK_SET);
+        $data = $this->read($fileSize);
+        $this->seek($seekBefore, SEEK_SET);
+        return $data;
+    }
+
+    public function setData($data)
+    {
+        $this->seek(0, SEEK_SET);
+        $this->truncate(0);
+        $this->write($data);
+    }
+
+    public function addData($data)
+    {
+        $seekBefore = $this->tell();
+        $this->seek(0, SEEK_END);
+        $this->write($data);
+        $this->seek($seekBefore, SEEK_SET);
     }
 
 }

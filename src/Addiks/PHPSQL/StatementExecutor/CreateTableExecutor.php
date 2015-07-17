@@ -16,7 +16,7 @@ use Addiks\PHPSQL\Table;
 use Addiks\PHPSQL\Value\Enum\Page\Index\ForeignKeyMethod;
 use Addiks\PHPSQL\Entity\Page\Schema\Index;
 use Addiks\PHPSQL\Value\Text\Annotation;
-use Addiks\PHPSQL\Entity\Page\Column;
+use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Entity\TableSchema;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\InsertMethod;
@@ -36,6 +36,8 @@ use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateTableStatement;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Entity\Page\ColumnPagePage;
+use Addiks\PHPSQL\Entity\Page\Schema\IndexPage;
 
 class CreateTableExecutor implements StatementExecutorInterface
 {
@@ -110,16 +112,16 @@ class CreateTableExecutor implements StatementExecutorInterface
                     $flags = 0;
                     
                     if ($column->getIsPrimaryKey()) {
-                        $flags = $flags ^ Column::EXTRA_PRIMARY_KEY;
+                        $flags = $flags ^ ColumnPage::EXTRA_PRIMARY_KEY;
                     }
                     if ($column->getIsUnique()) {
-                        $flags = $flags ^ Column::EXTRA_UNIQUE_KEY;
+                        $flags = $flags ^ ColumnPage::EXTRA_UNIQUE_KEY;
                     }
                     if (!$column->getIsNullable()) {
-                        $flags = $flags ^ Column::EXTRA_NOT_NULL;
+                        $flags = $flags ^ ColumnPage::EXTRA_NOT_NULL;
                     }
                     if ($column->getIsAutoIncrement()) {
-                        $flags = $flags ^ Column::EXTRA_AUTO_INCREMENT;
+                        $flags = $flags ^ ColumnPage::EXTRA_AUTO_INCREMENT;
                     }
                     
                     $columnPage->setExtraFlags($flags);

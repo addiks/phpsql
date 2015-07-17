@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL\Entity;
 
 use Addiks\PHPSQL\Entity\Page\Schema\Index;
-use Addiks\PHPSQL\Entity\Page\Column;
+use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\CustomIterator;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
@@ -48,7 +48,7 @@ class TableSchema extends Entity implements TableSchemaInterface
     /**
      * @return FileResourceProxy
      */
-    public function getcolumnFile()
+    public function getColumnFile()
     {
         return $this->columnFile;
     }
@@ -81,25 +81,25 @@ class TableSchema extends Entity implements TableSchemaInterface
 
         return new CustomIterator(null, [
             'valid' => function () use ($file) {
-                $data = fread($file->getHandle(), Index::PAGE_SIZE);
-                fseek($file->getHandle(), 0-Index::PAGE_SIZE, SEEK_CUR);
+                $data = $file->read(Index::PAGE_SIZE);
+                $file->seek(0-Index::PAGE_SIZE, SEEK_CUR);
                 return strlen($data) === Index::PAGE_SIZE;
             },
             'rewind' => function () use ($file) {
-                fseek($file->getHandle(), 0, SEEK_SET);
+                $file->seek(0, SEEK_SET);
             },
             'key' => function () use ($file) {
-                return (ftell($file->getHandle()) / Index::PAGE_SIZE);
+                return ($file->tell() / Index::PAGE_SIZE);
             },
             'current' => function () use ($file, $iteratorEntity) {
-                $data = fread($file->getHandle(), Index::PAGE_SIZE);
-                fseek($file->getHandle(), 0-Index::PAGE_SIZE, SEEK_CUR);
+                $data = $file->read(Index::PAGE_SIZE);
+                $file->seek(0-Index::PAGE_SIZE, SEEK_CUR);
                 $iteratorEntity->setData($data);
-                $iteratorEntity->setId(ftell($file->getHandle()) / Index::PAGE_SIZE);
+                $iteratorEntity->setId($file->tell() / Index::PAGE_SIZE);
                 return $iteratorEntity;
             },
             'next' => function () use ($file) {
-                fseek($file->getHandle(), Index::PAGE_SIZE, SEEK_CUR);
+                $file->seek(Index::PAGE_SIZE, SEEK_CUR);
             }
         ]);
     }
@@ -140,10 +140,10 @@ class TableSchema extends Entity implements TableSchemaInterface
         return false;
     }
 
-    public function addColumnPage(Column $column)
+    public function addColumnPage(ColumnPage $column)
     {
 
-        if ($this->getcolumnFile()->getLength()<=0) {
+        if ($this->getColumnFile()->getLength()<=0) {
             $writeIndex = 0;
         } else {
             $writeIndex = $this->getLastIndex()+1;
@@ -159,13 +159,11 @@ class TableSchema extends Entity implements TableSchemaInterface
 
         $file = $this->getindexFile();
 
-        $handle = $file->getHandle();
+        $file->seek(0, SEEK_END);
 
-        fseek($handle, 0, SEEK_END);
+        $index = $file->tell() / Index::PAGE_SIZE;
 
-        $index = ftell($handle) / Index::PAGE_SIZE;
-
-        fwrite($handle, $indexPage->getData());
+        $file->write($indexPage->getData());
 
         return $index;
     }
@@ -175,11 +173,9 @@ class TableSchema extends Entity implements TableSchemaInterface
 
         $file = $this->getindexFile();
 
-        $handle = $file->getHandle();
+        $file->seek($index*Index::PAGE_SIZE, SEEK_SET);
 
-        fseek($handle, $index*Index::PAGE_SIZE, SEEK_SET);
-
-        $data = fread($file->getHandle(), Index::PAGE_SIZE);
+        $data = $file->read(Index::PAGE_SIZE);
 
         if (strlen($data) !== Index::PAGE_SIZE) {
             return null;
@@ -195,47 +191,47 @@ class TableSchema extends Entity implements TableSchemaInterface
     public function getColumnIterator()
     {
 
-        $file = $this->getcolumnFile();
+        $file = $this->getColumnFile();
 
         $iteratorEntity = new Column();
 
         return new CustomIterator(null, [
             'rewind' => function () use ($file) {
-                fseek($file->getHandle(), 0, SEEK_SET);
+                $file->seek(0, SEEK_SET);
             },
             'valid' => function () use ($file) {
 
-                $beforeSeek = ftell($file->getHandle());
-                $data = fread($file->getHandle(), Column::PAGE_SIZE);
-                fseek($file->getHandle(), $beforeSeek, SEEK_SET);
+                $beforeSeek = $file->tell();
+                $data = $file->read(ColumnPage::PAGE_SIZE);
+                $file->seek($beforeSeek, SEEK_SET);
 
-                return strlen($data) === Column::PAGE_SIZE;
+                return strlen($data) === ColumnPage::PAGE_SIZE;
             },
             'key' => function () use ($file) {
 
-                return (ftell($file->getHandle()) / Column::PAGE_SIZE);
+                return ($file->tell() / ColumnPage::PAGE_SIZE);
             },
             'current' => function () use ($file, $iteratorEntity) {
-                $beforeSeek = ftell($file->getHandle());
-                $data = fread($file->getHandle(), Column::PAGE_SIZE);
-                fseek($file->getHandle(), $beforeSeek, SEEK_SET);
-                if (strlen($data)!==Column::PAGE_SIZE) {
+                $beforeSeek = $file->tell();
+                $data = $file->read(ColumnPage::PAGE_SIZE);
+                $file->seek($beforeSeek, SEEK_SET);
+                if (strlen($data)!==ColumnPage::PAGE_SIZE) {
                     return null;
                 }
                 $iteratorEntity->setData($data);
-                $iteratorEntity->setId(ftell($file->getHandle()) / Column::PAGE_SIZE);
+                $iteratorEntity->setId(ftell() / ColumnPage::PAGE_SIZE);
 
                 return clone $iteratorEntity;
             },
             'next' => function () use ($file) {
 
                 do {
-                    fseek($file->getHandle(), Column::PAGE_SIZE, SEEK_CUR);
+                    $file->seek(ColumnPage::PAGE_SIZE, SEEK_CUR);
                     
-                    $checkData = fread($file->getHandle(), Column::PAGE_SIZE);
-                    fseek($file->getHandle(), 0-strlen($checkData), SEEK_CUR);
+                    $checkData = $file->read(ColumnPage::PAGE_SIZE);
+                    $file->seek(0-strlen($checkData), SEEK_CUR);
                     
-                } while (trim($checkData, "\0")==='' && strlen($checkData) === Column::PAGE_SIZE);
+                } while (trim($checkData, "\0")==='' && strlen($checkData) === ColumnPage::PAGE_SIZE);
             }
         ]);
     }
@@ -263,7 +259,7 @@ class TableSchema extends Entity implements TableSchemaInterface
         $primaryColumns = array();
 
         foreach ($this->getColumnIterator() as $columnId => $columnPage) {
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
 
             if ($columnPage->isPrimaryKey()) {
                 $primaryColumns[$columnId] = $columnPage;
@@ -275,19 +271,19 @@ class TableSchema extends Entity implements TableSchemaInterface
 
     public function getLastIndex()
     {
-        $file = $this->getcolumnFile();
-        $position = ftell($file->getHandle());
+        $file = $this->getColumnFile();
+        $position = $file->tell();
 
-        fseek($file->getHandle(), 0, SEEK_END);
-        $endPosition = ftell($file->getHandle());
+        $file->seek(0, SEEK_END);
+        $endPosition = $file->tell();
 
         if ($endPosition === 0) {
             return null;
         }
 
-        fseek($file->getHandle(), $position, SEEK_SET);
+        $file->seek($position, SEEK_SET);
 
-        return (int)(($endPosition) / Column::PAGE_SIZE) -1;
+        return (int)(($endPosition) / ColumnPage::PAGE_SIZE) -1;
     }
 
     public function listColumns()
@@ -295,7 +291,7 @@ class TableSchema extends Entity implements TableSchemaInterface
 
         $columns = array();
         foreach ($this->getColumnIterator() as $index => $columnPage) {
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
 
             $columns[$index] = clone $columnPage;
             
@@ -325,18 +321,18 @@ class TableSchema extends Entity implements TableSchemaInterface
         }
         
         if (!isset($this->columnCache[$index])) {
-            $file = $this->getcolumnFile();
+            $file = $this->getColumnFile();
             
-            $position = $index * Column::PAGE_SIZE;
+            $position = $index * ColumnPage::PAGE_SIZE;
             
-            fseek($file->getHandle(), $position, SEEK_SET);
-            $data = fread($file->getHandle(), Column::PAGE_SIZE);
+            $file->seek($position, SEEK_SET);
+            $data = $file->read(ColumnPage::PAGE_SIZE);
             
-            if (strlen($data) !== Column::PAGE_SIZE) {
+            if (strlen($data) !== ColumnPage::PAGE_SIZE) {
                 return null;
             }
             
-            $column = new Column();
+            $column = new ColumnPage();
             $column->setData($data);
             $column->setId($index);
             
@@ -355,7 +351,7 @@ class TableSchema extends Entity implements TableSchemaInterface
     {
 
         foreach ($this->columnCache as $index => $columnPage) {
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
 
             if ($columnPage->getName() === $columnName) {
                 return $index;
@@ -363,7 +359,7 @@ class TableSchema extends Entity implements TableSchemaInterface
         }
         
         foreach ($this->getColumnIterator() as $index => $columnPage) {
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
 
             if ($columnPage->getName() === $columnName) {
                 return $index;
@@ -371,7 +367,7 @@ class TableSchema extends Entity implements TableSchemaInterface
         }
     }
 
-    public function writeColumn($index = null, Column $column)
+    public function writeColumn($index = null, ColumnPage $column)
     {
 
         if (is_null($index)) {
@@ -386,28 +382,27 @@ class TableSchema extends Entity implements TableSchemaInterface
         
         $this->columnCache[$index] = $column;
         
-        $file = $this->getcolumnFile();
+        $file = $this->getColumnFile();
 
-        flock($file->getHandle(), LOCK_EX);
-        fseek($file->getHandle(), Column::PAGE_SIZE * $index, SEEK_SET);
+        $file->lock(LOCK_EX);
+        $file->seek(ColumnPage::PAGE_SIZE * $index, SEEK_SET);
 
-        fwrite($file->getHandle(), $column->getData());
+        $file->write($column->getData());
 
-        flock($file->getHandle(), LOCK_UN);
+        $file->lock(LOCK_UN);
     }
     
     public function removeColumn($index)
     {
         
-        $file = $this->getcolumnFile();
-        $handle = $file->getHandle();
+        $file = $this->getColumnFile();
         
-        flock($handle, LOCK_EX);
-        fseek($handle, Column::PAGE_SIZE * $index, SEEK_SET);
+        $file->lock(LOCK_EX);
+        $file->seek(ColumnPage::PAGE_SIZE * $index, SEEK_SET);
         
-        fwrite($handle, str_pad("", Column::PAGE_SIZE, "\0"));
+        $file->write(str_pad("", ColumnPage::PAGE_SIZE, "\0"));
         
-        flock($handle, LOCK_UN);
+        $file->lock(LOCK_UN);
     }
 
     private $sizeCache;
@@ -422,7 +417,7 @@ class TableSchema extends Entity implements TableSchemaInterface
             $this->columnPositionCache = array();
 
             foreach ($this->getColumnIterator() as $columnPage) {
-                /* @var $columnPage Column */
+                /* @var $columnPage ColumnPage */
 
                 $this->columnPositionCache[$columnPage->getId()] = $this->sizeCache;
 

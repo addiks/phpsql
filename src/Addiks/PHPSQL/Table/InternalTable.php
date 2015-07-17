@@ -18,7 +18,7 @@ use Addiks\PHPSQL\Entity\ColumnData;
 use Addiks\PHPSQL\Entity\Job\Part\Value;
 use Addiks\PHPSQL\DataConverter;
 use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\Entity\Page\Column;
+use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\TableInterface;

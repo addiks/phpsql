@@ -14,7 +14,7 @@ namespace Addiks\PHPSQL;
 use Addiks\PHPSQL\Entity\Index\QuickSort;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\Entity\Page\Column;
+use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Table;
 use Addiks\PHPSQL\CustomIterator;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
