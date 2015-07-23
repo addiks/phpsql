@@ -23,12 +23,13 @@ use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
-use Addiks\PHPSQL\Entity\Job\StatementJob\InsertStatement;
+use Addiks\PHPSQL\Entity\Job\Statement\InsertStatement;
 use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Filesystem\FilePathes;
 
 class InsertExecutor implements StatementExecutorInterface
 {
-    
+
     use BinaryConverterTrait;
 
     public function __construct(
@@ -189,6 +190,24 @@ class InsertExecutor implements StatementExecutorInterface
                                 if ($columnPage->isAutoIncrement()) {
                                     $rowData[$columnId] = $table->getAutoIncrementId();
                                     $table->incrementAutoIncrementId();
+
+                                } elseif ($columnPage->hasDefaultValue()) {
+                                    if ($columnPage->isDefaultValueInFile()) {
+                                        $defaultValueReference = $columnPage->getDefaultValue();
+
+                                        $defaultValueFilePath = sprintf(
+                                            FilePathes::FILEPATH_DEFAULT_VALUE,
+                                            $schemaId,
+                                            $tableName,
+                                            $columnId
+                                        );
+
+                                    } else {
+                                        $rowData[$columnId] = $columnPage->getDefaultValue();
+                                    }
+                                    
+                                } else {
+                                    throw new ErrorException("Column '{$columnName}' cannot be NULL!");
                                 }
                             }
                         }

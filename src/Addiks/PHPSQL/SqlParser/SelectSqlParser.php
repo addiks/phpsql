@@ -88,6 +88,18 @@ class SelectSqlParser extends SqlParser
         $this->conditionParser = $conditionParser;
     }
 
+    protected $tableParser;
+
+    public function getTableParser()
+    {
+        return $this->tableParser;
+    }
+
+    public function setTableParser(TableParser $tableParser)
+    {
+        $this->tableParser = $tableParser;
+    }
+
     protected $columnParser;
 
     public function getColumnParser()
@@ -160,8 +172,8 @@ class SelectSqlParser extends SqlParser
                     
                     # parse jokers like: fooTable.*
                     case is_int($tokens->isTokenText('*', TokenIterator::NEXT, [T_STRING, '.'])):
-                        if ($tableSpecifierParser->canParseTokens($tokens)) {
-                            $tableFilter = $tableSpecifierParser->convertSqlToJob($tokens);
+                        if ($this->tableParser->canParseTokens($tokens)) {
+                            $tableFilter = $this->tableParser->convertSqlToJob($tokens);
                         } else {
                             $tableFilter = null;
                         }
@@ -189,10 +201,10 @@ class SelectSqlParser extends SqlParser
         ### COLLECT TABLES
         
         if ($tokens->seekTokenNum(SqlToken::T_FROM())) {
-            if (!$joinParser->canParseTokens($tokens)) {
+            if (!$this->joinParser->canParseTokens($tokens)) {
                 throw new MalformedSql("Missing valid join definition after FROM in SELECT statement!", $tokens);
             }
-            $entitySelect->setJoinDefinition($joinParser->convertSqlToJob($tokens));
+            $entitySelect->setJoinDefinition($this->joinParser->convertSqlToJob($tokens));
         }
         
         ### PREPENDED CONDITION (WHERE)

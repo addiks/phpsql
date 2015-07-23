@@ -57,6 +57,8 @@ interface FilesystemInterface
 
     /**
      * removes recursive a whole directory
+     *
+     * @param string $dir
      */
     public static function rrmdir($dir);
 }

@@ -139,7 +139,14 @@ class ColumnDefinitionParser extends SqlParser
                     if (!$this->valueParser->canParseTokens($tokens)) {
                         throw new MalformedSql("Missing valid default value for column definition!", $tokens);
                     }
-                    $columnDefinition->setDefaultValue($this->valueParser->convertSqlToJob($tokens));
+                    $beforeIndex = $tokens->getIndex();
+                    $this->valueParser->convertSqlToJob($tokens);
+                    $afterIndex = $tokens->getIndex();
+                    $defaultSqlRepresentation = "";
+                    for ($index = $beforeIndex+1; $index <= $afterIndex; $index++) {
+                        $defaultSqlRepresentation .= $tokens->getTokenArray()[$index][1];
+                    }
+                    $columnDefinition->setDefaultValue(trim($defaultSqlRepresentation));
                     break;
                         
                 case $tokens->seekTokenNum(SqlToken::T_UNIQUE()):

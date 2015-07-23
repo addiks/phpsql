@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Entity\Job\Part\Join;
 
 use Addiks\PHPSQL\Entity\Job\Part;
 
-class Table extends Part
+class TableJoin extends Part
 {
     
     private $dataSource;

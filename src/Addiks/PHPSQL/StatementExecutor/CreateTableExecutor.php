@@ -38,6 +38,9 @@ use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\TableManager;
 use Addiks\PHPSQL\Entity\Page\ColumnPagePage;
 use Addiks\PHPSQL\Entity\Page\Schema\IndexPage;
+use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
+use Addiks\PHPSQL\Filesystem\FilePathes;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 
 class CreateTableExecutor implements StatementExecutorInterface
 {
@@ -75,6 +78,8 @@ class CreateTableExecutor implements StatementExecutorInterface
         
         /* @var $databaseSchema Schema */
         $databaseSchema = $this->schemaManager->getSchema();
+
+        $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
         
         $schemaPage = new SchemaPage();
         $schemaPage->setName($statement->getName());
@@ -138,8 +143,28 @@ class CreateTableExecutor implements StatementExecutorInterface
                     if (!is_null($column->getDataTypeSecondLength())) {
                         $columnPage->setSecondLength($column->getDataTypeSecondLength());
                     }
+
+                    if (!is_null($column->getDefaultValue())
+                    && !$columnPage->isDefaultValueInFile()) {
+                        $columnPage->setDefaultValue($column->getDefaultValue());
+                    }
                     
-                    $tableSchema->writeColumn(null, $columnPage);
+                    $columnIndex = $tableSchema->writeColumn(null, $columnPage);
+
+                    if (!is_null($column->getDefaultValue())
+                    && $columnPage->isDefaultValueInFile()) {
+                        $defaultValueFilepath = sprintf(
+                            FilePathes::FILEPATH_DEFAULT_VALUE,
+                            $schemaId,
+                            $statement->getName(),
+                            $columnIndex
+                        );
+                        $this->tableManager->getFilesystem()->putFileContents(
+                            $defaultValueFilepath,
+                            $column->getDefaultValue()
+                        );
+                    }
+                    
                 }
                 break;
                     

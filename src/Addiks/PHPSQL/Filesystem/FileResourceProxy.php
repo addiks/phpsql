@@ -72,7 +72,7 @@ class FileResourceProxy
         ftruncate($this->resource, $size);
     }
 
-    public function seek($offset, $seekMode)
+    public function seek($offset, $seekMode = SEEK_SET)
     {
         $this->checkUsable();
         fseek($this->resource, $offset, $seekMode);
@@ -128,6 +128,15 @@ class FileResourceProxy
         $this->seek(0, SEEK_END);
         $this->write($data);
         $this->seek($seekBefore, SEEK_SET);
+    }
+
+    public function getLength()
+    {
+        $seekBefore = $this->tell();
+        $this->seek(0, SEEK_END);
+        $fileSize = $this->tell();
+        $this->seek($seekBefore, SEEK_SET);
+        return $fileSize;
     }
 
 }

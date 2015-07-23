@@ -10,7 +10,7 @@ use Addiks\PHPSQL\Filesystem\InmemoryFilesystem;
 
 class InmemoryDirectoryIterator extends DirectoryIterator
 {
-    public function __construct(string $path, InmemoryFilesystem $filesystem = null)
+    public function __construct($path, InmemoryFilesystem $filesystem = null)
     {
         $this->path = $path;
         $this->filesystem = $filesystem;

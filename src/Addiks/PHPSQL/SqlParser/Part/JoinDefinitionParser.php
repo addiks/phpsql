@@ -11,7 +11,6 @@
 
 namespace Addiks\PHPSQL\SqlParser\Part;
 
-use Addiks\PHPSQL\Entity\Job\Part\JoinJob;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\SelectSqlParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
@@ -22,6 +21,8 @@ use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\Entity\Job\Part\Join\TableJoin;
 use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;
+use Addiks\PHPSQL\Entity\Job\Part\ParenthesisPart;
+use Addiks\PHPSQL\Entity\Job\Part\Join;
 
 class JoinDefinitionParser extends Part
 {
@@ -107,7 +108,7 @@ class JoinDefinitionParser extends Part
         $tableJoin = new TableJoin();
         $tableJoin->setDataSource($this->parseTableSource($tokens));
         
-        $joinJob = new JoinJob();
+        $joinJob = new Join();
         $joinJob->addTable(clone $tableJoin);
         
         while (!is_null($joinData = $this->parseJoinOperator($tokens))) {
@@ -197,7 +198,7 @@ class JoinDefinitionParser extends Part
                 if ($tokens->seekTokenNum(T_STRING, TokenIterator::NEXT, [SqlToken::T_AS()])) {
                     $parenthesis->setAlias($tokens->getCurrentTokenString());
                 }
-                return $parenthesis;
+                break;
                 
             case $this->parenthesisParser->canParseTokens($tokens):
                 $parenthesisJob = $this->parenthesisParser->convertSqlToJob($tokens);
@@ -213,14 +214,17 @@ class JoinDefinitionParser extends Part
                 }
                 
                 if ($extractParenthesis->getContain() instanceof Select) {
-                    return $parenthesisJob; // return original parenthesis for correct alias
+                    $parenthesis = $parenthesisJob; // return original parenthesis for correct alias
                     
                 } else {
                     throw new MalformedSql("Parenthesis in JOIN condition has to contain SELECT statement!", $tokens);
                 }
+                break;
             
             default:
                 throw new MalformedSql("Missing valid table-source in JOIN defintion!", $tokens);
         }
+
+        return $parenthesis;
     }
 }

@@ -11,7 +11,6 @@
 
 namespace Addiks\PHPSQL\SqlParser;
 
-use Addiks\PHPSQL\Entity\Job\Insert\DataChange;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
 use Addiks\PHPSQL\SqlParser\Part\FunctionParser;
@@ -22,6 +21,7 @@ use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\Entity\Job\DataChange\InsertDataChange;
 
 class InsertSqlParser extends SqlParser
 {
@@ -89,7 +89,7 @@ class InsertSqlParser extends SqlParser
             throw new ErrorException("Tried to parse INSERT statement when token-iterator is not at INSERT!");
         }
         
-        $dataChange = new DataChange();
+        $dataChange = new InsertDataChange();
         $insertJob = new InsertStatement();
         
         switch(true){

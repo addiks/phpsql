@@ -565,7 +565,7 @@ class CreateSqlParser extends SqlParser
                     
                 case $tokens->seekTokenNum(SqlToken::T_CHARACTER(), TokenIterator::NEXT, [SqlToken::T_DEFAULT()]):
                     if (!$tokens->seekTokenNum(SqlToken::T_SET())) {
-                        throw new MalformedSql("MIssing SET after CHARACTER keyword!", $tokens);
+                        throw new MalformedSql("Missing SET after CHARACTER keyword!", $tokens);
                     }
                 case $tokens->seekTokenNum(SqlToken::T_CHARSET(), TokenIterator::NEXT, [SqlToken::T_DEFAULT()]):
                     $tokens->seekTokenText('=');

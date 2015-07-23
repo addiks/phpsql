@@ -17,14 +17,15 @@ use Addiks\PHPSQL\CustomIterator;
 use IteratorAggregate;
 use Countable;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
+use Addiks\PHPSQL\Filesystem\FilePathes;
 
 /**
  * This represents a table.
  */
 class Table implements IteratorAggregate, Countable, TableInterface
 {
-    
-    const FILEPATH_AUTOINCREMENT = "%s/Tables/%s/autoIncrement.int";
 
     public function __construct(
         SchemaManager $schemaManager,
@@ -33,25 +34,21 @@ class Table implements IteratorAggregate, Countable, TableInterface
         $schemaId = null
     ) {
         
-        switch(true){
+        switch($schemaId){
             
-            case $schemaId === Database::DATABASE_ID_META_INDICES:
-                /* @var $tableBackend InternalIndices */
+            case SchemaManager::DATABASE_ID_META_INDICES:
                 $tableBackend = new InternalIndices($tableName, $schemaId);
                 break;
                 
-            case $schemaId === Database::DATABASE_ID_META_MYSQL:
-                /* @var $tableBackend MySQLTable */
+            case SchemaManager::DATABASE_ID_META_MYSQL:
                 $tableBackend = new MySQLTable($tableName, $schemaId);
                 break;
                 
-            case $schemaId === Database::DATABASE_ID_META_INFORMATION_SCHEMA:
-                /* @var $tableBackend InformationSchema */
+            case SchemaManager::DATABASE_ID_META_INFORMATION_SCHEMA:
                 $tableBackend = new InformationSchema($tableName, $schemaId);
                 break;
             
             default:
-                /* @var $tableBackend Internal */
                 $tableBackend = new InternalTable(
                     $schemaManager,
                     $filesystem,
@@ -227,7 +224,7 @@ class Table implements IteratorAggregate, Countable, TableInterface
     {
     
         $filePath = sprintf(
-            self::FILEPATH_AUTOINCREMENT,
+            FilePathes::FILEPATH_AUTOINCREMENT,
             $this->getDBSchemaId(),
             $this->getTableName()
         );

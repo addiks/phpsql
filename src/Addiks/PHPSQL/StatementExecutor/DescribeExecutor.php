@@ -21,6 +21,7 @@ use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
+use Addiks\PHPSQL\Filesystem\FilePathes;
 
 class DescribeExecutor implements StatementExecutorInterface
 {
@@ -49,6 +50,8 @@ class DescribeExecutor implements StatementExecutorInterface
         
         $result = new TemporaryResult(['Field', 'Type', 'Null', 'Key', 'Default', 'Extra']);
         
+        $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
+
         /* @var $tableSchema TableSchema */
         $tableSchema = $this->schemaManager->getTableSchema($statement->getTable()->getTable(), $statement->getTable()->getDatabase());
         
@@ -63,6 +66,10 @@ class DescribeExecutor implements StatementExecutorInterface
             
             $dataType = $columnPage->getDataType();
             $length = $columnPage->getLength();
+
+            if ($columnPage->getSecondLength() > 0) {
+                $length = "{$length},{$columnPage->getSecondLength()}";
+            }
             
             $typeString = "{$dataType->getName()}({$length})";
             
@@ -71,6 +78,20 @@ class DescribeExecutor implements StatementExecutorInterface
             $key = $columnPage->isPrimaryKey() ?'PRI' :($columnPage->isUniqueKey() ?'UNQ' :'MUL');
                 
             $default = "";
+            if ($columnPage->hasDefaultValue()) {
+                if ($columnPage->isDefaultValueInFile()) {
+                    $defaultValueFilepath = sprintf(
+                        FilePathes::FILEPATH_DEFAULT_VALUE,
+                        $schemaId,
+                        $statement->getTable(),
+                        $columnId
+                    );
+                    $this->schemaManager->getFilesystem()->getFileContents($defaultValueFilepath);
+
+                } else {
+                    $default = $columnPage->getDefaultValue();
+                }
+            }
             
             $extraArray = array();
             

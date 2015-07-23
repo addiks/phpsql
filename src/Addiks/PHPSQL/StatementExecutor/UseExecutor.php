@@ -14,7 +14,7 @@ namespace Addiks\PHPSQL\StatementExecutor;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\Entity\Job\StatementJob\DropStatement;
+use Addiks\PHPSQL\Entity\Job\Statement\DropStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Schema\SchemaManager;
 

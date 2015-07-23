@@ -380,8 +380,6 @@ class TableSchema extends Entity implements TableSchemaInterface
         
         $this->columnCache[$index] = $column;
         
-        $this->columnCache[$index] = $column;
-        
         $file = $this->getColumnFile();
 
         $file->lock(LOCK_EX);
@@ -390,6 +388,8 @@ class TableSchema extends Entity implements TableSchemaInterface
         $file->write($column->getData());
 
         $file->lock(LOCK_UN);
+
+        return $index;
     }
     
     public function removeColumn($index)

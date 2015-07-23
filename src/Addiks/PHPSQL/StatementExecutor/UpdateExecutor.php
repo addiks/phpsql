@@ -15,7 +15,7 @@ use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
-use Addiks\PHPSQL\Entity\Job\StatementJob\UpdateStatement;
+use Addiks\PHPSQL\Entity\Job\Statement\UpdateStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\TableManager;

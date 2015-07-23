@@ -23,6 +23,8 @@ use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\CustomIterator;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Filesystem\FilePathes;
+use Addiks\PHPSQL\Schema\SchemaManager;
 
 /**
  *
@@ -30,11 +32,6 @@ use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 class Index implements \IteratorAggregate
 {
     
-    const FILEPATH_KEY_LENGTH         = "%s/Tables/%s/Indices/%s.keylength";
-    const FILEPATH_INDEX_DATA         = "%s/Tables/%s/Indices/%s.data";
-    const FILEPATH_INDEX_DOUBLES      = "%s/Tables/%s/Indices/%s.doubles";
-    const FILEPATH_TABLE_COLUMN_INDEX = "%s/Tables/%s/Indices/%s.columnIndex";
-
     use BinaryConverterTrait;
     
     public function __construct(
@@ -119,7 +116,7 @@ class Index implements \IteratorAggregate
             $indexPage = $this->getIndexPage();
                 
             $keyLengthFilepath = sprintf(
-                self::FILEPATH_KEY_LENGTH,
+                FilePathes::FILEPATH_KEY_LENGTH,
                 $this->getSchemaId(),
                 $this->getTableIndex(),
                 $indexPage->getName()
@@ -143,7 +140,7 @@ class Index implements \IteratorAggregate
             $indexPage = $this->getIndexPage();
             
             $indexDataFilepath = sprintf(
-                self::FILEPATH_INDEX_DATA,
+                FilePathes::FILEPATH_INDEX_DATA,
                 $this->getSchemaId(),
                 $this->getTableName(),
                 $indexPage->getName()
@@ -152,7 +149,7 @@ class Index implements \IteratorAggregate
             $indexDataFile = $this->filesystem->getFile($indexDataFilepath);
 
             $filePath = sprintf(
-                self::FILEPATH_TABLE_COLUMN_INDEX,
+                FilePathes::FILEPATH_TABLE_COLUMN_INDEX,
                 $this->getSchemaId(),
                 $this->getTableName(),
                 $indexPage->getName()
@@ -165,7 +162,7 @@ class Index implements \IteratorAggregate
             $indexDoublesFile = null;
             if (!$indexPage->isUnique()) {
                 $indexDoublesFilepath = sprintf(
-                    self::FILEPATH_INDEX_DOUBLES,
+                    FilePathes::FILEPATH_INDEX_DOUBLES,
                     $this->getSchemaId(),
                     $this->getTableName(),
                     $indexPage->getName()

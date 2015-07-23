@@ -25,11 +25,11 @@ use Addiks\PHPSQL\TableInterface;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\CustomIterator;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
+use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Filesystem\FilePathes;
 
 class InternalTable implements TableInterface
 {
-
-    const FILEPATH_COLUMN_DATA = "%s/Table/%s/ColumnData/%s_%s.dat";
 
     use BinaryConverterTrait;
 
@@ -51,10 +51,10 @@ class InternalTable implements TableInterface
         }
 
         if (is_null($schemaId)) {
-            $schemaId = $schemaMamager->getCurrentlyUsedDatabaseId();
+            $schemaId = $schemaManager->getCurrentlyUsedDatabaseId();
         }
 
-        $schema = $schemaMamager->getSchema($schemaId);
+        $schema = $schemaManager->getSchema($schemaId);
 
         $this->schemaManager = $schemaManager;
         $this->filesystem = $filesystem;
@@ -62,7 +62,7 @@ class InternalTable implements TableInterface
         $this->dataConverter = $dataConverter;
         $this->dbSchemaId = $schemaId;
         $this->dbSchema = $schema;
-        $this->tableSchema = $databaseResource->getTableSchema($tableName, $schemaId);
+        $this->tableSchema = $schemaManager->getTableSchema($tableName, $schemaId);
         $this->tableId = $schema->getTableIndex($tableName);
         $this->tableName = $tableName;
     }
@@ -144,7 +144,7 @@ class InternalTable implements TableInterface
             throw new Conflict("Column '{$columnDefinition->getName()}' already exist!");
         }
         
-        $columnPage = new Column();
+        $columnPage = new ColumnPage();
         $columnPage->setName($columnDefinition->getName());
         $columnPage->setDataType($columnDefinition->getDataType());
     
@@ -159,27 +159,27 @@ class InternalTable implements TableInterface
         $flags = 0;
     
         if ($columnDefinition->getIsAutoIncrement()) {
-            $flags = $flags ^ Column::EXTRA_AUTO_INCREMENT;
+            $flags = $flags ^ ColumnPage::EXTRA_AUTO_INCREMENT;
         }
     
         if (!$columnDefinition->getIsNullable()) {
-            $flags = $flags ^ Column::EXTRA_NOT_NULL;
+            $flags = $flags ^ ColumnPage::EXTRA_NOT_NULL;
         }
     
         if ($columnDefinition->getIsPrimaryKey()) {
-            $flags = $flags ^ Column::EXTRA_PRIMARY_KEY;
+            $flags = $flags ^ ColumnPage::EXTRA_PRIMARY_KEY;
         }
             
         if ($columnDefinition->getIsUnique()) {
-            $flags = $flags ^ Column::EXTRA_UNIQUE_KEY;
+            $flags = $flags ^ ColumnPage::EXTRA_UNIQUE_KEY;
         }
     
         if ($columnDefinition->getIsUnsigned()) {
-            $flags = $flags ^ Column::EXTRA_UNSIGNED;
+            $flags = $flags ^ ColumnPage::EXTRA_UNSIGNED;
         }
     
         if (false) {
-            $flags = $flags ^ Column::EXTRA_ZEROFILL;
+            $flags = $flags ^ ColumnPage::EXTRA_ZEROFILL;
         }
         
         $columnPage->setExtraFlags($flags);
@@ -218,7 +218,7 @@ class InternalTable implements TableInterface
     protected function getRowsPerColumnData($columnId)
     {
 
-        /* @var $columnSchemaPage Column */
+        /* @var $columnSchemaPage ColumnPage */
         $columnSchemaPage = $this->getTableSchema()->getColumn($columnId);
 
         return ceil(self::BYTES_PER_DATAFILE / $columnSchemaPage->getCellSize());
@@ -250,7 +250,7 @@ class InternalTable implements TableInterface
         if (!isset($this->columnDataCache[$columnId][$columnDataIndex])) {
 
             $columnDataFilePath = sprintf(
-                self::FILEPATH_COLUMN_DATA,
+                FilePathes::FILEPATH_COLUMN_DATA_FILE,
                 $this->dbSchemaId,
                 $this->getTableName(),
                 $columnId,
@@ -259,7 +259,7 @@ class InternalTable implements TableInterface
 
             $columnDataFile = $this->filesystem->getFile($columnDataFilePath);
 
-            /* @var $columnSchemaPage Column */
+            /* @var $columnSchemaPage ColumnPage */
             $columnSchemaPage = $this->getTableSchema()->getColumn($columnId);
 
             /* @var $columnData ColumnData */
@@ -310,7 +310,7 @@ class InternalTable implements TableInterface
         $tableSchema = $this->getTableSchema();
         
         foreach ($tableSchema->getPrimaryKeyColumns() as $columnId => $columnPage) {
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
             
             $columnName = $columnPage->getName();
             
@@ -338,16 +338,20 @@ class InternalTable implements TableInterface
         $tableSchema = $this->getTableSchema();
         
         foreach ($tableSchema->getPrimaryKeyColumns() as $columnPage) {
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
             
-            $lastDataIndex = $this->getTableColumnDataLastDataIndex($columnPage->getName(), $this->getTableName(), $this->getDBSchemaId());
+            $lastDataIndex = $this->getTableColumnDataLastDataIndex(
+                $columnPage->getName(),
+                $this->getTableName(),
+                $this->getDBSchemaId()
+            );
             
             if (is_null($lastDataIndex)) {
                 return 0;
             }
             
             $columnDataFilePath = sprintf(
-                self::FILEPATH_COLUMN_DATA,
+                FilePathes::FILEPATH_COLUMN_DATA_FILE,
                 $this->dbSchemaId,
                 $this->getTableName(),
                 $columnId,
@@ -372,6 +376,38 @@ class InternalTable implements TableInterface
         }
         
         return 0;
+    }
+    
+    protected function getTableColumnDataLastDataIndex($columnId, $tableName, $schemaId = null)
+    {
+        if (is_null($schemaId)) {
+            $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
+        }
+
+        if (is_numeric($columnId)) {
+            throw new Error("Column-Name '{$columnId}' cannot be numeric!");
+        }
+        
+        $folderPath = sprintf(
+            FilePathes::FILEPATH_COLUMN_DATA_FOLDER,
+            $schemaId,
+            (string)$tableName,
+            (string)$columnId
+        );
+        
+        $lastDataIndex = null;
+        foreach ($this->filesystem->getDirectoryIterator($folderPath) as $item) {
+            /* @var $item DirectoryIterator */
+
+            $fileName = $item->getFilename();
+            $dataIndex = substr($fileName, 0, strrpos(fileName, "."));
+
+            if ($lastDataIndex < $dataIndex) {
+                $lastDataIndex = $dataIndex;
+            }
+        }
+        
+        return $lastDataIndex;
     }
     
     public function getNamedRowData($rowId = null)
@@ -415,7 +451,7 @@ class InternalTable implements TableInterface
         $rowData = array();
 
         foreach ($tableSchema->getCachedColumnIds() as $columnId) {
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
 
             /* @var $columnData ColumnData */
             $columnData = $this->getColumnDataByRowIndex($rowId, $columnId);
@@ -472,7 +508,7 @@ class InternalTable implements TableInterface
         $tableSchema = $this->getTableSchema();
         
         foreach ($tableSchema->getCachedColumnIds() as $columnId) {
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
             
             /* @var $columnData ColumnData */
             $columnData = $this->getColumnDataByRowIndex($rowId, $columnId);
@@ -491,9 +527,13 @@ class InternalTable implements TableInterface
     {
         $rowId = null;
 
-        $deletedRowsFilepath = sprintf(self::FILEPATH_DELETED_ROWS, $this->getDBSchemaId(), $this->getTableName());
-        $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
+        $deletedRowsFilepath = sprintf(
+            FilePathes::FILEPATH_DELETED_ROWS,
+            $this->getDBSchemaId(),
+            $this->getTableName()
+        );
 
+        $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
         $deletedRowsFile->lock(LOCK_EX);
         $deletedRowsFile->seek(0, SEEK_END);
 
@@ -512,7 +552,12 @@ class InternalTable implements TableInterface
     
     protected function pushDeletedRowStack($rowId)
     {
-        $deletedRowsFilepath = sprintf(self::FILEPATH_DELETED_ROWS, $this->getDBSchemaId(), $this->getTableName());
+        $deletedRowsFilepath = sprintf(
+            FilePathes::FILEPATH_DELETED_ROWS,
+            $this->getDBSchemaId(),
+            $this->getTableName()
+        );
+
         $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
 
         $rowId = $this->decstr($rowId);
@@ -526,9 +571,13 @@ class InternalTable implements TableInterface
     
     protected function getDeletedRowsCount()
     {
-        $deletedRowsFilepath = sprintf(self::FILEPATH_DELETED_ROWS, $this->getDBSchemaId(), $this->getTableName());
-        $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
+        $deletedRowsFilepath = sprintf(
+            FilePathes::FILEPATH_DELETED_ROWS,
+            $this->getDBSchemaId(),
+            $this->getTableName()
+        );
 
+        $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
         $deletedRowsFile->lock(LOCK_SH);
         $deletedRowsFile->seek(0, SEEK_END);
         $count = $deletedRowsFile->tell() / self::DELETEDROWS_PAGE_SIZE;
@@ -625,7 +674,7 @@ class InternalTable implements TableInterface
                 continue;
             }
 
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
             $columnPage = $tableSchema->getColumn($columnId);
 
             /* @var $dataType DataType */
@@ -647,7 +696,7 @@ class InternalTable implements TableInterface
                 continue;
             }
 
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
             $columnPage = $tableSchema->getColumn($columnId);
 
             /* @var $dataType DataType */

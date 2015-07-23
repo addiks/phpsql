@@ -34,7 +34,7 @@ class ValuePart extends Part
         if (is_null($this->getAlias())) {
             $this->setAlias("");
             
-            foreach ($this->chain as $chainAlias => $chainValue) {
+            foreach ($this->chain as $chainValue) {
                 switch(true){
             
                     case $chainValue instanceof Column:
@@ -57,5 +57,16 @@ class ValuePart extends Part
             
         }
         return $this->getAlias();
+    }
+
+    public function __toString()
+    {
+        $string = "";
+
+        foreach ($this->chain as $chainValue) {
+            $string .= (string)$chainValue;
+        }
+
+        return $string;
     }
 }

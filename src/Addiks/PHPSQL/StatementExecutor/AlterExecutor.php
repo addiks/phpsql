@@ -18,7 +18,7 @@ use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\TableManager;
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
-use Addiks\PHPSQL\Entity\Job\StatementJob\AlterStatement;
+use Addiks\PHPSQL\Entity\Job\Statement\AlterStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Schema\SchemaManager;
 

@@ -85,16 +85,16 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             }
         }
         
-        $index  = $this->getRowIdByValue($needle);
-        $handle = $this->getDoublesFile()->getHandle();
+        $index = $this->getRowIdByValue($needle);
+        $file = $this->getDoublesFile();
         $result = array();
         
         if (!is_null($index)) {
             do {
                 $index = $this->strdec($index);
-                fseek($handle, ($this->keyLength*2)*$index, SEEK_SET);
-                $rowId = fread($handle, $this->keyLength);
-                $index = fread($handle, $this->keyLength);
+                $file->seek(($this->keyLength*2)*$index, SEEK_SET);
+                $rowId = $file->read($this->keyLength);
+                $index = $file->read($this->keyLength);
                 if (trim($rowId, "\0")!=='') {
                     $result[] = $rowId;
                 }
@@ -127,48 +127,47 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             return;
         }
         
-        $handle = $this->getDoublesFile()->getHandle();
-        
         ### APPEND TO CHAIN
         
         $index = $this->getRowIdByValue($value);
         
+        $file = $this->getDoublesFile();
         
         if (is_null($index)) {
-            fseek($handle, 0, SEEK_END);
-            $index = ftell($handle) /($this->keyLength*2);
-            fwrite($handle, str_pad("", $this->keyLength*2, "\0"));
+            $file->seek(0, SEEK_END);
+            $index = $file->tell() /($this->keyLength*2);
+            $file->write(str_pad("", $this->keyLength*2, "\0"));
             $this->insertValue($value, $this->decstr($index, $this->getKeyLength()));
         } else {
             $index = $this->strdec($index);
         }
         
         do {
-            fseek($handle, ($index*($this->keyLength*2)), SEEK_SET);
-            $checkRowId = fread($handle, $this->keyLength);
+            $file->seek(($index*($this->keyLength*2)), SEEK_SET);
+            $checkRowId = $file->read($this->keyLength);
             if (trim($checkRowId, "\0")==="") {
-                fseek($handle, 0-$this->keyLength, SEEK_CUR);
-                fwrite($handle, $rowId);
+                $file->seek(0-$this->keyLength, SEEK_CUR);
+                $file->write($rowId);
                 return;
             }
-            $index = $this->strdec(fread($handle, $this->keyLength));
+            $index = $this->strdec($file->read($this->keyLength));
         } while ($index > 0);
         
-        fseek($handle, 0-$this->keyLength, SEEK_CUR);
-        $writeSeek = ftell($handle);
+        $file->seek(0-$this->keyLength, SEEK_CUR);
+        $writeSeek = $file->tell();
         
         ### WRITE NEW ROW-ID
         
-        fseek($handle, 0, SEEK_END);
-        $newIndex = ftell($handle) /($this->keyLength*2);
+        $file->seek(0, SEEK_END);
+        $newIndex = $file->tell() /($this->keyLength*2);
         
         $data  = $rowId;
         $data .= str_pad("", $this->keyLength, "\0");
         
-        fwrite($handle, $data);
+        $file->write($data);
         
-        fseek($handle, $writeSeek);
-        fwrite($handle, $this->decstr($newIndex, $this->getKeyLength()));
+        $file->seek($writeSeek);
+        $file->write($this->decstr($newIndex, $this->getKeyLength()));
     }
     
     public function remove($value, $rowId)
@@ -191,18 +190,18 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         }
         
         $index  = $this->getRowIdByValue($value);
-        $handle = $this->getDoublesFile()->getHandle();
+        $file = $this->getDoublesFile();
         
         do {
             $index = $this->strdec($index);
-            fseek($handle, $index*($this->keyLength*2), SEEK_SET);
-            $checkRowId = fread($handle, $this->keyLength);
+            $file->seek($index*($this->keyLength*2), SEEK_SET);
+            $checkRowId = $file->read($this->keyLength);
             if ($rowId === $checkRowId) {
-                fseek($handle, 0-$this->keyLength, SEEK_CUR);
-                fwrite($handle, str_pad("", $this->keyLength, "\0"));
+                $file->seek(0-$this->keyLength, SEEK_CUR);
+                $file->write(str_pad("", $this->keyLength, "\0"));
                 return;
             }
-            $index = fread($handle, $this->keyLength);
+            $index = $file->read($this->keyLength);
         } while (trim($index, "\0")!=='');
     }
     
@@ -766,27 +765,27 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     {
         
         $keyLength = $this->getKeyLength();
-        $handle = $this->getFile()->getHandle();
+        $file = $this->getFile();
         
         $node = new Node();
         $node->setKeyLength($keyLength);
         $node->setForkRate($this->forkRate);
         
         return new CustomIterator(null, [
-            'rewind' => function () use ($handle, $keyLength) {
-                fseek($handle, $keyLength*2, SEEK_SET);
+            'rewind' => function () use ($keyLength) {
+                $file->seek($keyLength*2, SEEK_SET);
             },
-            'valid' => function () use ($handle, $node) {
-                $data = fread($handle, $node->getPageSize());
-                fseek($handle, 0-strlen($data), SEEK_CUR);
+            'valid' => function () use ($node) {
+                $data = $file->read($node->getPageSize());
+                $file->seek(0-strlen($data), SEEK_CUR);
                 return strlen($data) === $node->getPageSize();
             },
-            'key' => function () use ($handle, $node) {
-                return (int)((ftell($handle) -$node->getKeyLength()) / $node->getPageSize());
+            'key' => function () use ($node) {
+                return (int)(($file->tell() -$node->getKeyLength()) / $node->getPageSize());
             },
-            'current' => function () use ($handle, $node) {
-                $data = fread($handle, $node->getPageSize());
-                fseek($handle, 0-strlen($data), SEEK_CUR);
+            'current' => function () use ($node) {
+                $data = $file->read($node->getPageSize());
+                $file->seek(0-strlen($data), SEEK_CUR);
                 
                 if (strlen($data)!==$node->getPageSize()) {
                     return null;
@@ -795,8 +794,8 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
                 $node->setData($data);
                 return $node;
             },
-            'next' => function () use ($handle, $node) {
-                fseek($handle, $node->getPageSize(), SEEK_CUR);
+            'next' => function () use ($node) {
+                $file->seek($node->getPageSize(), SEEK_CUR);
             }
         ]);
     }
@@ -813,16 +812,16 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         }
         
         $keyLength = $this->getKeyLength();
-        $handle = $this->getFile()->getHandle();
-        $seekBefore = ftell($handle);
+        $file = $this->getFile();
+        $seekBefore = $file->tell();
         
         $node = new Node();
         $node->setKeyLength($keyLength);
         $node->setForkRate($this->forkRate);
         
-        fseek($handle, ($keyLength*2) +($node->getPageSize()*$index), SEEK_SET);
+        $file->seek(($keyLength*2) +($node->getPageSize()*$index), SEEK_SET);
         
-        $data = fread($handle, $node->getPageSize());
+        $data = $file->read($node->getPageSize());
         
         if (strlen($data)<=0) {
             throw new ErrorException("Error reading node {$index}!");
@@ -833,7 +832,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         
         $node->setData($data);
         
-        fseek($handle, $seekBefore, SEEK_SET);
+        $file->seek($seekBefore, SEEK_SET);
         return $node;
     }
     
@@ -861,18 +860,18 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         }
         
         $keyLength = $this->getKeyLength();
-        $handle = $this->getFile()->getHandle();
+        $file = $this->getFile();
         
-        fseek($handle, ($keyLength*2) +($node->getPageSize()*$index), SEEK_SET);
+        $file->seek(($keyLength*2) +($node->getPageSize()*$index), SEEK_SET);
         
-        fwrite($handle, $node->getData());
+        $file->write($node->getData());
         
         return $index;
     }
     
     protected function deleteNode($index)
     {
-        $handle = $this->getFile()->getHandle();
+        $file = $this->getFile();
         $node = new Node();
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
@@ -885,16 +884,16 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $keyLength = $this->getKeyLength();
         
         if ($index === $nodeCount-1) {
-            fseek($handle, 0, SEEK_END);
-            ftruncate($handle, ($keyLength*2) +($node->getPageSize()*($index)));
+            $file->seek(0, SEEK_END);
+            $file->truncate(($keyLength*2) +($node->getPageSize()*($index)));
             
         } else {
-            fseek($handle, ($keyLength*2) +($node->getPageSize()*$index), SEEK_SET);
-            fwrite($handle, str_pad("", $node->getPageSize(), "\0"));
+            $file->seek(($keyLength*2) +($node->getPageSize()*$index), SEEK_SET);
+            $file->write(str_pad("", $node->getPageSize(), "\0"));
             
-            $leftOverData = fread($handle, $keyLength +(($nodeCount-1)-$index)*$node->getPageSize());
+            $leftOverData = $file->read($keyLength +(($nodeCount-1)-$index)*$node->getPageSize());
             if (trim($leftOverData, "\0")==='') {
-                ftruncate($handle, ($keyLength*2) +$node->getPageSize()*($index+1));
+                $file->truncate(($keyLength*2) +$node->getPageSize()*($index+1));
             } else {
                 $this->pushGarbage($index);
             }
@@ -906,32 +905,32 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     {
         
         $keyLength = $this->getKeyLength();
-        $handle = $this->getFile()->getHandle();
-        $beforeSeek = ftell($handle);
+        $file = $this->getFile();
+        $beforeSeek = $file->tell();
         
         $node = new Node();
         $node->setKeyLength($keyLength);
         $node->setForkRate($this->forkRate);
         
-        fseek($handle, 0, SEEK_END);
+        $file->seek(0, SEEK_END);
         
-        $count = (ftell($handle) -($keyLength*2)) / $node->getPageSize();
-        fseek($handle, $beforeSeek);
+        $count = ($file->tell() -($keyLength*2)) / $node->getPageSize();
+        $file->seek($beforeSeek);
         return $count;
     }
     
     protected function getRootReference()
     {
     
-        $handle = $this->getFile()->getHandle();
-        fseek($handle, 0, SEEK_SET);
+        $file = $this->getFile();
+        $file->seek(0, SEEK_SET);
     
-        $reference = fread($handle, $this->getKeyLength());
+        $reference = $file->read($this->getKeyLength());
     
         if (strlen($reference) === 0 || trim($reference, "\0") === '') {
-            fwrite($handle, str_pad(chr(1), $this->getKeyLength(), "\0"));
-            fseek($handle, 0, SEEK_SET);
-            $reference = fread($handle, $this->getKeyLength());
+            $file->write(str_pad(chr(1), $this->getKeyLength(), "\0"));
+            $file->seek(0, SEEK_SET);
+            $reference = $file->read($this->getKeyLength());
         }
     
         return $reference;
@@ -948,10 +947,9 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             throw new ErrorException("Root-reference cannot be int(0)!");
         }
     
-        $handle = $this->getFile()->getHandle();
-        fseek($handle, 0, SEEK_SET);
-        
-        fwrite($handle, $reference);
+        $file = $this->getFile();
+        $file->seek(0, SEEK_SET);
+        $file->write($reference);
     }
     
     /**
@@ -995,38 +993,37 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
         
-        $handle = $this->getFile()->getHandle();
-        $seekBefore = ftell($handle);
+        $file = $this->getFile();
+        $seekBefore = $file->tell();
         
-        fseek($handle, ($this->keyLength*2)+($this->getGarbageReference()*$node->getPageSize()));
+        $file->seek(($this->keyLength*2)+($this->getGarbageReference()*$node->getPageSize()));
         
         while (true) {
             for ($i=0; $i<($this->forkRate*3); $i++) {
-                $deletedReference = fread($handle, $this->keyLength);
+                $deletedReference = $file->read($this->keyLength);
                 if (trim($deletedReference, "\0")==="") {
-                    fseek($handle, 0-$this->keyLength, SEEK_CUR);
+                    $file->seek(0-$this->keyLength, SEEK_CUR);
                     break 2;
                 }
             }
             
-            $nextGarbageIndex = fread($handle, $this->keyLength); // normally this is the last-index of a page
+            $nextGarbageIndex = $file->read($this->keyLength); // normally this is the last-index of a page
             
             if (trim($nextGarbageIndex, "\0")==='') {
-                $writeSeek = ftell($handle) -$this->keyLength;
-                fseek($handle, 0, SEEK_END);
-                $nextGarbageIndex = (ftell($handle)-(2*$this->keyLength)) /$node->getPageSize();
-                fwrite($handle, str_pad("", $node->getPageSize(), "\0"));
-                fseek($handle, $writeSeek);
-                fwrite($handle, $this->decstr($nextGarbageIndex, $this->getKeyLength()));
+                $writeSeek = $file->tell() -$this->keyLength;
+                $file->seek(0, SEEK_END);
+                $nextGarbageIndex = ($file->tell()-(2*$this->keyLength)) /$node->getPageSize();
+                $file->write(str_pad("", $node->getPageSize(), "\0"));
+                $file->seek($writeSeek);
+                $file->write($this->decstr($nextGarbageIndex, $this->getKeyLength()));
                 
             }
             
-            fseek($handle, ($this->keyLength*2)+($nextGarbageIndex*$node->getPageSize()));
+            $file->seek(($this->keyLength*2)+($nextGarbageIndex*$node->getPageSize()));
         }
         
-        fwrite($handle, $this->decstr($nodeIndex, $this->getKeyLength()));
-        
-        fseek($handle, $seekBefore, SEEK_SET);
+        $file->write($this->decstr($nodeIndex, $this->getKeyLength()));
+        $file->seek($seekBefore, SEEK_SET);
     }
     
     protected function popGarbage()
@@ -1035,30 +1032,29 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
         
-        $handle = $this->getFile()->getHandle();
-        $seekBefore = ftell($handle);
+        $file = $this->getFile();
+        $seekBefore = $file->tell();
         
-        fseek($handle, ($this->keyLength*2)+($this->getGarbageReference()*$node->getPageSize()));
+        $file->seek(($this->keyLength*2)+($this->getGarbageReference()*$node->getPageSize()));
         
         while (true) {
             for ($i=0; $i<($this->forkRate*3); $i++) {
-                $deletedReference = fread($handle, $this->keyLength);
+                $deletedReference = $file->read($this->keyLength);
                 if (trim($deletedReference, "\0")==="") {
-                    fseek($handle, 0-($this->keyLength*2), SEEK_CUR);
+                    $file->seek(0-($this->keyLength*2), SEEK_CUR);
                     break 2;
                 }
             }
             
-            $nextGarbageIndex = fread($handle, $this->keyLength); // normally this is the last-index of a page
+            $nextGarbageIndex = $file->read($this->keyLength); // normally this is the last-index of a page
             
-            fseek($handle, ($this->keyLength*2)+($nextGarbageIndex*$node->getPageSize()));
+            $file->seek(($this->keyLength*2)+($nextGarbageIndex*$node->getPageSize()));
         }
         
-        $deletedReference = fread($handle, $this->keyLength);
-        fseek($handle, 0-$this->keyLength, SEEK_CUR);
-        fwrite($handle, str_pad("", $this->keyLength, "\0"));
-        
-        fseek($handle, $seekBefore, SEEK_SET);
+        $deletedReference = $file->read($this->keyLength);
+        $file->seek(0-$this->keyLength, SEEK_CUR);
+        $file->write(str_pad("", $this->keyLength, "\0"));
+        $file->seek($seekBefore, SEEK_SET);
         
         return $this->strdec($deletedReference);
     }
@@ -1069,13 +1065,13 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
         
-        $handle = $this->getFile()->getHandle();
-        $seekBefore = ftell($handle);
+        $file = $this->getFile();
+        $seekBefore = $file->tell();
         
-        fseek($handle, ($this->keyLength*2)+($this->getGarbageReference()*$node->getPageSize()));
-        $reference = fread($handle, $this->keyLength);
+        $file->seek(($this->keyLength*2)+($this->getGarbageReference()*$node->getPageSize()));
+        $reference = $file->read($this->keyLength);
         
-        fseek($handle, $seekBefore, SEEK_SET);
+        $file->seek($seekBefore, SEEK_SET);
         
         return trim($reference, "\0")!=="";
     }
@@ -1083,27 +1079,27 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     protected function getGarbageReference()
     {
         
-        $handle = $this->getFile()->getHandle();
-        $seekBefore = ftell($handle);
+        $file = $this->getFile();
+        $seekBefore = $file->tell();
         
-        fseek($handle, $this->keyLength, SEEK_SET);
-        $reference = fread($handle, $this->keyLength);
+        $file->seek($this->keyLength, SEEK_SET);
+        $reference = $file->read($this->keyLength);
         $reference = $this->strdec($reference);
         
         if ($reference === 0) {
-            fseek($handle, 0, SEEK_END);
+            $file->seek(0, SEEK_END);
             $node = new Node();
             $node->setKeyLength($this->getKeyLength());
             $node->setForkRate($this->forkRate);
             
-            $reference = (ftell($handle)-($this->keyLength*2)) /$node->getPageSize();
+            $reference = ($file->tell()-($this->keyLength*2)) /$node->getPageSize();
             
-            fwrite($handle, str_pad("", $node->getPageSize(), "\0"));
+            $file->write(str_pad("", $node->getPageSize(), "\0"));
             
             $this->setGarbageReference($reference);
         }
         
-        fseek($handle, $seekBefore, SEEK_SET);
+        $file->seek($seekBefore, SEEK_SET);
         return $reference;
     }
     
@@ -1114,13 +1110,11 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             $reference = $this->decstr($reference, $this->getKeyLength());
         }
         
-        $handle = $this->getFile()->getHandle();
-        $seekBefore = ftell($handle);
-        fseek($handle, $this->keyLength, SEEK_SET);
-        
-        fwrite($handle, $reference);
-        
-        fseek($handle, $seekBefore, SEEK_SET);
+        $file = $this->getFile();
+        $seekBefore = $file->tell();
+        $file->seek($this->keyLength, SEEK_SET);
+        $file->write($reference);
+        $file->seek($seekBefore, SEEK_SET);
     }
     
     ### ITERATOR
@@ -1533,7 +1527,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             $row[] = $lastReference;
         
             $string .= implode("_t_t", $row)."\n";
-            fwrite($outHandle, implode("_t_t", $row)."\n");
+            $file->write($outHandle, implode("_t_t", $row)."\n");
         }
         
         $string .= "root: {$this->getRootReference()}\n\n";

@@ -20,15 +20,17 @@ use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 /**
  * A page in an table-index containing information about a column in the table.
  *
- * name:       1024bit  128byte
- * datatype:     16bit    2byte
- * length:      384bit   48byte
- * extra:        16bit    2byte
- * fk_table      64bit    8byte
- * fk_column     32bit    4byte
- * reserved              64byte
- * __________________
- *             2048bit  256byte
+ * name         128byte
+ * datatype       2byte
+ * extra          2byte
+ * length        16byte
+ * secondlength  16byte
+ * default-val   64byte
+ * fk_table       8byte
+ * fk_column      4byte
+ * reserved      16byte
+ * ____________________
+ *              256byte
  */
 class ColumnPage extends Entity
 {
@@ -200,6 +202,28 @@ class ColumnPage extends Entity
     {
         return $this->fkColumnIndex;
     }
+
+    private $defaultValue;
+
+    public function setDefaultValue($defaultValue)
+    {
+        $this->defaultValue = (string)$defaultValue;
+    }
+
+    public function getDefaultValue()
+    {
+        return $this->defaultValue;
+    }
+
+    public function isDefaultValueInFile()
+    {
+        return ($this->getLength() + $this->getSecondLength()) > 64;
+    }
+
+    public function hasDefaultValue()
+    {
+        return !is_null($this->defaultValue);
+    }
     
     ### PERSISTANCE
     
@@ -210,27 +234,34 @@ class ColumnPage extends Entity
             throw new \InvalidArgumentException("Invalid data-block given to column-page! (length ".strlen($data)." != ".self::PAGE_SIZE.")");
         }
         
-        $rawName     = substr($data, 0, 128);
-        $rawDataType = substr($data, 128, 2);
-        $rawLength   = substr($data, 130, 48);
-        $rawExtra    = substr($data, 178, 2);
-        $rawFkTable  = substr($data, 180, 8);
-        $rawFkColumn = substr($data, 188, 4);
+        $rawName         = substr($data, 0, 128);
+        $rawDataType     = substr($data, 128, 2);
+        $rawLength       = substr($data, 130, 16);
+        $rawSecondLength = substr($data, 146, 16);
+        $rawDefaultValue = substr($data, 162, 64);
+        $rawExtra        = substr($data, 226, 2);
+        $rawFkTable      = substr($data, 228, 8);
+        $rawFkColumn     = substr($data, 236, 4);
         
-        $name     = rtrim($rawName, "\0");
-        $length   = ltrim($rawLength, "\0");
-        $fkTable  = ltrim($rawFkTable, "\0");
-        $fkColumn = ltrim($rawFkColumn, "\0");
+        $name         = rtrim($rawName, "\0");
+        $length       = ltrim($rawLength, "\0");
+        $secondLength = ltrim($rawSecondLength, "\0");
+        $defaultValue = rtrim($rawDefaultValue, "\0");
+        $fkTable      = ltrim($rawFkTable, "\0");
+        $fkColumn     = ltrim($rawFkColumn, "\0");
         
-        $dataType = unpack("n", $rawDataType)[1];
-        $length   = $this->strdec($length);
-        $extra    = unpack("n", $rawExtra)[1];
-        $fkTable  = $this->strdec($fkTable);
-        $fkColumn = $this->strdec($fkColumn);
+        $dataType     = unpack("n", $rawDataType)[1];
+        $length       = $this->strdec($length);
+        $secondLength = $this->strdec($secondLength);
+        $extra        = unpack("n", $rawExtra)[1];
+        $fkTable      = $this->strdec($fkTable);
+        $fkColumn     = $this->strdec($fkColumn);
         
         $this->setName($name);
         $this->setDataType(DataType::getByValue($dataType));
         $this->setLength($length);
+        $this->setSecondLength($secondLength);
+        $this->setDefaultValue($defaultValue);
         $this->setExtraFlags($extra);
         $this->setFKTableIndex($fkTable);
         $this->setFKColumnIndex($fkColumn);
@@ -242,24 +273,31 @@ class ColumnPage extends Entity
         $name          = $this->getName();
         $dataType      = $this->getDataType()->getValue();
         $length        = $this->getLength();
+        $secondLength  = $this->getSecondLength();
+        $defaultValue  = $this->getDefaultValue();
         $extra         = $this->getExtraFlags();
         $fkTableIndex  = $this->getFKTableIndex();
         $fkColumnIndex = $this->getFKColumnIndex();
         
-        $rawDataType = pack("n", $dataType);
-        $rawLength   = $this->decstr($length);
-        $rawExtra    = pack("n", $extra);
-        $rawFkTable  = $this->decstr($fkTableIndex);
-        $rawFkColumn = $this->decstr($fkColumnIndex);
+        $rawDataType     = pack("n", $dataType);
+        $rawLength       = $this->decstr($length);
+        $rawSecondLength = $this->decstr($secondLength);
+        $rawExtra        = pack("n", $extra);
+        $rawFkTable      = $this->decstr($fkTableIndex);
+        $rawFkColumn     = $this->decstr($fkColumnIndex);
         
-        $rawName     = str_pad($name, 128, "\0", STR_PAD_RIGHT);
-        $rawLength   = str_pad($rawLength, 48, "\0", STR_PAD_LEFT);
-        $rawFkTable  = str_pad($rawFkTable, 8, "\0", STR_PAD_LEFT);
-        $rawFkColumn = str_pad($rawFkColumn, 4, "\0", STR_PAD_LEFT);
+        $rawName         = str_pad($name, 128, "\0", STR_PAD_RIGHT);
+        $rawLength       = str_pad($rawLength, 16, "\0", STR_PAD_LEFT);
+        $rawSecondLength = str_pad($rawSecondLength, 16, "\0", STR_PAD_LEFT);
+        $rawDefaultValue = str_pad($defaultValue, 64, "\0", STR_PAD_RIGHT);
+        $rawFkTable      = str_pad($rawFkTable, 8, "\0", STR_PAD_LEFT);
+        $rawFkColumn     = str_pad($rawFkColumn, 4, "\0", STR_PAD_LEFT);
         
         $data = $rawName.
                 $rawDataType.
                 $rawLength.
+                $rawSecondLength.
+                $rawDefaultValue.
                 $rawExtra.
                 $rawFkTable.
                 $rawFkColumn;

@@ -15,7 +15,7 @@ use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
-use Addiks\PHPSQL\Entity\Job\StatementJob\SetStatement;
+use Addiks\PHPSQL\Entity\Job\Statement\SetStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 
 class SetExecutor implements StatementExecutorInterface

@@ -16,8 +16,6 @@ use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 interface TableInterface
 {
     
-    public function __construct($tableName, $schemaId = null);
-    
     public function getDBSchemaId();
     
     public function getDBSchema();

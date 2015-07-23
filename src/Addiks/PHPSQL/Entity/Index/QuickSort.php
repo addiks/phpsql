@@ -106,25 +106,25 @@ class QuickSort extends Entity implements \Iterator
     public function rewind()
     {
     
-        $handle = $this->getFile()->getHandle();
+        $file = $this->getFile();
     
-        fseek($handle, $this->getPageSize(), SEEK_SET);
+        $file->seek($this->getPageSize(), SEEK_SET);
     }
     
     public function valid()
     {
     
-        $handle = $this->getFile()->getHandle();
+        $file = $this->getFile();
     
-        $beforeIndex = ftell($handle);
+        $beforeIndex = $file->tell();
     
         if ($beforeIndex < $this->getPageSize()) {
             return false;
         }
         
-        $rowId = fread($handle, 8);
+        $rowId = $file->read(8);
     
-        fseek($handle, $beforeIndex, SEEK_SET);
+        $file->seek($beforeIndex, SEEK_SET);
     
         return strlen($rowId)===8;
     }
@@ -132,13 +132,13 @@ class QuickSort extends Entity implements \Iterator
     public function current()
     {
     
-        $handle = $this->getFile()->getHandle();
+        $file = $this->getFile();
     
-        $beforeIndex = ftell($handle);
+        $beforeIndex = $file->tell();
     
-        $rowId = fread($handle, 8);
+        $rowId = $file->read(8);
     
-        fseek($handle, $beforeIndex, SEEK_SET);
+        $file->seek($beforeIndex, SEEK_SET);
     
         return $this->strdec($rowId);
     }
@@ -146,31 +146,28 @@ class QuickSort extends Entity implements \Iterator
     public function key()
     {
     
-        $handle = $this->getFile()->getHandle();
+        $file = $this->getFile();
     
-        $index = ftell($handle) / $this->getPageSize();
+        $index = $file->tell() / $this->getPageSize();
         
         return $index;
     }
     
     public function next()
     {
-    
-        $handle = $this->getFile()->getHandle();
-    
-        fseek($handle, $this->getPageSize(), SEEK_CUR);
+        $this->getFile()->seek($this->getPageSize(), SEEK_CUR);
     }
     
     public function count()
     {
     
-        $handle = $this->getFile()->getHandle();
-        $beforeIndex = ftell($handle);
+        $file = $this->getFile();
+        $beforeIndex = $file->tell();
     
-        fseek($handle, 0, SEEK_END);
-        $lastIndex = ftell($handle) / $this->getPageSize();
+        $file->seek(0, SEEK_END);
+        $lastIndex = $file->tell() / $this->getPageSize();
     
-        fseek($handle, $beforeIndex, SEEK_SET);
+        $file->seek($beforeIndex, SEEK_SET);
         return $lastIndex;
     }
     
@@ -185,9 +182,8 @@ class QuickSort extends Entity implements \Iterator
             }
         }
         
-        $handle = $this->getFile()->getHandle();
-        
-        fseek($handle, 0, SEEK_END);
+        $file = $this->getFile();
+        $file->seek(0, SEEK_END);
         
         $block = str_pad($this->decstr($rowId), 8, "\0", STR_PAD_LEFT);
         foreach ($this->getColumnPages() as $index => $columnDataset) {
@@ -201,7 +197,7 @@ class QuickSort extends Entity implements \Iterator
             $block .= $value;
         }
         
-        fwrite($handle, $block);
+        $file->write($block);
     }
     
     protected function swapBlocks($blockIndexA, $blockIndexB)
@@ -211,23 +207,23 @@ class QuickSort extends Entity implements \Iterator
             return;
         }
         
-        $handle = $this->getFile()->getHandle();
+        $file = $this->getFile();
         
         ### READ
         
-        fseek($handle, $blockIndexA * $this->getPageSize());
-        $blockA = fread($handle, $this->getPageSize());
+        $file->seek($blockIndexA * $this->getPageSize());
+        $blockA = fread($this->getPageSize());
         
-        fseek($handle, $blockIndexB * $this->getPageSize());
-        $blockB = fread($handle, $this->getPageSize());
+        $file->seek($blockIndexB * $this->getPageSize());
+        $blockB = fread($this->getPageSize());
         
         ### WRITE
         
-        fseek($handle, $blockIndexA * $this->getPageSize());
-        fwrite($handle, $blockB);
+        $file->seek($blockIndexA * $this->getPageSize());
+        $file->write($blockB);
         
-        fseek($handle, $blockIndexB * $this->getPageSize());
-        fwrite($handle, $blockA);
+        $file->seek($blockIndexB * $this->getPageSize());
+        $file->write($blockA);
     }
     
     private $compareCount = 0;
@@ -242,7 +238,7 @@ class QuickSort extends Entity implements \Iterator
         $blockIndexAExport = str_replace(["\n", ' ', '"', "'", '.'], "", $blockIndexAExport);
         $blockIndexBExport = str_replace(["\n", ' ', '"', "'", '.'], "", $blockIndexBExport);
         
-        $handle = $this->getFile()->getHandle();
+        $file = $this->getFile();
         
         ### READ A
         
@@ -250,16 +246,16 @@ class QuickSort extends Entity implements \Iterator
             $rowA = $blockIndexA;
             
         } else {
-            fseek($handle, $blockIndexA * $this->getPageSize());
+            $file->seek($blockIndexA * $this->getPageSize());
             
-            $rawRowId = fread($handle, 8);
+            $rawRowId = $file->read(8);
             
             $rowA = array();
             foreach ($this->getColumnPages() as $index => $columnDataset) {
                 list($columnPage, $direction) = $columnDataset;
                 /* @var $columnPage Column */
                 
-                $rowA[] = fread($handle, $columnPage->getCellSize());
+                $rowA[] = $file->read($columnPage->getCellSize());
             }
         }
         
@@ -269,16 +265,16 @@ class QuickSort extends Entity implements \Iterator
             $rowB = $blockIndexB;
             
         } else {
-            fseek($handle, $blockIndexB * $this->getPageSize());
+            $file->seek($blockIndexB * $this->getPageSize());
             
-            $rawRowId = fread($handle, 8);
+            $rawRowId = $file->read(8);
             
             $rowB = array();
             foreach ($this->getColumnPages() as $index => $columnDataset) {
                 list($columnPage, $direction) = $columnDataset;
                 /* @var $columnPage Column */
                 
-                $rowB[] = fread($handle, $columnPage->getCellSize());
+                $rowB[] = $file->read($columnPage->getCellSize());
             }
         }
         
@@ -311,19 +307,16 @@ class QuickSort extends Entity implements \Iterator
     
     protected function getBlockRow($index)
     {
-        
-        $handle = $this->getFile()->getHandle();
-        
-        fseek($handle, $index * $this->getPageSize());
-        
-        fread($handle, 8);
+        $file = $this->getFile();
+        $file->seek($index * $this->getPageSize());
+        $file->read(8);
         
         $blockData = array();
         foreach ($this->getColumnPages() as $index => $columnDataset) {
             list($columnPage, $direction) = $columnDataset;
             /* @var $columnPage Column */
         
-            $blockData[] = fread($handle, $columnPage->getCellSize());
+            $blockData[] = $file->read($columnPage->getCellSize());
         }
         
         return $blockData;

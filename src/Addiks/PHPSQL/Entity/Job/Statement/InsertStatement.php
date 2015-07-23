@@ -9,7 +9,7 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\StatementJob;
+namespace Addiks\PHPSQL\Entity\Job\Statement;
 
 use Addiks\PHPSQL\Entity\Job\Insert\DataChange;
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
@@ -20,7 +20,7 @@ use Addiks\PHPSQL\Executor\InsertExecutor;
 /**
  *
  */
-class InsertStatement extends Statement
+class InsertStatement extends StatementJob
 {
 
     const EXECUTOR_CLASS = InsertExecutor::class;

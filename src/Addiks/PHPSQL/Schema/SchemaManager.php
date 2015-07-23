@@ -9,6 +9,7 @@ use Addiks\PHPSQL\Entity\Schema;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Value\Database\Dsn\InternalDsn;
 use Addiks\PHPSQL\Entity\TableSchema;
+use Addiks\PHPSQL\Filesystem\FilePathes;
 
 class SchemaManager
 {
@@ -19,11 +20,6 @@ class SchemaManager
     const DATABASE_ID_META_PERFORMANCE_SCHEMA = "performance_schema";
     const DATABASE_ID_META_INDICES = "indicies";
 
-    const FILEPATH_SCHEMA             = "%s.schema";
-    const FILEPATH_TABLE_SCHEMA       = "%s/Tables/%s.schema";
-    const FILEPATH_TABLE_INDEX_SCHEMA = "%s/Tables/%s.index";
-    const FILEPATH_VIEW_SQL           = "%s/Views/%s.sql";
-    
     public function __construct(FilesystemInterface $filesystem)
     {
         $this->filesystem = $filesystem;
@@ -97,7 +93,7 @@ class SchemaManager
                     break;
                     
                 default:
-                    $schemaFilePath = sprintf(self::FILEPATH_SCHEMA, $schemaId);
+                    $schemaFilePath = sprintf(FilePathes::FILEPATH_SCHEMA, $schemaId);
                     $schemaFile = $this->filesystem->getFile($schemaFilePath);
                     $this->schemas[$schemaId] = new Schema($schemaFile);
                     break;
@@ -129,7 +125,7 @@ class SchemaManager
             return true;
         }
         
-        return $this->filesystem->fileExists(sprintf(self::FILEPATH_SCHEMA, $schemaId));
+        return $this->filesystem->fileExists(sprintf(FilePathes::FILEPATH_SCHEMA, $schemaId));
     }
     
     public function createSchema($schemaId)
@@ -144,7 +140,7 @@ class SchemaManager
             throw new ErrorException("Database '{$schemaId}' already exist!");
         }
         
-        $schemaFilePath = sprintf(self::FILEPATH_SCHEMA, $schemaId);
+        $schemaFilePath = sprintf(FilePathes::FILEPATH_SCHEMA, $schemaId);
         $schemaFile = $this->filesystem->getFile($schemaFilePath);
 
         /* @var $schema Schema */
@@ -179,7 +175,7 @@ class SchemaManager
         /* @var $filesystem FilesystemInterface */
         $filesystem = $this->filesystem;
 
-        list($schemaPath, $suffix) = explode("%s", self::FILEPATH_SCHEMA);
+        list($schemaPath, $suffix) = explode("%s", FilePathes::FILEPATH_SCHEMA);
 
         foreach ($filesystem->getDirectoryIterator($filesystem) as $item) {
             /* @var $item DirectoryIterator */
@@ -223,8 +219,8 @@ class SchemaManager
         }
         
         if (!isset($this->tableSchemas["{$schemaId}.{$tableName}"])) {
-            $tableSchemaFilepath = sprintf(self::FILEPATH_TABLE_SCHEMA, $schemaId, $tableName);
-            $indexSchemaFilepath = sprintf(self::FILEPATH_TABLE_INDEX_SCHEMA, $schemaId, $tableName);
+            $tableSchemaFilepath = sprintf(FilePathes::FILEPATH_TABLE_SCHEMA, $schemaId, $tableName);
+            $indexSchemaFilepath = sprintf(FilePathes::FILEPATH_TABLE_INDEX_SCHEMA, $schemaId, $tableName);
 
             $tableSchemaFile = $this->filesystem->getFile($tableSchemaFilepath);
             $indexSchemaFile = $this->filesystem->getFile($indexSchemaFilepath);
@@ -286,7 +282,7 @@ class SchemaManager
             return null;
         }
 
-        $viewFilePath = sprintf(self::FILEPATH_VIEW_SQL, $schema->getId(), $viewIndex);
+        $viewFilePath = sprintf(FilePathes::FILEPATH_VIEW_SQL, $schema->getId(), $viewIndex);
         return $this->filesystem->getFileContents($viewFilePath);
     }
     
@@ -304,7 +300,7 @@ class SchemaManager
             $viewIndex = $schema->getViewIndex($viewName);
         }
 
-        $viewFilePath = sprintf(self::FILEPATH_VIEW_SQL, $schema->getId(), $viewIndex);
+        $viewFilePath = sprintf(FilePathes::FILEPATH_VIEW_SQL, $schema->getId(), $viewIndex);
         $this->filesystem->putFileContents($viewFilePath, $query);
     }
 

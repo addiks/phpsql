@@ -20,6 +20,7 @@ use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\CustomIterator;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
+use Addiks\PHPSQL\Filesystem\FilePathes;
 
 /**
  * This is an dynamic result-set specific for SELECT statements.
@@ -29,8 +30,6 @@ class SelectResult implements ResultInterface, \IteratorAggregate
 {
 
     use BinaryConverterTrait;
-
-    const FILEPATH_GROUPBY_HASHTABLE = "Temporary/GroupByHashTables/%s";
 
     public function __construct(
         FilesystemInterface $filesystem,
@@ -352,7 +351,7 @@ class SelectResult implements ResultInterface, \IteratorAggregate
             $keyLength = count($statement->getGroupings())*64;
             $uniqid = uniqid();
             
-            $groupingHashTableFilepath = sprintf(self::FILEPATH_GROUPBY_HASHTABLE, $uniqid);
+            $groupingHashTableFilepath = sprintf(FilePathes::FILEPATH_GROUPBY_HASHTABLE, $uniqid);
             $groupingHashTableFile = $this->filesystem->getFile($groupingHashTableFilepath);
             $groupingHashTableFile->setIsTemporary(true);
 

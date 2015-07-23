@@ -11,8 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity\Job\Part;
 
-use Addiks\PHPSQL\Entity\Job\Part\Join\Table;
-
+use Addiks\PHPSQL\Entity\Job\Part\Join\TableJoin;
 use Addiks\PHPSQL\Entity\Job\Part;
 
 class Join extends Part
@@ -22,7 +21,7 @@ class Join extends Part
     
     private $leftTables = array();
     
-    public function addTable(Table $table)
+    public function addTable(TableJoin $table)
     {
         
         if ($table->getIsRight()) {
@@ -38,13 +37,13 @@ class Join extends Part
         $tables = array();
         
         foreach ($this->rightTables as $table) {
-            /* @var $table Table */
+            /* @var $table TableJoin */
             
             array_unshift($tables, $table);
         }
         
         foreach ($this->leftTables as $table) {
-            /* @var $table Table */
+            /* @var $table TableJoin */
                 
             array_push($tables, $table);
         }

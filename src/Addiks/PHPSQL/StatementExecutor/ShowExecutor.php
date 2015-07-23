@@ -17,7 +17,7 @@ use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Job\Statement\ShowStatement as ShowJob;
 use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
-use Addiks\PHPSQL\Entity\Job\StatementJob\ShowStatement;
+use Addiks\PHPSQL\Entity\Job\Statement\ShowStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\ValueResolver;

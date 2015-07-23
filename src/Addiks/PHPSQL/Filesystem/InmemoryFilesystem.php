@@ -177,9 +177,7 @@ class InmemoryFilesystem implements FilesystemInterface
 
     /**
      * removes recursive a whole directory
-     * (copied from a comment in http://de.php.net/rmdir)
-
-     * @author Someone else from the thing called internet (NOSPAMzentralplan dot de)
+     *
      * @param string $dir
      */
     public static function rrmdir($dir)

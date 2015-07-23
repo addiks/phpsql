@@ -95,8 +95,8 @@ class HashTable extends Entity implements IndexInterface
             $value = $this->decstr($value);
         }
         
-        $handle = $this->getFile()->getHandle();
-        $beforeSeek = ftell($handle);
+        $file = $this->getFile();
+        $beforeSeek = $file->tell();
         $hashIndex = $this->getHashedInteger($value);
         
         $cachedResult = null;
@@ -112,7 +112,7 @@ class HashTable extends Entity implements IndexInterface
             $keys = $cachedResult;
             
         } else {
-            fseek($handle, $hashIndex * self::REFERENCE_SIZE, SEEK_SET);
+            $file->seek($hashIndex * self::REFERENCE_SIZE, SEEK_SET);
             
             /**
              * This is a loop-prevention to checks if the current index has already been visited.
@@ -122,7 +122,7 @@ class HashTable extends Entity implements IndexInterface
             
             $keys = array();
             
-            $seek = fread($handle, self::REFERENCE_SIZE);
+            $seek = $file->read(self::REFERENCE_SIZE);
             
             while (ltrim($seek, "\0")!=="") {
                 $seek = $this->strdec($seek);
@@ -132,28 +132,28 @@ class HashTable extends Entity implements IndexInterface
                 }
                 $walkedIndicies[$seek] = $seek;
                     
-                fseek($handle, $seek, SEEK_SET);
+                $file->seek($seek, SEEK_SET);
                     
-                $checkLength = fread($handle, self::REFERENCE_SIZE);
+                $checkLength = $file->read(self::REFERENCE_SIZE);
                 $checkLength = $this->strdec($checkLength);
                 if ($checkLength <= 0) {
                     throw new ErrorException("Found length-specification for check-value in hash-table which is lower or equal 0!");
                 }
-                $checkValue  = fread($handle, $checkLength);
-                $dataLength  = fread($handle, self::REFERENCE_SIZE);
+                $checkValue  = $file->read($checkLength);
+                $dataLength  = $file->read(self::REFERENCE_SIZE);
                 $dataLength  = $this->strdec($dataLength);
                 if ($dataLength <= 0) {
                     throw new ErrorException("Found length-specification for data-value in hash-table which is lower or equal 0!");
                 }
-                $data        = fread($handle, $dataLength);
-                $seek        = fread($handle, self::REFERENCE_SIZE);
+                $data        = $file->read($dataLength);
+                $seek        = $file->read(self::REFERENCE_SIZE);
                     
                 if ($checkValue === $value) {
                     $keys[] = $data;
                 }
             }
             
-            fseek($handle, $beforeSeek, SEEK_SET);
+            $file->seek($beforeSeek, SEEK_SET);
             
             if (!is_null($this->getCacheBackend())) {
                 $this->getCacheBackend()->set($value, "\0".implode("\0", $keys));
@@ -193,13 +193,13 @@ class HashTable extends Entity implements IndexInterface
             $this->getCacheBackend()->add($value, "\0" . $rowId);
         }
         
-        $handle = $this->getFile()->getHandle();
-        $beforeSeek = ftell($handle);
+        $file = $this->getFile();
+        $beforeSeek = $file->tell();
         $hashSeek = $this->getHashedInteger($value);
         
-        fseek($handle, $hashSeek * self::REFERENCE_SIZE, SEEK_SET);
+        $file->seek($hashSeek * self::REFERENCE_SIZE, SEEK_SET);
         
-        $seek = fread($handle, self::REFERENCE_SIZE);
+        $seek = $file->read(self::REFERENCE_SIZE);
         
         if (ltrim($seek, "\0") === "") {
             ### CREATE NEW CELL
@@ -217,61 +217,61 @@ class HashTable extends Entity implements IndexInterface
             
             do {
                 $seek = $this->strdec($seek);
-                fseek($handle, $seek, SEEK_SET);
+                $file->seek($seek, SEEK_SET);
                     
                 if (isset($walkedIndicies[$seek])) {
-                    fseek($handle, $beforeSeek, SEEK_SET);
+                    $file->seek($beforeSeek, SEEK_SET);
                     throw new ErrorException("Reference-Loop in HashTable-Doubles-File occoured!");
                 }
                 $walkedIndicies[$seek] = $seek;
                     
-                $checkLength = fread($handle, self::REFERENCE_SIZE);
-                $checkValue  = fread($handle, $this->strdec($checkLength));
-                $dataLength  = fread($handle, self::REFERENCE_SIZE);
-                $data        = fread($handle, $this->strdec($dataLength));
-                $seek        = fread($handle, self::REFERENCE_SIZE);
+                $checkLength = $file->read(self::REFERENCE_SIZE);
+                $checkValue  = $file->read($this->strdec($checkLength));
+                $dataLength  = $file->read(self::REFERENCE_SIZE);
+                $data        = $file->read($this->strdec($dataLength));
+                $seek        = $file->read(self::REFERENCE_SIZE);
                 
-                if ($this->strdec($seek) > fstat($handle)['size']) {
-                    fseek($handle, $beforeSeek, SEEK_SET);
+                if ($this->strdec($seek) > $file->getSize()) {
+                    $file->seek($beforeSeek, SEEK_SET);
                     throw new ErrorException("Invalid reference in hash-table found!");
                 }
                 
             } while (ltrim($seek, "\0") !== "");
             
-            fseek($handle, 0-self::REFERENCE_SIZE, SEEK_CUR);
-            $writeSeek = ftell($handle);
+            $file->seek(0-self::REFERENCE_SIZE, SEEK_CUR);
+            $writeSeek = $file->tell();
         }
         
-        fseek($handle, 0, SEEK_END);
-        $seek = ftell($handle);
+        $file->seek(0, SEEK_END);
+        $seek = $file->tell();
         
         if (log($seek, 256) > self::REFERENCE_SIZE) {
-            fseek($handle, $beforeSeek, SEEK_SET);
+            $file->seek($beforeSeek, SEEK_SET);
             throw new Conflict("Hash-Table is full! (Can not address more data!)");
         }
             
         $valueLength = $this->decstr(strlen($value), self::REFERENCE_SIZE);
         $rowIdLength = $this->decstr(strlen($rowId), self::REFERENCE_SIZE);
             
-        fwrite($handle, $valueLength);
-        fwrite($handle, $value);
-        fwrite($handle, $rowIdLength);
-        fwrite($handle, $rowId);
-        fwrite($handle, str_pad("", self::REFERENCE_SIZE, "\0"));
+        $file->write($valueLength);
+        $file->write($value);
+        $file->write($rowIdLength);
+        $file->write($rowId);
+        $file->write(str_pad("", self::REFERENCE_SIZE, "\0"));
             
         // store the reference to the value in the hash-table
-        fseek($handle, $writeSeek, SEEK_SET);
-        fwrite($handle, $this->decstr($seek, self::REFERENCE_SIZE));
+        $file->seek($writeSeek, SEEK_SET);
+        $file->write($this->decstr($seek, self::REFERENCE_SIZE));
 
         if (self::DEBUG) {
-            fseek($handle, 0, SEEK_END);
-            if (ftell($handle) > (50 * 1024 * 1024)) {
+            $file->seek(0, SEEK_END);
+            if ($file->tell() > (50 * 1024 * 1024)) {
                 var_dump([$value, $rowId, $hashSeek, $writeSeek, $seek]);
                 throw new ErrorException("WAAAAIT! Something wrong here!");
             }
         }
         
-        fseek($handle, $beforeSeek, SEEK_SET);
+        $file->seek($beforeSeek, SEEK_SET);
         
         if (!in_array($rowId, $this->search($value))) {
             throw new ErrorException("Value not found in hash-table after inserting it!");
@@ -311,13 +311,13 @@ class HashTable extends Entity implements IndexInterface
             $this->getCacheBackend()->set($value, $cachedString);
         }
         
-        $handle = $this->getFile()->getHandle();
-        $beforeSeek = ftell($handle);
+        $file = $this->getFile();
+        $beforeSeek = $file->tell();
         $hashSeek = $this->getHashedInteger($value);
         
-        fseek($handle, $hashSeek * self::REFERENCE_SIZE, SEEK_SET);
+        $file->seek($hashSeek * self::REFERENCE_SIZE, SEEK_SET);
         
-        $seek = fread($handle, self::REFERENCE_SIZE);
+        $seek = $file->read(self::REFERENCE_SIZE);
         
         if (ltrim($seek, "\0") === "") {
             return;
@@ -331,33 +331,33 @@ class HashTable extends Entity implements IndexInterface
         
         do {
             $seek = $this->strdec($seek);
-            fseek($handle, $seek, SEEK_SET);
+            $file->seek($seek, SEEK_SET);
                 
             if (isset($walkedIndicies[$seek])) {
-                fseek($handle, $beforeSeek, SEEK_SET);
+                $file->seek($beforeSeek, SEEK_SET);
                 throw new ErrorException("Reference-Loop in HashTable-Doubles-File occoured!");
             }
             $walkedIndicies[$seek] = $seek;
                 
-            $checkLength = fread($handle, self::REFERENCE_SIZE);
-            $checkValue  = fread($handle, $this->strdec($checkLength));
-            $dataLength  = fread($handle, self::REFERENCE_SIZE);
-            $data        = fread($handle, $this->strdec($dataLength));
+            $checkLength = $file->read(self::REFERENCE_SIZE);
+            $checkValue  = $file->read($this->strdec($checkLength));
+            $dataLength  = $file->read(self::REFERENCE_SIZE);
+            $data        = $file->read($this->strdec($dataLength));
         
             if ($checkValue === $value && $data === $rowId) {
-                fseek($handle, $seek, SEEK_SET);
+                $file->seek($seek, SEEK_SET);
                 
-                $checkLength = fread($handle, self::REFERENCE_SIZE);
-                fwrite($handle, str_pad("", $this->strdec($checkLength), "\0"));
-                $dataLength  = fread($handle, self::REFERENCE_SIZE);
-                fwrite($handle, str_pad("", $this->strdec($dataLength), "\0"));
+                $checkLength = $file->read(self::REFERENCE_SIZE);
+                $file->write(str_pad("", $this->strdec($checkLength), "\0"));
+                $dataLength  = $file->read(self::REFERENCE_SIZE);
+                $file->write(str_pad("", $this->strdec($dataLength), "\0"));
             }
             
-            $seek = fread($handle, self::REFERENCE_SIZE);
+            $seek = $file->read(self::REFERENCE_SIZE);
             
         } while (ltrim($seek, "\0") !== "");
         
-        fseek($handle, $beforeSeek, SEEK_SET);
+        $file->seek($beforeSeek, SEEK_SET);
 
         if (self::DEBUG) {
             $this->performSelfTest();
@@ -370,13 +370,12 @@ class HashTable extends Entity implements IndexInterface
     
     public function clearAll()
     {
-        
-        $handle = $this->getFile()->getHandle();
-        ftruncate($handle, 0);
-        fflush($handle);
-        fseek($handle, $this->getDoublesBeginSeek(), SEEK_SET);
-        fwrite($handle, "\0");
-        fflush($handle);
+        $file = $this->getFile();
+        $file->truncate(0);
+        $file->flush();
+        $file->seek($this->getDoublesBeginSeek(), SEEK_SET);
+        $file->write("\0");
+        $file->flush();
     }
     
     ### HELPER
@@ -405,19 +404,18 @@ class HashTable extends Entity implements IndexInterface
     
     public function dumpToArray()
     {
-        
-        $handle = $this->getFile()->getHandle();
-        $beforeSeek = ftell($handle);
-        fseek($handle, $this->getDoublesBeginSeek()+1, SEEK_SET);
+        $file = $this->getFile();
+        $beforeSeek = $file->tell();
+        $file->seek($this->getDoublesBeginSeek()+1, SEEK_SET);
         
         $array = array();
         
-        while (!feof($handle)) {
-            $checkLength = fread($handle, self::REFERENCE_SIZE);
-            $checkValue  = fread($handle, $this->strdec($checkLength));
-            $dataLength  = fread($handle, self::REFERENCE_SIZE);
-            $data        = fread($handle, $this->strdec($dataLength));
-            $seek        = fread($handle, self::REFERENCE_SIZE);
+        while (!$file->eof()) {
+            $checkLength = $file->read(self::REFERENCE_SIZE);
+            $checkValue  = $file->read($this->strdec($checkLength));
+            $dataLength  = $file->read(self::REFERENCE_SIZE);
+            $data        = $file->read($this->strdec($dataLength));
+            $seek        = $file->read(self::REFERENCE_SIZE);
                 
             if (ltrim($checkValue, "\0")!== "") {
                 if (!isset($array[$checkValue])) {
@@ -427,7 +425,7 @@ class HashTable extends Entity implements IndexInterface
             }
         }
         
-        fseek($handle, $beforeSeek, SEEK_SET);
+        $file->seek($beforeSeek, SEEK_SET);
         
         return $array;
     }
@@ -435,53 +433,53 @@ class HashTable extends Entity implements IndexInterface
     public function dumpToLog($logger)
     {
         
-        $handle = $this->getFile()->getHandle();
-        $beforeSeek = ftell($handle);
-        fseek($handle, $this->getDoublesBeginSeek()+1, SEEK_SET);
+        $file = $this->getFile();
+        $beforeSeek = $file->tell();
+        $file->seek($this->getDoublesBeginSeek()+1, SEEK_SET);
         
-        while (!feof($handle)) {
-            $checkLength = fread($handle, self::REFERENCE_SIZE);
-            $checkValue  = fread($handle, $this->strdec($checkLength));
-            $dataLength  = fread($handle, self::REFERENCE_SIZE);
-            $data        = fread($handle, $this->strdec($dataLength));
-            $seek        = fread($handle, self::REFERENCE_SIZE);
+        while (!$file->eof()) {
+            $checkLength = $file->read(self::REFERENCE_SIZE);
+            $checkValue  = $file->read($this->strdec($checkLength));
+            $dataLength  = $file->read(self::REFERENCE_SIZE);
+            $data        = $file->read($this->strdec($dataLength));
+            $seek        = $file->read(self::REFERENCE_SIZE);
             
             if (ltrim($checkValue, "\0")!== "") {
                 $logger->log("{$checkValue}: {$data}");
             }
         }
         
-        fseek($handle, $beforeSeek, SEEK_SET);
+        $file->seek($beforeSeek, SEEK_SET);
     }
     
     protected function performSelfTest()
     {
         
-        $handle = $this->getFile()->getHandle();
-        $beforeSeek = ftell($handle);
+        $file = $this->getFile();
+        $beforeSeek = $file->tell();
 
-        fseek($handle, 0, SEEK_END);
+        $file->seek(0, SEEK_END);
         
-        $size = ftell($handle);
+        $size = $file->tell();
         
-        fseek($handle, 0, SEEK_SET);
+        $file->seek(0, SEEK_SET);
             
         for ($index=0; $index<$this->filePageCount; $index++) {
-            $reference = fread($handle, self::REFERENCE_SIZE);
+            $reference = $file->read(self::REFERENCE_SIZE);
             if (ltrim($reference, "\0")!=='') {
                 $reference = $this->strdec($reference);
                 if ($reference >= $size) {
-                    throw new ErrorException("Broken hash-table detected! (Reference '{$reference}' in hashtable points beyond end '{$size}' near seek '".ftell($handle)."'!)");
+                    throw new ErrorException("Broken hash-table detected! (Reference '{$reference}' in hashtable points beyond end '{$size}' near seek '".$file->tell()."'!)");
                 }
             }
         }
 
-        fseek($handle, $this->doublesBeginSeek+1, SEEK_SET);
+        $file->seek($this->doublesBeginSeek+1, SEEK_SET);
 
-        while (!feof($handle)) {
+        while (!$file->eof()) {
             ### CHECK
             
-            $checkLength = fread($handle, self::REFERENCE_SIZE);
+            $checkLength = $file->read(self::REFERENCE_SIZE);
             
             if ($checkLength === "") {
                 break; // reached end
@@ -490,39 +488,39 @@ class HashTable extends Entity implements IndexInterface
             $checkLength = $this->strdec($checkLength);
             
             if ($checkLength <= 0) {
-                throw new ErrorException("Broken hash-table detected! (Check-length cannot be 0 near seek '".ftell($handle)."'!)");
-            } elseif ($checkLength + ftell($handle) > $size) {
-                throw new ErrorException("Broken hash-table detected! (Check-length '{$checkLength}' reads beyond data-end '{$size}' near seek '".ftell($handle)."'!)");
+                throw new ErrorException("Broken hash-table detected! (Check-length cannot be 0 near seek '".$file->tell()."'!)");
+            } elseif ($checkLength + $file->tell() > $size) {
+                throw new ErrorException("Broken hash-table detected! (Check-length '{$checkLength}' reads beyond data-end '{$size}' near seek '".$file->tell()."'!)");
             }
             
-            $checkData   = fread($handle, $checkLength);
+            $checkData   = $file->read($checkLength);
             
             ### VALUE
             
-            $valueLength = fread($handle, self::REFERENCE_SIZE);
+            $valueLength = $file->read(self::REFERENCE_SIZE);
             $valueLength = $this->strdec($valueLength);
 
             if ($valueLength <= 0) {
-                throw new ErrorException("Broken hash-table detected! (Data-length cannot be 0 near seek '".ftell($handle)."'!)");
-            } elseif ($valueLength + ftell($handle) > $size) {
-                throw new ErrorException("Broken hash-table detected! (Data-length '{$valueLength}' reads beyond data-end '{$size}' near seek '".ftell($handle)."'!)");
+                throw new ErrorException("Broken hash-table detected! (Data-length cannot be 0 near seek '".$file->tell()."'!)");
+            } elseif ($valueLength + $file->tell() > $size) {
+                throw new ErrorException("Broken hash-table detected! (Data-length '{$valueLength}' reads beyond data-end '{$size}' near seek '".$file->tell()."'!)");
             }
                 
-            $valueData   = fread($handle, $valueLength);
+            $valueData   = $file->read($valueLength);
             
             ### FOLLOWUP
             
-            $reference   = fread($handle, self::REFERENCE_SIZE);
+            $reference   = $file->read(self::REFERENCE_SIZE);
             
             if (ltrim($reference, "\0")!=='') {
                 $reference = $this->strdec($reference);
                 if ($reference >= $size) {
-                    throw new ErrorException("Broken hash-table detected! (Followup-reference '{$reference}' points beyond end '{$size}' near seek '".ftell($handle)."'!)");
+                    throw new ErrorException("Broken hash-table detected! (Followup-reference '{$reference}' points beyond end '{$size}' near seek '".$file->tell()."'!)");
                 }
             }
         }
         
-        fseek($handle, $beforeSeek, SEEK_SET);
+        $file->seek($beforeSeek, SEEK_SET);
     }
     
     ### CACHE-BACKEND

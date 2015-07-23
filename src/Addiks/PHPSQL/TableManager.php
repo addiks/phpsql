@@ -74,8 +74,9 @@ class TableManager
         $indexId = "{$schemaId}.{$tableName}.{$indexName}";
         if (!isset($this->indicies[$indexId])) {
             $this->indicies[$indexId] = new Index(
-                $this->schemaManager,
                 $this->filesystem,
+                $this->schemaManager,
+                $indexId,
                 $tableName,
                 $schemaId
             );
