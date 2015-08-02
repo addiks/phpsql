@@ -9,7 +9,7 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\StatementJob;
+namespace Addiks\PHPSQL\Entity\Job\Statement;
 
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Executor\DropExecutor;

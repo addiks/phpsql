@@ -82,9 +82,6 @@ class InsertExecutor implements StatementExecutorInterface
         /* @var $tableSchema TableSchema */
         $tableSchema = $table->getTableSchema();
         
-        $this->valueResolver->setStatement($statement);
-        $this->valueResolver->setStatementParameters($parameters);
-        
         ### BUILD COLUMN MAP
         
         $columnNameToIdMap = array();
@@ -105,7 +102,7 @@ class InsertExecutor implements StatementExecutorInterface
             /* @var $indexPage Index */
             
             /* @var $index Index */
-            $index = $this->tableManager->getIndex($indexId, $tableName);
+            $index = $table->getIndex($indexId);
 
             $indices[$indexId] = $index;
         }
@@ -157,7 +154,7 @@ class InsertExecutor implements StatementExecutorInterface
                         
                         if (isset($sourceRow[$columnName])) {
                             $value = $sourceRow[$columnName];
-                            $value = $this->valueResolver->resolveValue($value);
+                            $value = $this->valueResolver->resolveValue($value, $parameters);
                         } else {
                             $value = null;
                         }

@@ -5,7 +5,7 @@ namespace Addiks\PHPSQL\ValueResolver\FunctionResolver;
 use Addiks\PHPSQL\ValueResolver\FunctionResolver;
 use Addiks\PHPSQL\Entity\Job\FunctionJob;
 
-class AbsFunction extends FunctionResolver
+class AbsFunction implements FunctionResolverInterface
 {
     
     public function getExpectedParameterCount()

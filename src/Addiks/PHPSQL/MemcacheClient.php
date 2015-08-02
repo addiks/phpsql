@@ -10,6 +10,7 @@
  */
 
 namespace Addiks\PHPSQL;
+
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 
 /**

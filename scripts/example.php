@@ -1,6 +1,12 @@
 <?php
 /**
- * @author Gerrit Addiks <gerrit.addiks@brille24.de>
+ * Copyright (C) 2013  Gerrit Addiks.
+ * This package (including this file) was released under the terms of the GPL-3.0.    
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/> or send me a mail so i can send you a copy.
+ * @license GPL-3.0
+ * @author Gerrit Addiks <gerrit@addiks.de>
+ * @package Addiks
  */
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -10,16 +16,7 @@ use Addiks\PHPSQL\PDO;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\ResultWriter;
 
-define("BASEDIR", realpath(__DIR__."/.."));
-
-function __autoload($className)
-{
-    $filePath = str_replace("\\", "/", $className);
-    $filePath = BASEDIR."/src/{$filePath}.php";
-    if (file_exists($filePath)) {
-        require_once($filePath);
-    }
-}
+require_once(dirname(__FILE__)."/bootstrap.php");
 
 $pdo = new PDO("inmemory:some_example_database");
 
@@ -95,7 +92,7 @@ try{
             product ON(product.id = product_id)
         LEFT JOIN
             customer ON(customer.id = customer_id)
-    "));
+    ")->getResult());
     
     // how often were our products ordered?
     echo new ResultWriter($pdo->query("
@@ -108,7 +105,7 @@ try{
             cart_item ON(id = product_id)
         GROUP BY
             product.name
-    "));
+    ")->getResult());
 
 } catch (MalformedSql $exception) {
     echo $exception;

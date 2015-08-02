@@ -20,5 +20,4 @@ class ShowType extends Enum
     const TABLES    = "tables";
     const COLUMNS   = "columns";
     const VIEWS     = "views";
-    
 }

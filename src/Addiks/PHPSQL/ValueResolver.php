@@ -27,6 +27,8 @@ use Addiks\PHPSQL\Entity\Job\Part\FlowControl\CaseData;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use ErrorException;
+use Addiks\PHPSQL\Entity\Exception\Conflict;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 /**
  * This service can resolve any Value-Object into an scalar value.
@@ -35,42 +37,19 @@ use ErrorException;
  */
 class ValueResolver
 {
-    
-    public function resolveSourceRow(array $row)
-    {
-        
-        $this->setSourceRow($row);
-        
-        /* @var $statement StatementJob */
-        $statement = $this->getStatement();
-        
-        $resultRow = array();
-        
-        $this->resetParameterCurrentIndex();
-        
-        foreach ($statement->getResultSpecifier() as $resultColumn) {
-            /* @var $resultColumn Column */
-            
-            $this->resolveResultColumn($resultColumn, $resultRow);
-            
+    public function __construct(
+        FunctionResolver $functionResolver = null
+    ) {
+        if (is_null($functionResolver)) {
+            $functionResolver = new FunctionResolver($this);
         }
-        
-        return $resultRow;
+        $this->functionResolver = $functionResolver;
     }
+
+    protected $functionResolver;
+
     
     ### INPUT
-    
-    private $parameters = array();
-    
-    public function setStatementParameters(array $parameters)
-    {
-        $this->parameters = $parameters;
-    }
-    
-    public function getStatementParameters()
-    {
-        return $this->parameters;
-    }
     
     private $sourceRow = array();
     
@@ -117,14 +96,29 @@ class ValueResolver
         return $this->getTableSchema()->getColumn($this->getCurrentColumnId());
     }
     
-    ### SUB-RESOLVER
-    
+    public function resolveSourceRow(array $row, ExecutionContext $context)
+    {
+        
+        /* @var $statement StatementJob */
+        $statement = $this->getStatement();
+        
+        $resultRow = array();
+        
+        foreach ($statement->getResultSpecifier() as $resultColumn) {
+            /* @var $resultColumn Column */
+            
+            $this->resolveResultColumn($resultColumn, $resultRow, $context);
+            
+        }
+        
+        return $resultRow;
+    }
     /**
      *
      * @return array
      * @param Column $resultColumn
      */
-    public function resolveResultColumn(Column $resultColumn, array &$resultRow = array())
+    public function resolveResultColumn(Column $resultColumn, array &$resultRow = array(), ExecutionContext $context)
     {
         
         $schemaSource = $resultColumn->getSchemaSource();
@@ -135,7 +129,7 @@ class ValueResolver
                 
                 $columnIdentifier = $schemaSource->generateAlias();
                 
-                $columnData = $this->resolveValue($schemaSource);
+                $columnData = $this->resolveValue($schemaSource, $context);
                 
                 $resultRow[$columnIdentifier] = $columnData;
                 break;
@@ -189,14 +183,7 @@ class ValueResolver
         return $resultRow;
     }
     
-    private $parameterCurrentIndex = 0;
-    
-    public function resetParameterCurrentIndex()
-    {
-        $this->parameterCurrentIndex = 0;
-    }
-    
-    public function resolveValue($value)
+    public function resolveValue($value, ExecutionContext $context)
     {
         
         $returnValue = null;
@@ -204,11 +191,11 @@ class ValueResolver
         switch(true){
             
             case $value instanceof ValuePart:
-                $returnValue = $this->resolveValueJob($value);
+                $returnValue = $this->resolveValueJob($value, $context);
                 break;
             
             case $value instanceof Enum:
-                $returnValue = $this->resolveEnumCondition($value);
+                $returnValue = $this->resolveEnumCondition($value, $context);
                 break;
                     
             case $value instanceof Like:
@@ -216,29 +203,32 @@ class ValueResolver
                 break;
                 
             case $value instanceof ConditionJob:
-                $returnValue = $this->resolveCondition($value);
+                $returnValue = $this->resolveCondition($value, $context);
                 break;
                     
             case $value instanceof CaseData:
-                $returnValue = $this->resolveFlowControlCase($value);
+                $returnValue = $this->resolveFlowControlCase($value, $context);
                 break;
                     
             case $value instanceof FunctionJob:
-                $returnValue = $this->resolveFunction($value);
+                $returnValue = $this->resolveFunction($value, $context);
                 break;
         
             case $value instanceof Parenthesis:
-                $returnValue = $this->resolveValue($value->getContain());
+                $returnValue = $this->resolveValue($value->getContain(), $context);
                 break;
                     
             case $value instanceof Variable:
                 $key = (string)$value;
-                $parameters = $this->getStatementParameters();
                 
+                $parameters = $context->getParameters();
+                $parameterIndex = $value->getIndex();
+                if (is_null($parameterIndex)) {
+                    $parameterIndex = (string)$value;
+                }
                 if ($key === '?') {
-                    if (isset($parameters[$this->parameterCurrentIndex])) {
-                        $returnValue = $parameters[$this->parameterCurrentIndex];
-                        $this->parameterCurrentIndex++;
+                    if (isset($parameters[$parameterIndex])) {
+                        $returnValue = $parameters[$parameterIndex];
                     } else {
                         throw new Conflict("Too few arguments given!");
                     }
@@ -282,11 +272,11 @@ class ValueResolver
             }
             
         } else {
-            return $this->resolveValue($returnValue);
+            return $this->resolveValue($returnValue, $context);
         }
     }
     
-    public function resolveValueJob(ValuePart $valueJob)
+    public function resolveValueJob(ValuePart $valueJob, ExecutionContext $context)
     {
         
         $chainValues = $valueJob->getChainValues();
@@ -309,21 +299,21 @@ class ValueResolver
                     break;
             }
             
-            $value = $this->resolveValue($chainValue);
+            $value = $this->resolveValue($chainValue, $context);
             
         }
         
-        return $this->resolveValue($value);
+        return $this->resolveValue($value, $context);
     }
     
-    public function resolveCondition(ConditionJob $conditionJob)
+    public function resolveCondition(ConditionJob $conditionJob, ExecutionContext $context)
     {
         
         $firstValue = $conditionJob->getFirstParameter();
         $lastValue  = $conditionJob->getLastParameter();
         
-        $firstValue = $this->resolveValue($firstValue);
-        $lastValue  = $this->resolveValue($lastValue);
+        $firstValue = $this->resolveValue($firstValue, $context);
+        $lastValue  = $this->resolveValue($lastValue, $context);
         
         switch($conditionJob->getOperator()){
             case Operator::OP_ADDITION():
@@ -389,13 +379,12 @@ class ValueResolver
         }
     }
     
-    public function resolveEnumCondition(Enum $enumJob)
+    public function resolveEnumCondition(Enum $enumJob, ExecutionContext $context)
     {
-        
         $checkValue = $enumJob->getCheckValue();
         
         foreach ($enumJob->getValues() as $value) {
-            $value = $this->resolveValue($value);
+            $value = $this->resolveValue($value, $context);
             
             if ($value === $checkValue) {
                 return $enumJob->getIsNegated() ?false :true;
@@ -407,7 +396,6 @@ class ValueResolver
     
     public function resolveLikeCondition(Like $likeJob)
     {
-        
         $pattern = $likeJob->getPattern();
         
         $pattern = preg_replace("/[^a-zA-Z0-9]/is", "\\\$1", $pattern);
@@ -420,20 +408,19 @@ class ValueResolver
         return ($likeJob->getIsNegated() ?!$result :$result);
     }
     
-    public function resolveFlowControlCase(CaseData $caseJob)
+    public function resolveFlowControlCase(CaseData $caseJob, $context)
     {
-        
         $checkValue = $caseJob->getCaseValue();
         
         foreach ($caseJob->getWhenThenStatements() as $values) {
-            $whenValue = $this->resolveValue($values['when']);
+            $whenValue = $this->resolveValue($values['when'], $context);
             
             if ($whenValue === $checkValue) {
-                return $this->resolveValue($values['then']);
+                return $this->resolveValue($values['then'], $context);
             }
         }
         
-        return $this->resolveValue($caseJob->getElseStatement());
+        return $this->resolveValue($caseJob->getElseStatement(), $context);
     }
     
     public function resolveSqlToken(SqlToken $token)
@@ -472,7 +459,7 @@ class ValueResolver
         }
     }
     
-    public function resolveFunction(FunctionJob $functionJob)
+    public function resolveFunction(FunctionJob $functionJob, ExecutionContext $context)
     {
         
         $functionName = $functionJob->getName();
@@ -488,8 +475,7 @@ class ValueResolver
         }
         
         /* @var $functionExecuter FunctionResolver */
-        $functionExecuter = $this->factory($className);
-        
+        $functionExecuter = new $className();
         $functionExecuter->setValueResolver($this);
         
         $functionArguments = array();
@@ -500,7 +486,7 @@ class ValueResolver
                 $value = $argument;
             }
             
-            $value = $this->resolveValue($value);
+            $value = $this->resolveValue($value, $context);
             
             $functionArguments[] = $value;
         }

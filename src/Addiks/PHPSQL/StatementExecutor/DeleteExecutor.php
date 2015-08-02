@@ -58,9 +58,6 @@ class DeleteExecutor implements StatementExecutorInterface
         
         $result = new TemporaryResult();
         
-        $this->valueResolver->setResultSet($result);
-        $this->valueResolver->setStatement($statement);
-        $this->valueResolver->setStatementParameters($parameters);
         $this->valueResolver->resetParameterCurrentIndex();
         
         /* @var $conditionValue Value */
@@ -131,7 +128,10 @@ class DeleteExecutor implements StatementExecutorInterface
                 $this->valueResolver->setSourceRow($row);
                 $this->valueResolver->resetParameterCurrentIndex();
                 
-                $isConditionMatch = is_null($conditionValue) || $this->valueResolver->resolveValue($conditionValue);
+                $isConditionMatch = true;
+                if (!is_null($conditionValue)) {
+                    $isConditionMatch = $this->valueResolver->resolveValue($conditionValue, $parameters);
+                }
                 
                 if ($isConditionMatch) {
                     if (!is_null($limitOffset) && $rowSkip < $limitOffset) {

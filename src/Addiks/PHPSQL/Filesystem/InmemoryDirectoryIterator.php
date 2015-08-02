@@ -190,5 +190,4 @@ class InmemoryDirectoryIterator extends DirectoryIterator
     {
         return !is_null($this->indexInPath);
     }
-
 }

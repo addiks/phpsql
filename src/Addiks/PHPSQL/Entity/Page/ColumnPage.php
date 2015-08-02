@@ -359,5 +359,4 @@ class ColumnPage extends Entity
 
         return $dataType->isBinary();
     }
-    
 }

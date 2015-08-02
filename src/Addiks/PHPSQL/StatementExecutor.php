@@ -106,7 +106,12 @@ class StatementExecutor implements StatementExecutorInterface
         $schemaManager = $this->schemaManager;
         $tableManager = $this->tableManager;
         $valueResolver = $this->valueResolver;
-        $selectExecutor = new SelectExecutor($valueResolver);
+        $selectExecutor = new SelectExecutor(
+            $tableManager->getFilesystem(),
+            $schemaManager,
+            $tableManager,
+            $valueResolver
+        );
 
         $this->addStatementExecutor(new AlterExecutor($schemaManager, $tableManager));
         $this->addStatementExecutor(new CreateDatabaseExecutor($valueResolver, $schemaManager));

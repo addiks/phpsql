@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<phpunit colors="true">
+<phpunit colors="true" bootstrap="scripts/bootstrap.php">
     <testsuites>
-        <testsuite name="Behat test suite">
+        <testsuite name="PHPSQL test suite">
             <directory>./tests/</directory>
         </testsuite>
     </testsuites>

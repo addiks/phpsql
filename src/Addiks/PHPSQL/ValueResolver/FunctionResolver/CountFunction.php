@@ -6,7 +6,7 @@ use Addiks\PHPSQL\ValueResolver\FunctionResolver;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\Entity\Job\FunctionJob;
 
-class CountFunction extends FunctionResolver implements AggregateInterface
+class CountFunction implements AggregateInterface, FunctionResolverInterface
 {
     
     public function getExpectedParameterCount()

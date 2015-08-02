@@ -49,5 +49,4 @@ abstract class StatementJob extends Job
     {
         return static::EXECUTOR_CLASS;
     }
-
 }

@@ -21,7 +21,6 @@ use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Countable;
 use SeekableIterator;
-use Addiks\PHPSQL\Entity\Index\QuickSort;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 
 /**
@@ -36,10 +35,8 @@ class SortedResourceIterator implements Countable, SeekableIterator
 
     public function __construct(
         $resource,
-        FilesystemInterface $filesystem,
         ValueResolver $valueResolver
     ) {
-        $this->filesystem = $filesystem;
         $this->valueResolver = $valueResolver;
         if ($resource instanceof Table) {
             $this->setResourceTable($resource);
@@ -48,13 +45,6 @@ class SortedResourceIterator implements Countable, SeekableIterator
         } else {
             throw new ErrorException("Resource for SortedResourceIterator has to be Table or ResultInterface!");
         }
-    }
-
-    private $filesystem;
-
-    public function getFilesystem()
-    {
-        return $this->filesystem;
     }
 
     private $valueResolver;

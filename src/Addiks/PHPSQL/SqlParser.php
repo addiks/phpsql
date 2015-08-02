@@ -195,7 +195,7 @@ class SqlParser
         $updateParser->setTableParser($tableParser);
         $updateParser->setColumnParser($columnParser);
         $updateParser->setValueParser($valueParser);
-        $useParser->setDatabaseParser($databaseParser);
+        $useParser->setValueParser($valueParser);
         $columnDefinitionParser->setValueParser($valueParser);
         $conditionParser->setValueParser($valueParser);
         $functionParser->setValueParser($valueParser);

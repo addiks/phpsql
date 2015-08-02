@@ -181,8 +181,8 @@ class SelectSqlParser extends SqlParser
                         $entitySelect->addColumnAllTable($tableFilter);
                         break;
                         
-                    case $valueParser->canParseTokens($tokens):
-                        $value = $valueParser->convertSqlToJob($tokens);
+                    case $this->valueParser->canParseTokens($tokens):
+                        $value = $this->valueParser->convertSqlToJob($tokens);
                         if ($tokens->seekTokenNum(T_STRING, TokenIterator::NEXT, [SqlToken::T_AS()])) {
                             $entitySelect->addColumnValue($value, $tokens->getCurrentTokenString());
                         } else {
@@ -210,11 +210,11 @@ class SelectSqlParser extends SqlParser
         ### PREPENDED CONDITION (WHERE)
         
         if ($tokens->seekTokenNum(SqlToken::T_WHERE())) {
-            if (!$valueParser->canParseTokens($tokens)) {
+            if (!$this->valueParser->canParseTokens($tokens)) {
                 throw new MalformedSql("Missing condition for WHERE clause in SELECT statement!", $tokens);
             }
             
-            $entitySelect->setCondition($valueParser->convertSqlToJob($tokens));
+            $entitySelect->setCondition($this->valueParser->convertSqlToJob($tokens));
         }
         
         ### GROUP
@@ -225,8 +225,8 @@ class SelectSqlParser extends SqlParser
             }
             do {
                 switch(true){
-                    case $columnParser->canParseTokens($tokens):
-                        $groupValue = $columnParser->convertSqlToJob($tokens);
+                    case $this->columnParser->canParseTokens($tokens):
+                        $groupValue = $this->columnParser->convertSqlToJob($tokens);
                         break;
                         
                     default:
@@ -247,12 +247,12 @@ class SelectSqlParser extends SqlParser
         ### APPENDED CONDITION (HAVING)
         
         if ($tokens->seekTokenNum(SqlToken::T_HAVING())) {
-            if (!$valueParser->canParseTokens($tokens)) {
+            if (!$this->valueParser->canParseTokens($tokens)) {
                 throw new MalformedSql("Missing condition for WHERE clause in SELECT statement!", $tokens);
             }
                 
             $condition = new ConditionJob();
-            $condition->setFirstParameter($valueParser->convertSqlToJob($tokens));
+            $condition->setFirstParameter($this->valueParser->convertSqlToJob($tokens));
                 
             $entitySelect->setResultFilter($condition);
         }
@@ -264,11 +264,11 @@ class SelectSqlParser extends SqlParser
                 throw new MalformedSql("Missing BY after ORDER on SELECT statement!", $tokens);
             }
             do {
-                if (!$valueParser->canParseTokens($tokens)) {
+                if (!$this->valueParser->canParseTokens($tokens)) {
                     throw new MalformedSql("Missing value for ORDER BY part on SELECT statement!", $tokens);
                 }
                 
-                $orderValue = $valueParser->convertSqlToJob($tokens);
+                $orderValue = $this->valueParser->convertSqlToJob($tokens);
                 if ($tokens->seekTokenNum(SqlToken::T_DESC())) {
                     $entitySelect->addOrderColumn($orderValue, SqlToken::T_DESC());
                         
@@ -298,7 +298,6 @@ class SelectSqlParser extends SqlParser
         ### PROCEDURE
         
         if ($tokens->seekTokenNum(SqlToken::T_PROCEDURE())) {
-            
             if (!$functionParser->canParseTokens($tokens)) {
                 throw new MalformedSql("Missing valid procedure specifier after PROCEDURE!", $tokens);
             }

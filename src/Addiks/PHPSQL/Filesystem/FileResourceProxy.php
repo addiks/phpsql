@@ -15,7 +15,7 @@ class FileResourceProxy
     protected $index = 0;
     protected $isOpen = true;
     
-    public function __construct($resource, $mode="a+")
+    public function __construct($resource, $mode = "a+")
     {
 
         if ($resource instanceof self) {
@@ -138,5 +138,4 @@ class FileResourceProxy
         $this->seek($seekBefore, SEEK_SET);
         return $fileSize;
     }
-
 }

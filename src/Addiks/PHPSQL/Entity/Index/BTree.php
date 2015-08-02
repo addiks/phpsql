@@ -11,6 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity\Index;
 
+use ErrorException;
 use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\CustomIterator;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
@@ -90,7 +91,12 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $result = array();
         
         if (!is_null($index)) {
+            $walkedIndexes = array();
             do {
+                if (isset($walkedIndexes[$index])) {
+                    throw new ErrorException("Circular reference in B-TREE doubles file!");
+                }
+                $walkedIndexes[$index] = $index;
                 $index = $this->strdec($index);
                 $file->seek(($this->keyLength*2)*$index, SEEK_SET);
                 $rowId = $file->read($this->keyLength);

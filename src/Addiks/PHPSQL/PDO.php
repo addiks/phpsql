@@ -217,11 +217,11 @@ class PDO extends BasePDO
      * @return PDOStatement PDO::query returns a PDOStatement object, or false
      * on failure.
      */
-    public function query($statementString)
+    public function query($statementString, array $parameters = array())
     {
         
         $statement = new Statement($statementString, $this);
-        $statement->execute();
+        $statement->execute($parameters);
         
         $this->lastInsertId = $statement->getLastInsertId();
         

@@ -33,5 +33,4 @@ class MySQLDatabaseAdapter implements DatabaseAdapterInterface
     {
         return null;
     }
-
 }

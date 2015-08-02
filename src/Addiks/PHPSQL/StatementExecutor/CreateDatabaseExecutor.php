@@ -18,6 +18,8 @@ use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateDatabaseStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Entity\Result\TemporaryResult;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 class CreateDatabaseExecutor implements StatementExecutorInterface
 {
@@ -52,8 +54,11 @@ class CreateDatabaseExecutor implements StatementExecutorInterface
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
         /* @var $statement CreateDatabaseStatement */
+
+        $executionContext = new ExecutionContext();
+        $executionContext->setParameters($parameters);
         
-        $name = $this->valueResolver->resolveValue($statement->getName());
+        $name = $this->valueResolver->resolveValue($statement->getName(), $executionContext);
         
         $this->schemaManager->createSchema($name);
         

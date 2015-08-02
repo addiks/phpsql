@@ -25,5 +25,4 @@ interface DatabaseAdapterInterface
     public function getTypeName();
 
     public function getFilesystem();
-
 }

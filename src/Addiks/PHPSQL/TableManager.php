@@ -56,39 +56,4 @@ class TableManager
         }
         return $this->tables[$tableId];
     }
-
-    public function createTable(TableSchema $tableSchema)
-    {
-        unimplemented();
-    }
-
-    ### INDICIES
-
-    protected $indicies = array();
-
-    public function getIndex($indexName, $tableName, $schemaId = null)
-    {
-        if (is_null($schemaId)) {
-            $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
-        }
-        $indexId = "{$schemaId}.{$tableName}.{$indexName}";
-        if (!isset($this->indicies[$indexId])) {
-            $this->indicies[$indexId] = new Index(
-                $this->filesystem,
-                $this->schemaManager,
-                $indexId,
-                $tableName,
-                $schemaId
-            );
-        }
-        return $this->indicies[$indexId];
-    }
-
-    public function createIndex(IndexPage $indexPage, $tableName, $schemaId = null)
-    {
-        unimplemented();
-
-        $indexPosition = $tableSchema->addIndexPage($indexSchemaPage);
-    }
-
 }

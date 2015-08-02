@@ -24,6 +24,7 @@ use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\Value\Sql\Variable;
 
 class ValueParser extends SqlParser
 {
@@ -201,7 +202,12 @@ class ValueParser extends SqlParser
                 break;
         
             case $tokens->seekTokenNum(T_VARIABLE):
-                $valueJob->addChainValue(Variable::factory($tokens->getCurrentTokenString()));
+                $variableString = $tokens->getCurrentTokenString();
+                $variable = Variable::factory($variableString);
+                if ($variableString === '?') {
+                    $variable->setIndex($tokens->countTokenOccourences(T_VARIABLE, 0, $tokens->getIndex()));
+                }
+                $valueJob->addChainValue($variable);
                 break;
                 
             case $this->parenthesisParser->canParseTokens($tokens):

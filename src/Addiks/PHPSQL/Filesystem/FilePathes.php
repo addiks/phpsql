@@ -28,5 +28,4 @@ class FilePathes
     const FILEPATH_COLUMN_DATA_FILE   = "%s/tables/%s/column_data/%s/%s.dat";
     const FILEPATH_COLUMN_DATA_FOLDER = "%s/tables/%s/column_data/%s";
     const FILEPATH_GROUPBY_HASHTABLE  = "temporary/groupby_hashtables/%s.hashtable";
-
 }

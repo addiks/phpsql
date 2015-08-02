@@ -33,74 +33,80 @@ use Addiks\PHPSQL\Entity\EntityTrait;
  * @MappedSuperclass
  * @Addiks\Singleton(negated=true)
  */
-abstract class Entity{
+abstract class Entity
+{
 
-	/**
-	 * The identification of this entity.
-	 * @var int
-	 */
-	private $id;
-	
-	/**
-	 * Gets the id of this entity.
-	 * @return string
-	 */
-	public function getId(){
-		return $this->id;
-	}
-	
-	public function setId($id){
-		$this->id = (int)$id;
-	}
-	
-	/**
-	 * The date that this entity was created.
-	 * Format: "Y-m-d H:i:s"
-	 * @see self::__construct()
-	 * @Column(type="string")
-	 * @var string
-	 */
-	private $createdDate;
-	
-	/**
-	 * The date this entity was last modified.
-	 * Format: "Y-m-d H:i:s"
-	 * @see self::__construct()
-	 * @Column(type="string")
-	 * @var string
-	 */
-	private $modifiedDate;
-	
-	/**
-	 * Gets the create-date of this entity.
-	 * Format: Y-m-d H:i:s
-	 * @return string
-	 */
-	public function getCreatedDate(){
-		return $this->createdDate;
-	}
-	
-	/**
-	 * Gets the modified-date of this entity.
-	 * Format: Y-m-d H:i:s
-	 * @return string
-	 */
-	public function getModifiedDate(){
-		return $this->modifiedDate;
-	}
-	
-	/**
-	 * Constructor.
-	 * Sets id, create- and modified-date.
-	 * @see uuid()
-	 */
-	public function __construct(){
-	
-		$this->createdDate = date("Y-m-d H:i:s", time());
-	
-		$this->modifiedDate = date("Y-m-d H:i:s", time());
-	
-		$this->id = uniqid();
-	
-	}
+    /**
+     * The identification of this entity.
+     * @var int
+     */
+    private $id;
+    
+    /**
+     * Gets the id of this entity.
+     * @return string
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+    
+    public function setId($id)
+    {
+        $this->id = (int)$id;
+    }
+    
+    /**
+     * The date that this entity was created.
+     * Format: "Y-m-d H:i:s"
+     * @see self::__construct()
+     * @Column(type="string")
+     * @var string
+     */
+    private $createdDate;
+    
+    /**
+     * The date this entity was last modified.
+     * Format: "Y-m-d H:i:s"
+     * @see self::__construct()
+     * @Column(type="string")
+     * @var string
+     */
+    private $modifiedDate;
+    
+    /**
+     * Gets the create-date of this entity.
+     * Format: Y-m-d H:i:s
+     * @return string
+     */
+    public function getCreatedDate()
+    {
+        return $this->createdDate;
+    }
+    
+    /**
+     * Gets the modified-date of this entity.
+     * Format: Y-m-d H:i:s
+     * @return string
+     */
+    public function getModifiedDate()
+    {
+        return $this->modifiedDate;
+    }
+    
+    /**
+     * Constructor.
+     * Sets id, create- and modified-date.
+     * @see uuid()
+     */
+    public function __construct()
+    {
+    
+        $this->createdDate = date("Y-m-d H:i:s", time());
+    
+        $this->modifiedDate = date("Y-m-d H:i:s", time());
+    
+        $this->id = uniqid();
+    
+    }
 }

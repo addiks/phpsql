@@ -153,7 +153,17 @@ class JoinDefinitionParser extends Part
             return $joinData;
         }
         
-        if (!$tokens->isTokenNum(SqlToken::T_JOIN(), TokenIterator::NEXT, [SqlToken::T_LEFT(), SqlToken::T_RIGHT(), SqlToken::T_INNER(), SqlToken::T_OUTER(), SqlToken::T_CROSS()])) {
+        if (!$tokens->isTokenNum(
+            SqlToken::T_JOIN(),
+            TokenIterator::NEXT,
+            [
+                    SqlToken::T_LEFT(),
+                    SqlToken::T_RIGHT(),
+                    SqlToken::T_INNER(),
+                    SqlToken::T_OUTER(),
+                    SqlToken::T_CROSS()
+                ]
+        )) {
             return null;
         }
         

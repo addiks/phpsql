@@ -80,19 +80,13 @@ class UpdateExecutor implements StatementExecutorInterface
             $indicies[] = $index;
         }
         
-        $this->valueResolver->setStatement($statement);
-        $this->valueResolver->setResultSet($result);
-        $this->valueResolver->setStatementParameters($parameters);
-        
         /* @var $condition Value */
         $condition = $statement->getCondition();
         
         foreach ($tableResource->getIterator() as $rowId => $row) {
             $row = $tableResource->convertDataRowToStringRow($row);
             
-            $this->valueResolver->setSourceRow($row);
-            
-            $conditionResult = $this->valueResolver->resolveValue($condition);
+            $conditionResult = $this->valueResolver->resolveValue($condition, $parameters);
             
             if ($conditionResult) {
                 $newRow = array();
@@ -102,7 +96,7 @@ class UpdateExecutor implements StatementExecutorInterface
                     $columnName = (string)$dataChange->getColumn();
                     
                     $newValue = $dataChange->getValue();
-                    $newValue = $this->valueResolver->resolveValue($newValue);
+                    $newValue = $this->valueResolver->resolveValue($newValue, $parameters);
                     
                     $newRow[$columnName] = $newValue;
                 }

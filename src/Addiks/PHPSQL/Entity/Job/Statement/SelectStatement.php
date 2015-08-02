@@ -11,8 +11,6 @@
 
 namespace Addiks\PHPSQL\Entity\Job\Statement;
 
-use Addiks\PHPSQL\Entity\Job\Part\Value;
-use Addiks\PHPSQL\Entity\Result\Specifier\Column;
 use Addiks\PHPSQL\Entity\Result\Specifier;
 use Addiks\PHPSQL\Entity\Job\Part\Join;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
@@ -20,6 +18,10 @@ use Addiks\PHPSQL\Executor\SelectExecutor;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Entity\Job\FunctionJob;
+use ErrorException;
+use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
+use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
+use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 
 /**
  *
@@ -53,18 +55,18 @@ class SelectStatement extends StatementJob
         
         switch(true){
             
-            case $value instanceof Value:
+            case $value instanceof ValuePart:
                 if (is_null($alias)) {
                     $alias = $value->generateAlias();
                 }
                 $this->columns[$alias] = $value;
                 break;
             
-            case $value instanceof Column:
+            case $value instanceof ColumnSpecifier:
                 $this->addColumnSpecifier($value, $alias);
                 break;
                 
-            case $value instanceof Table:
+            case $value instanceof TableSpecifier:
                 $this->addColumnAllTable($value, $alias);
                 break;
                 
@@ -95,10 +97,18 @@ class SelectStatement extends StatementJob
             case is_string($value):
                 $this->addColumnString($value, $alias);
                 break;
+
+            default:
+                if (is_object($value)) {
+                    $descriptor = get_class($value);
+                } else {
+                    $descriptor = get_type($value);
+                }
+                throw new ErrorException("Unexpected type of column! ({$descriptor})");
         }
     }
     
-    public function addColumnSpecifier(Column $column, $alias = null)
+    public function addColumnSpecifier(ColumnSpecifier $column, $alias = null)
     {
         if (is_null($alias)) {
             $alias = $column->getColumn();
@@ -109,7 +119,7 @@ class SelectStatement extends StatementJob
         $this->columns[$alias] = $column;
     }
     
-    public function addColumnAllTable(Table $tableFilter = null, $alias = null)
+    public function addColumnAllTable(TableSpecifier $tableFilter = null, $alias = null)
     {
         if (is_null($alias)) {
             $alias = is_null($tableFilter) ?'*' :$tableFilter->getValue();
@@ -294,7 +304,7 @@ class SelectStatement extends StatementJob
                     $resultColumn = reset($Specifier->getColumns());
                     break;
                     
-                case $column instanceof Value:
+                case $column instanceof ValuePart:
                     $resultColumn->setSchemaSourceValue($column);
                     break;
             }
@@ -311,7 +321,7 @@ class SelectStatement extends StatementJob
     
     private $condition;
     
-    public function setCondition(Value $condition)
+    public function setCondition(ValuePart $condition)
     {
         $this->condition = $condition;
     }
@@ -362,7 +372,7 @@ class SelectStatement extends StatementJob
     
     private $groupings = array();
     
-    public function addGrouping($value, Token $direction = null, $withRollup = false)
+    public function addGrouping($value, SqlToken $direction = null, $withRollup = false)
     {
         $this->groupings[] = [
             'value'      => $value,

@@ -184,5 +184,4 @@ class InmemoryFilesystem implements FilesystemInterface
     {
         
     }
-
 }

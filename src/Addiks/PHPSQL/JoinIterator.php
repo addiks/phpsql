@@ -19,6 +19,9 @@ use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\CustomIterator;
 use ErrorException;
 use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Table\TableContainer;
+use Addiks\PHPSQL\StatementExecutor\SelectExecutor;
+use Addiks\PHPSQL\ValueResolver;
 
 /**
  * The purpose of this component is to cross-join in any needed way
@@ -28,31 +31,35 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
 {
 
     public function __construct(
-        TableManager $tableManager,
-        Database $database,
+        TableContainer $tableContainer,
+        SelectExecutor $selectExecutor,
+        ValueResolver $valueResolver,
         SelectStatement $statement,
         $schemaId = null,
         array $parameters = array()
     ) {
-        $this->tableManager = $tableManager;
-        $this->database = $database;
+        $this->tableContainer = $tableContainer;
+        $this->selectExecutor = $selectExecutor;
+        $this->valueResolver = $valueResolver;
         $this->statement = $statement;
-        $this->schemaId;
+        $this->schemaId = $schemaId;
         $this->parameters = $parameters;
     }
 
-    protected $tableManager;
+    protected $valueResolver;
 
-    public function getTableManager()
+    protected $tableContainer;
+
+    public function gettableContainer()
     {
-        return $this->tableManager;
+        return $this->tableContainer;
     }
 
-    protected $database;
+    protected $selectExecutor;
 
-    public function getDatabase()
+    public function getSelectExecutor()
     {
-        return $this->database;
+        return $this->selectExecutor;
     }
     
     public function getIsSuccess()
@@ -181,8 +188,6 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
             $alias      = $parenthesis->getAlias();
             $dataSource = $parenthesis->getContain();
         
-            $resourceIterator = new SortedResourceIterator();
-            
             switch(true){
         
                 case $dataSource instanceof TableSpecifier:
@@ -192,20 +197,23 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
                     }
         
                     if (!is_null($dataSource->getDatabase())) {
-                        $database = $dataSource->getDatabase();
+                        $databaseId = $dataSource->getDatabase();
         
                     } else {
-                        $database = $this->schemaId;
+                        $databaseId = $this->schemaId;
                     }
         
                     /* @var $tableResource Table */
-                    $tableResource = $this->tableManager->getTable(
+                    $tableResource = $this->tableContainer->getTable(
                         $dataSource->getTable(),
-                        $database
+                        $databaseId
                     );
         
-                    $resourceIterator->setResourceTable($tableResource);
-        
+                    $resourceIterator = new SortedResourceIterator(
+                        $tableResource,
+                        $this->valueResolver
+                    );
+            
                     if (count($this->getStatement()->getOrderColumns())>0) {
                         $orderColumns = $this->getStatement()->getOrderColumns();
                         
@@ -222,11 +230,7 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
         
                         if (!is_null($primaryIndexId)) {
                             /* @var $index Index */
-                            $index = $this->tableManager->getIndex(
-                                $primaryIndexId,
-                                $dataSource->getTable(),
-                                $database
-                            );
+                            $index = $tableResource->getIndex($primaryIndexId);
                                 
                             // TODO: try to extract begin/end values from conditions
                             $beginValue = null;
@@ -260,7 +264,7 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
                     print((string)$dataSource);
                     
                     /* @var $result SelectResult */
-                    $result = $this->database->queryStatement($dataSource, $this->getParameters());
+                    $result = $this->selectExecutor->executeJob($dataSource, $this->getParameters());
         
                     $this->tableResources[$alias] = $result;
                     break;
@@ -447,7 +451,7 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
     {
         
         $unsortedJoinIterator = new JoinIterator(
-            $this->getTableManager(),
+            $this->gettableContainer(),
             $this->getDatabase(),
             $this->getStatement(),
             $this->getSchemaId(),

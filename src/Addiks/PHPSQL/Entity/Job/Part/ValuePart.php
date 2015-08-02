@@ -12,6 +12,8 @@
 namespace Addiks\PHPSQL\Entity\Job\Part;
 
 use Addiks\PHPSQL\Entity\Job\Part;
+use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
+use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
 
 class ValuePart extends Part
 {
@@ -37,7 +39,7 @@ class ValuePart extends Part
             foreach ($this->chain as $chainValue) {
                 switch(true){
             
-                    case $chainValue instanceof Column:
+                    case $chainValue instanceof ColumnSpecifier:
                         $this->setAlias($this->getAlias() . (string)$chainValue);
                         break;
                         

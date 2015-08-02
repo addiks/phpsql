@@ -20,7 +20,7 @@ use Addiks\PHPSQL\DatabaseAdapter\InternalDatabaseAdapter;
 class Database
 {
 
-    public function __construct($dsn, $doInitDatabaseAdapters=true)
+    public function __construct($dsn, $doInitDatabaseAdapters = true)
     {
         if (!$dsn instanceof Dsn) {
             $dsn = Dsn::factorizeDSN($dsn);

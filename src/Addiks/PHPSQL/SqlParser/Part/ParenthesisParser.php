@@ -18,6 +18,7 @@ use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\SqlParser\SelectSqlParser;
+use Addiks\PHPSQL\Entity\Job\Part\ParenthesisPart;
 
 class ParenthesisParser extends Part
 {
@@ -58,8 +59,8 @@ class ParenthesisParser extends Part
             throw new ErrorException("Tried to parse sql-parenthesis when token-iterator does not point to paranthesis ('(' sign)!");
         }
         
-        /* @var $parenthesis Parenthesis */
-        $parenthesis = new Parenthesis();
+        /* @var $parenthesis ParenthesisPart */
+        $parenthesis = new ParenthesisPart();
         
         switch(true){
             

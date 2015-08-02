@@ -5,7 +5,7 @@ namespace Addiks\PHPSQL\ValueResolver\FunctionResolver;
 use Addiks\PHPSQL\ValueResolver\FunctionResolver;
 use Addiks\PHPSQL\Entity\Job\FunctionJob;
 
-class RandFunction extends FunctionResolver
+class RandFunction implements FunctionResolverInterface
 {
     
     public function getExpectedParameterCount()

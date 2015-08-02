@@ -4,6 +4,7 @@
  */
 
 namespace Addiks\PHPSQL\Schema;
+
 use Addiks\PHPSQL\Schema\Meta\InformationSchema;
 use Addiks\PHPSQL\Entity\Schema;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
@@ -303,5 +304,4 @@ class SchemaManager
         $viewFilePath = sprintf(FilePathes::FILEPATH_VIEW_SQL, $schema->getId(), $viewIndex);
         $this->filesystem->putFileContents($viewFilePath, $query);
     }
-
 }

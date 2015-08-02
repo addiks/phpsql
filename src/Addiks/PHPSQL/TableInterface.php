@@ -55,5 +55,4 @@ interface TableInterface
     public function convertStringRowToDataRow(array $row);
     
     public function convertDataRowToStringRow(array $row);
-    
 }

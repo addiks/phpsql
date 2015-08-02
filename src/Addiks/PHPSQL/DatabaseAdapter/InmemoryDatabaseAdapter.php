@@ -31,5 +31,4 @@ class InmemoryDatabaseAdapter extends InternalDatabaseAdapter
     {
         return 'inmemory';
     }
-    
 }

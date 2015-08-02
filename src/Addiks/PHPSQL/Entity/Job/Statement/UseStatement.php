@@ -9,22 +9,23 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Job\StatementJob;
+namespace Addiks\PHPSQL\Entity\Job\Statement;
 
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Executor\UseExecutor;
+use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 
 /**
  *
  */
-class UseStatement extends Statement
+class UseStatement extends StatementJob
 {
     
     const EXECUTOR_CLASS = UseExecutor::class;
 
     private $database;
     
-    public function setDatabase(Database $database)
+    public function setDatabase(ValuePart $database)
     {
         $this->database = $database;
     }

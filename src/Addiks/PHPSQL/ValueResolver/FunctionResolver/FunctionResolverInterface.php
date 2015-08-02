@@ -9,23 +9,11 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Value;
+namespace Addiks\PHPSQL\ValueResolver\FunctionResolver;
 
-use Addiks\PHPSQL\Value;
-
-/**
- * Class representing a numeric value.
- */
-class Number extends Value
+interface FunctionResolverInterface
 {
+    public function getExpectedParameterCount();
     
-    public function validate($value)
-    {
-    
-        parent::validate($value);
-    
-        if (!is_numeric($value)) {
-            throw new ErrorException("Value has to be numeric!");
-        }
-    }
+    public function executeFunction(FunctionJob $function);
 }

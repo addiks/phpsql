@@ -16,12 +16,22 @@ use Addiks\PHPSQL\Value\Text\Line;
 
 class Variable extends Line
 {
-    
     protected function validate($string)
     {
-        
         if (!preg_match("/^(\:[a-zA-Z0-9_-]+|\?)$/is", $string)) {
             throw new ErrorException("SQL Varaible name '{$string}' does not match pattern '^\:[a-zA-Z0-9_-]+$'!");
         }
+    }
+
+    protected $index = 0;
+
+    public function setIndex($index)
+    {
+        $this->index = (int)$index;
+    }
+
+    public function getIndex()
+    {
+        return $this->index;
     }
 }

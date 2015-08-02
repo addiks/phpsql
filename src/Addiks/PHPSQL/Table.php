@@ -60,7 +60,16 @@ class Table implements IteratorAggregate, Countable, TableInterface
         
         $this->filesystem = $filesystem;
         $this->tableBackend = $tableBackend;
+        $this->schemaManager = $schemaManager;
+        $this->schemaId = $schemaId;
+        $this->tableName = $tableName;
     }
+
+    protected $schemaManager;
+
+    protected $tableName;
+
+    protected $schemaId;
 
     protected $filesystem;
 
@@ -215,6 +224,24 @@ class Table implements IteratorAggregate, Countable, TableInterface
         return $this->tableBackend->convertDataRowToStringRow($row);
     }
     
+    ### INDICIES
+
+    protected $indicies = array();
+
+    public function getIndex($indexName)
+    {
+        if (!isset($this->indicies[$indexName])) {
+            $this->indicies[$indexName] = new Index(
+                $this->filesystem,
+                $this->schemaManager,
+                $indexName,
+                $this->tableName,
+                $this->schemaId
+            );
+        }
+        return $this->indicies[$indexName];
+    }
+
     ### HELPER
     
     /**

@@ -12,6 +12,7 @@
 namespace Addiks\PHPSQL\Entity\Job\Part\Join;
 
 use Addiks\PHPSQL\Entity\Job\Part;
+use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 
 class TableJoin extends Part
 {
@@ -74,7 +75,7 @@ class TableJoin extends Part
     
     private $condition;
     
-    public function setCondition(Value $condition)
+    public function setCondition(ValuePart $condition)
     {
         $this->condition = $condition;
     }

@@ -336,7 +336,9 @@ class SelectResult implements ResultInterface, \IteratorAggregate
             }
         }
         
-        $joinIterator = new JoinIterator($statement);
+        $joinIterator = new JoinIterator(
+            $statement
+        );
 
         $this->joinIterator = $joinIterator;
         
@@ -482,10 +484,6 @@ class SelectResult implements ResultInterface, \IteratorAggregate
         if (is_null($conditionJob)) {
             return true;
         }
-        
-        $this->valueResolver->setSourceRow($this->currentIteratorUnresolved());
-        $this->valueResolver->setStatementParameters($this->getStatementParameters());
-        $this->valueResolver->resetParameterCurrentIndex();
         
         $result = $this->valueResolver->resolveValue($conditionJob);
     

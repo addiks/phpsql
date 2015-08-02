@@ -248,7 +248,6 @@ class InternalTable implements TableInterface
         $columnDataIndex = floor($rowIndex / $rowsPerColumnData);
 
         if (!isset($this->columnDataCache[$columnId][$columnDataIndex])) {
-
             $columnDataFilePath = sprintf(
                 FilePathes::FILEPATH_COLUMN_DATA_FILE,
                 $this->dbSchemaId,

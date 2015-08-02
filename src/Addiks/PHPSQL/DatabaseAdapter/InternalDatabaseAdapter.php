@@ -175,8 +175,6 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
         $result = null;
             
         try {
-            $this->getValueResolver()->setStatementParameters($parameters);
-            
             if (is_null($tokens)) {
                 $tokens = new SQLTokenIterator($statementString);
             }
@@ -214,5 +212,4 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
         
         return $result;
     }
-
 }

@@ -12,8 +12,9 @@
 namespace Addiks\PHPSQL\ValueResolver;
 
 use Addiks\PHPSQL\Entity\Job\FunctionJob;
+use Addiks\PHPSQL\ValueResolver;
 
-abstract class FunctionResolver
+class FunctionResolver
 {
 
     public function __construct(ValueResolver $valueResolver)
@@ -28,8 +29,13 @@ abstract class FunctionResolver
         return $this->valueResolver;
     }
     
-    abstract public function getExpectedParameterCount();
+    public function getExpectedParameterCount()
+    {
+
+    }
     
-    abstract public function executeFunction(FunctionJob $function);
-    
+    public function executeFunction(FunctionJob $function)
+    {
+
+    }
 }
