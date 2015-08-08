@@ -22,6 +22,7 @@ use ErrorException;
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
 use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
 use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
+use Addiks\PHPSQL\Entity\Result\Specifier\Column;
 
 /**
  *

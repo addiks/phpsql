@@ -65,7 +65,8 @@ class FunctionParser extends Part
         
         $tokens->seekIndex($tokens->getExclusiveTokenIndex());
         
-        if ($tokens->getCurrentTokenNumber() !== T_STRING && !($tokens->getCurrentTokenNumber() instanceof Token)) {
+        if (!in_array((int)(string)$tokens->getCurrentTokenNumber(), [T_STRING, SqlToken::T_DATABASE])
+        && !($tokens->getCurrentTokenNumber() instanceof Token)) {
             $tokens->seekIndex($indexBefore);
             return false;
         }

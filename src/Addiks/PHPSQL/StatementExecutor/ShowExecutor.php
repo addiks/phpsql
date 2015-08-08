@@ -22,6 +22,7 @@ use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 
 class ShowExecutor implements StatementExecutorInterface
 {
@@ -91,8 +92,8 @@ class ShowExecutor implements StatementExecutorInterface
     
     protected function executeShowDatabases(ShowJob $statement, array $parameters = array())
     {
-            
         $result = new TemporaryResult(['DATABASE']);
+
         $list = $this->schemaManager->listSchemas();
         sort($list);
         

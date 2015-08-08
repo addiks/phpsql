@@ -42,8 +42,20 @@ class InmemoryFilesystem implements FilesystemInterface
         if ($this->fileIsDir($filePath)) {
             throw new ErrorException("Requested file is a folder ('{$filePath}')!");
         }
+        $filePathParts = explode("/", $filePath);
+        $fileName = array_pop($filePathParts);
+        $folderPath = implode("/", $filePathParts);
+        if (strlen($folderPath) <= 0) {
+            $folderPath = "/";
+        }
+        if (!isset($this->fileResources[$folderPath])) {
+            $this->fileResources[$folderPath] = array();
+        } elseif (is_resource($this->fileResources[$folderPath])) {
+            throw new ErrorException("Cannot create file '{$filePath}' in another file '{$folderPath}'!");
+        }
         if (!isset($this->fileResources[$filePath])) {
             $this->fileResources[$filePath] = fopen("php://memory", "w+");
+            $this->fileResources[$folderPath][$fileName] = $fileName;
         }
         return $this->fileResources[$filePath];
     }
@@ -130,8 +142,15 @@ class InmemoryFilesystem implements FilesystemInterface
             if (is_array($this->fileResources[$filePath])) {
                 throw new ErrorException("Cannot unlink a folder!");
             }
+            $filePathParts = explode("/", $filePath);
+            $fileName = array_pop($filePathParts);
+            $folderPath = implode("/", $filePathParts);
+            if (strlen($folderPath) <= 0) {
+                $folderPath = "/";
+            }
             fclose($this->fileResources[$filePath]);
             unset($this->fileResources[$filePath]);
+            unset($this->fileResources[$folderPath][$fileName]);
         }
     }
     
@@ -164,7 +183,7 @@ class InmemoryFilesystem implements FilesystemInterface
         if ($this->fileIsDir($path)) {
             $files = $this->fileResources[$path];
         }
-        return $files;
+        return array_values($files);
     }
 
     /**

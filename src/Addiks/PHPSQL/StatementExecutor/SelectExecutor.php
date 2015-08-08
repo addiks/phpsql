@@ -30,6 +30,7 @@ use Addiks\PHPSQL\Entity\TableSchema;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 use Addiks\PHPSQL\JoinIterator;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 class SelectExecutor implements StatementExecutorInterface
 {
@@ -65,8 +66,11 @@ class SelectExecutor implements StatementExecutorInterface
 
         $defaultSchema = $this->schemaManager->getSchema();
         
-        $executionContext = new ExecutionContext();
-        $executionContext->setStatement($statement);
+        $executionContext = new ExecutionContext(
+            $this->schemaManager,
+            $statement,
+            $parameters
+        );
 
         if (!is_null($statement->getJoinDefinition())) {
             foreach ($statement->getJoinDefinition()->getTables() as $joinTable) {
@@ -148,16 +152,24 @@ class SelectExecutor implements StatementExecutorInterface
 
         $result = new TemporaryResult($resultColumns);
 
-        $joinIterator = new JoinIterator(
-            $executionContext,
-            $this,
-            $this->valueResolver,
-            $statement,
-            null # TODO: schemaId
-        );
+        if (!is_null($statement->getJoinDefinition())) {
+            $joinIterator = new JoinIterator(
+                $executionContext,
+                $this,
+                $this->valueResolver,
+                $statement,
+                null # TODO: schemaId
+            );
 
-        foreach ($joinIterator as $dataRow) {
-            $resolvedRow = $this->valueResolver->resolveRow($dataRow);
+            foreach ($joinIterator as $dataRow) {
+                $executionContext->setCurrentSourceRow($dataRow);
+                $resolvedRow = $this->valueResolver->resolveSourceRow($statement->getColumns(), $executionContext);
+
+                $result->addRow($resolvedRow);
+            }
+
+        } else {
+            $resolvedRow = $this->valueResolver->resolveSourceRow($statement->getColumns(), $executionContext);
 
             $result->addRow($resolvedRow);
         }

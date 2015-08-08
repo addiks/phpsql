@@ -14,16 +14,22 @@ namespace Addiks\PHPSQL\StatementExecutor;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\Entity\Job\Statement\DropStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Entity\Job\Statement\UseStatement;
+use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 
 class UseExecutor implements StatementExecutorInterface
 {
     
-    public function __construct(SchemaManager $schemaManager)
-    {
+    public function __construct(
+        SchemaManager $schemaManager,
+        ValueResolver $valueResolver
+    ) {
         $this->schemaManager = $schemaManager;
+        $this->valueResolver = $valueResolver;
     }
 
     protected $schemaManager;
@@ -35,17 +41,27 @@ class UseExecutor implements StatementExecutorInterface
     
     public function canExecuteJob(StatementJob $statement)
     {
-        return $statement instanceof DropStatement;
+        return $statement instanceof UseStatement;
     }
 
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
-        /* @var $statement DropStatement */
+        /* @var $statement UseStatement */
+
+        $executionContext = new ExecutionContext(
+            $this->schemaManager,
+            $statement,
+            $parameters
+        );
         
-        $this->schemaManager->setCurrentlyUsedDatabaseId($statement->getDatabase());
+        $databaseValue = $statement->getDatabase();
+
+        $databaseName = $this->valueResolver->resolveValue($databaseValue, $executionContext);
+
+        $this->schemaManager->setCurrentlyUsedDatabaseId($databaseName);
         
         $result = new TemporaryResult();
-        $result->setIsSuccess($this->schemaManager->getCurrentlyUsedDatabaseId() === $statement->getDatabase());
+        $result->setIsSuccess($this->schemaManager->getCurrentlyUsedDatabaseId() === $databaseName);
         
         return $result;
     }

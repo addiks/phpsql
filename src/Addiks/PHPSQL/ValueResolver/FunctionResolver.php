@@ -11,8 +11,9 @@
 
 namespace Addiks\PHPSQL\ValueResolver;
 
-use Addiks\PHPSQL\Entity\Job\FunctionJob;
 use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 class FunctionResolver
 {
@@ -34,8 +35,47 @@ class FunctionResolver
 
     }
     
-    public function executeFunction(FunctionJob $function)
-    {
+    public function executeFunction(
+        FunctionJob $functionJob,
+        ExecutionContext $context
+    ) {
+        $functionName = $functionJob->getName();
 
+        /* @var $functionResolver FunctionResolverInterface */
+        $functionResolver = null;
+
+        if (isset($this->functionOverrides[$functionName])) {
+            $functionResolver = $this->functionOverrides[$functionName];
+
+        } else {
+            $functionResolverClassName = ucfirst(strtolower($functionName))."Function";
+            $functionResolverClass = "Addiks\PHPSQL\ValueResolver\FunctionResolver\\{$functionResolverClassName}";
+
+            $functionResolver = new $functionResolverClass($this->valueResolver);
+        }
+
+        $returnValue = $functionResolver->executeFunction(
+            $functionJob,
+            $context
+        );
+
+        return $returnValue;
+    }
+
+    protected $functionOverrides = array();
+
+    public function setFunctionOverride($functionName, FunctionResolverInterface $functionResolver)
+    {
+        $this->functionOverrides[$functionName] = $functionResolver;
+    }
+
+    public function getFunctionOverrides()
+    {
+        return $this->functionOverrides;
+    }
+
+    public function clearFunctionOverrides()
+    {
+        $this->functionOverrides = array();
     }
 }

@@ -1,6 +1,12 @@
 <?php
 /**
- * @author Gerrit Addiks <gerrit.addiks@brille24.de>
+ * Copyright (C) 2013  Gerrit Addiks.
+ * This package (including this file) was released under the terms of the GPL-3.0.
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/> or send me a mail so i can send you a copy.
+ * @license GPL-3.0
+ * @author Gerrit Addiks <gerrit@addiks.de>
+ * @package Addiks
  */
 
 namespace Addiks\PHPSQL;
@@ -116,15 +122,15 @@ class StatementExecutor implements StatementExecutorInterface
         $this->addStatementExecutor(new AlterExecutor($schemaManager, $tableManager));
         $this->addStatementExecutor(new CreateDatabaseExecutor($valueResolver, $schemaManager));
         $this->addStatementExecutor(new CreateIndexExecutor($tableManager));
-        $this->addStatementExecutor(new CreateTableExecutor($schemaManager, $tableManager));
+        $this->addStatementExecutor(new CreateTableExecutor($schemaManager, $tableManager, $valueResolver));
         $this->addStatementExecutor(new DeleteExecutor($valueResolver, $tableManager));
         $this->addStatementExecutor(new DescribeExecutor($schemaManager));
-        $this->addStatementExecutor(new DropExecutor($schemaManager));
+        $this->addStatementExecutor(new DropExecutor($schemaManager, $valueResolver));
         $this->addStatementExecutor(new InsertExecutor($valueResolver, $tableManager, $selectExecutor));
         $this->addStatementExecutor($selectExecutor);
         $this->addStatementExecutor(new SetExecutor($valueResolver));
         $this->addStatementExecutor(new ShowExecutor($schemaManager));
         $this->addStatementExecutor(new UpdateExecutor($valueResolver, $tableManager));
-        $this->addStatementExecutor(new UseExecutor($schemaManager));
+        $this->addStatementExecutor(new UseExecutor($schemaManager, $valueResolver));
     }
 }

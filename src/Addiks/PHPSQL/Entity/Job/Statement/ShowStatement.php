@@ -18,7 +18,7 @@ use Addiks\PHPSQL\Executor\ShowExecutor;
 /**
  *
  */
-class ShowStatement extends Statement
+class ShowStatement extends StatementJob
 {
 
     const EXECUTOR_CLASS = ShowExecutor::class;

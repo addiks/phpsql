@@ -1,10 +1,17 @@
 <?php
 /**
- * @author Gerrit Addiks <gerrit.addiks@brille24.de>
+ * Copyright (C) 2013  Gerrit Addiks.
+ * This package (including this file) was released under the terms of the GPL-3.0.
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/> or send me a mail so i can send you a copy.
+ * @license GPL-3.0
+ * @author Gerrit Addiks <gerrit@addiks.de>
+ * @package Addiks
  */
 
 namespace Addiks\PHPSQL\Schema;
 
+use ErrorException;
 use Addiks\PHPSQL\Schema\Meta\InformationSchema;
 use Addiks\PHPSQL\Entity\Schema;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
@@ -163,7 +170,9 @@ class SchemaManager
             throw new ErrorException("Cannot remove or modify meta-database '{$schemaId}'!");
         }
         
-        $this->filesystem->fileUnlink($this->getSchemaFile($schemaId));
+        $schemaFilePath = sprintf(FilePathes::FILEPATH_SCHEMA, $schemaId);
+
+        $this->filesystem->fileUnlink($schemaFilePath);
     }
     
     public function listSchemas()
@@ -178,7 +187,7 @@ class SchemaManager
 
         list($schemaPath, $suffix) = explode("%s", FilePathes::FILEPATH_SCHEMA);
 
-        foreach ($filesystem->getDirectoryIterator($filesystem) as $item) {
+        foreach ($filesystem->getDirectoryIterator($schemaPath) as $item) {
             /* @var $item DirectoryIterator */
 
             $filename = $item->getFilename();

@@ -41,16 +41,20 @@ use Addiks\PHPSQL\Entity\Page\Schema\IndexPage;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Filesystem\FilePathes;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
+use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 class CreateTableExecutor implements StatementExecutorInterface
 {
     
     public function __construct(
         SchemaManager $schemaManager,
-        TableManager $tableManager
+        TableManager $tableManager,
+        ValueResolver $valueResolver
     ) {
         $this->schemaManager = $schemaManager;
         $this->tableManager = $tableManager;
+        $this->valueResolver = $valueResolver;
     }
 
     protected $schemaManager;
@@ -66,6 +70,8 @@ class CreateTableExecutor implements StatementExecutorInterface
     {
         return $this->tableManager;
     }
+
+    protected $valueResolver;
     
     public function canExecuteJob(StatementJob $statement)
     {
@@ -76,13 +82,21 @@ class CreateTableExecutor implements StatementExecutorInterface
     {
         /* @var $statement CreateTableStatement */
         
+        $context = new ExecutionContext(
+            $this->schemaManager,
+            $statement,
+            $parameters
+        );
+        
         /* @var $databaseSchema Schema */
         $databaseSchema = $this->schemaManager->getSchema();
 
         $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
         
+        $tableName = $this->valueResolver->resolveValue($statement->getName(), $context);
+
         $schemaPage = new SchemaPage();
-        $schemaPage->setName($statement->getName());
+        $schemaPage->setName($tableName);
         $schemaPage->setType(Type::TABLE());
         $schemaPage->setEngine(Engine::factory($statement->getEngine()->getName()));
         $schemaPage->setCollation(strtoupper($statement->getCollate()));
@@ -97,7 +111,7 @@ class CreateTableExecutor implements StatementExecutorInterface
         $databaseSchema->registerTableSchema($schemaPage);
         
         /* @var $tableSchema TableSchema */
-        $tableSchema = $this->schemaManager->getTableSchema($statement->getName());
+        $tableSchema = $this->schemaManager->getTableSchema($tableName);
         
         ### WRITE COLUMNS
         
@@ -156,7 +170,7 @@ class CreateTableExecutor implements StatementExecutorInterface
                         $defaultValueFilepath = sprintf(
                             FilePathes::FILEPATH_DEFAULT_VALUE,
                             $schemaId,
-                            $statement->getName(),
+                            $tableName,
                             $columnIndex
                         );
                         $this->tableManager->getFilesystem()->putFileContents(

@@ -4,16 +4,18 @@ namespace Addiks\PHPSQL\ValueResolver\FunctionResolver;
 
 use Addiks\PHPSQL\ValueResolver\FunctionResolver;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
-use Addiks\PHPSQL\Entity\Job\FunctionJob;
+use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 class CountFunction implements AggregateInterface, FunctionResolverInterface
 {
-    
-    public function getExpectedParameterCount()
+    public function __construct(ValueResolver $valueResolver)
     {
-        return 1;
+        $this->valueResolver = $valueResolver;
     }
-    
+
+    private $valueResolver;
+
     private $rowIdsInGrouping = array();
     
     public function setRowIdsInCurrentGroup(array $rowIds)
@@ -28,8 +30,10 @@ class CountFunction implements AggregateInterface, FunctionResolverInterface
         $this->resultSet = $result;
     }
     
-    public function executeFunction(FunctionJob $function)
-    {
+    public function executeFunction(
+        FunctionJob $function,
+        ExecutionContext $context
+    ) {
         
         /* @var $result SelectResult */
         $result = $this->resultSet;

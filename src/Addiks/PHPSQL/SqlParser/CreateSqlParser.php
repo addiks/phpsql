@@ -199,11 +199,11 @@ class CreateSqlParser extends SqlParser
         
         # NAME
         
-        if (!$tokens->seekTokenNum(T_STRING)) {
+        if (!$this->valueParser->canParseTokens($tokens)) {
             throw new MalformedSql("Missing name of table to create!", $tokens);
         }
-        
-        $createTableJob->setName($tokens->getCurrentTokenString());
+
+        $createTableJob->setName($this->valueParser->convertSqlToJob($tokens));
         
         # COLUMN DEFINITION
         

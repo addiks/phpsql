@@ -11,8 +11,8 @@
 
 namespace Addiks\PHPSQL\Entity\Result\Specifier;
 
-use Addiks\PHPSQL\Entity\Job\Part\Value;
 use Addiks\PHPSQL\Entity;
+use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 
 class Column extends Entity
 {
@@ -46,7 +46,7 @@ class Column extends Entity
         $this->schemaSource = '*';
     }
     
-    public function setSchemaSourceValue(Value $value)
+    public function setSchemaSourceValue(ValuePart $value)
     {
         $this->schemaSource = $value;
     }

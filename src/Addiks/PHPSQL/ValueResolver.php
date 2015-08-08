@@ -22,13 +22,13 @@ use Addiks\PHPSQL\Entity\Job\Part\ConditionJob;
 use Addiks\PHPSQL\Entity\Result\Specifier\Column;
 use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 use Addiks\PHPSQL\ValueResolver\FunctionResolver;
-use Addiks\PHPSQL\Entity\Job\FunctionJob;
 use Addiks\PHPSQL\Entity\Job\Part\FlowControl\CaseData;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use ErrorException;
 use Addiks\PHPSQL\Entity\Exception\Conflict;
 use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
 
 /**
  * This service can resolve any Value-Object into an scalar value.
@@ -100,7 +100,7 @@ class ValueResolver
     {
         
         /* @var $statement StatementJob */
-        $statement = $this->getStatement();
+        $statement = $context->getStatement();
         
         $resultRow = array();
         
@@ -118,7 +118,7 @@ class ValueResolver
      * @return array
      * @param Column $resultColumn
      */
-    public function resolveResultColumn(Column $resultColumn, array &$resultRow = array(), ExecutionContext $context)
+    public function resolveResultColumn(Column $resultColumn, array &$resultRow, ExecutionContext $context)
     {
         
         $schemaSource = $resultColumn->getSchemaSource();
@@ -145,7 +145,7 @@ class ValueResolver
             
             case $resultColumn->getIsAllColumnsFromTable() && $schemaSource === '*':
                 
-                $tables = $this->getStatement()->getJoinDefinition()->getTables();
+                $tables = $context->getStatement()->getJoinDefinition()->getTables();
                 
                 if (count($tables) === 1) {
                     foreach ($this->getSourceRow() as $alias => $columnData) {
@@ -211,7 +211,10 @@ class ValueResolver
                 break;
                     
             case $value instanceof FunctionJob:
-                $returnValue = $this->resolveFunction($value, $context);
+                $returnValue = $this->functionResolver->executeFunction(
+                    $value,
+                    $context
+                );
                 break;
         
             case $value instanceof Parenthesis:
@@ -462,6 +465,10 @@ class ValueResolver
     public function resolveFunction(FunctionJob $functionJob, ExecutionContext $context)
     {
         
+
+
+
+        
         $functionName = $functionJob->getName();
         
         $classNameFunctionPart = str_replace("_", " ", strtolower($functionName));
@@ -489,13 +496,6 @@ class ValueResolver
             $value = $this->resolveValue($value, $context);
             
             $functionArguments[] = $value;
-        }
-        
-        $actualArgumentCount = count($functionArguments);
-        if ($actualArgumentCount !== $functionExecuter->getExpectedParameterCount()) {
-            $errorMessage  = "Invalid argument count of {$actualArgumentCount} for function '{$functionName}', ";
-            $errorMessage .= "expected {$functionExecuter->getExpectedParameterCount()} arguments!";
-            throw new InvalidArgument($errorMessage);
         }
         
         if ($functionExecuter instanceof AggregateInterface) {

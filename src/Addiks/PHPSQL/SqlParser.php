@@ -180,6 +180,7 @@ class SqlParser
         $deleteParser->setValueParser($valueParser);
         $deleteParser->setJoinParser($joinParser);
         $describeParser->setTableParser($tableParser);
+        $dropParser->setValueParser($valueParser);
         $insertParser->setTableParser($tableParser);
         $insertParser->setColumnParser($columnParser);
         $insertParser->setValueParser($valueParser);

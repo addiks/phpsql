@@ -12,12 +12,23 @@
 namespace Addiks\PHPSQL\Entity;
 
 use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Schema\SchemaManager;
 
 /**
  * Contains information about and for the currently executed statement.
  */
 class ExecutionContext
 {
+    public function __construct(
+        SchemaManager $schemaManager,
+        StatementJob $statement,
+        array $parameters = array()
+    ) {
+        $this->schemaManager = $schemaManager;
+        $this->statement = $statement;
+        $this->parameters = $parameters;
+    }
+
     /**
      * The statement-parameters for the currently executed statement.
      *
@@ -25,16 +36,29 @@ class ExecutionContext
      */
     protected $parameters = array();
 
-    public function setParameters(array $parameters)
-    {
-        $this->parameters = $parameters;
-    }
-
     public function getParameters()
     {
         return $this->parameters;
     }
 
+    protected $schemaManager;
+
+    public function getSchemaManager()
+    {
+        return $this->schemaManager;
+    }
+
+    /**
+     * The statement currently being executed.
+     *
+     * @var StatementJob
+     */
+    protected $statement;
+
+    public function getStatement()
+    {
+        return $this->statement;
+    }
     /**
      * A container of table-resources to act as data-source for the execution.
      *
@@ -78,20 +102,4 @@ class ExecutionContext
         return $this->currentSourceRow;
     }
 
-    /**
-     * The statement currently being executed.
-     *
-     * @var StatementJob
-     */
-    protected $statement;
-
-    public function setStatement(StatementJob $statement)
-    {
-        $this->statement = $statement;
-    }
-
-    public function getStatement()
-    {
-        return $this->statement;
-    }
 }

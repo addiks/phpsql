@@ -55,8 +55,11 @@ class CreateDatabaseExecutor implements StatementExecutorInterface
     {
         /* @var $statement CreateDatabaseStatement */
 
-        $executionContext = new ExecutionContext();
-        $executionContext->setParameters($parameters);
+        $executionContext = new ExecutionContext(
+            $this->schemaManager,
+            $statement,
+            $parameters
+        );
         
         $name = $this->valueResolver->resolveValue($statement->getName(), $executionContext);
         

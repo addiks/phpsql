@@ -14,19 +14,23 @@ namespace Addiks\PHPSQL\StatementExecutor;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\Entity\Job\Statement\DropStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Entity\Job\Statement\DropStatement;
+use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 
 class DropExecutor implements StatementExecutorInterface
 {
     
     public function __construct(
-        SchemaManager $schemaManager
+        SchemaManager $schemaManager,
+        ValueResolver $valueResolver
     ) {
         $this->schemaManager = $schemaManager;
+        $this->valueResolver = $valueResolver;
     }
 
     protected $schemaManager;
@@ -35,6 +39,8 @@ class DropExecutor implements StatementExecutorInterface
     {
         return $this->schemaManager;
     }
+
+    protected $valueResolver;
     
     public function canExecuteJob(StatementJob $statement)
     {
@@ -44,27 +50,34 @@ class DropExecutor implements StatementExecutorInterface
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
         /* @var $statement DropStatement */
+
+        $context = new ExecutionContext(
+            $this->schemaManager,
+            $statement,
+            $parameters
+        );
         
         switch($statement->getType()){
-            case Drop::TYPE_DATABASE:
-                return $this->executeDropDatabase($statement, $parameters);
+            case DropStatement::TYPE_DATABASE:
+                return $this->executeDropDatabase($statement, $context);
                 
-            case Drop::TYPE_TABLE:
-                return $this->executeDropTable($statement, $parameters);
+            case DropStatement::TYPE_TABLE:
+                return $this->executeDropTable($statement, $context);
                 
-            case Drop::TYPE_VIEW:
-                return $this->executeDropView($statement, $parameters);
+            case DropStatement::TYPE_VIEW:
+                return $this->executeDropView($statement, $context);
         }
         
     }
     
-    protected function executeDropDatabase(Drop $statement, array $parameters = array())
+    protected function executeDropDatabase(DropStatement $statement, ExecutionContext $context)
     {
         
         /* @var $databaseSchema Schema */
         $databaseSchema = $this->schemaManager->getSchema();
         
-        foreach ($statement->getSubjects() as $subject) {
+        foreach ($statement->getSubjects() as $subjectValue) {
+            $subject = $this->valueResolver->resolveValue($subjectValue, $context);
             $this->schemaManager->removeSchema($subject);
         }
         
@@ -73,7 +86,8 @@ class DropExecutor implements StatementExecutorInterface
         $result = new TemporaryResult();
         $result->setIsSuccess(true);
         
-        foreach ($statement->getSubjects() as $subject) {
+        foreach ($statement->getSubjects() as $subjectValue) {
+            $subject = $this->valueResolver->resolveValue($subjectValue, $context);
             if ($this->schemaManager->schemaExists($subject)) {
                 $result->setIsSuccess(false);
                 break;
@@ -83,7 +97,7 @@ class DropExecutor implements StatementExecutorInterface
         return $result;
     }
     
-    protected function executeDropTable(Drop $statement, array $parameters = array())
+    protected function executeDropTable(DropStatement $statement, ExecutionContext $context)
     {
         
         foreach ($statement->getSubjects() as $tableName) {
@@ -98,7 +112,7 @@ class DropExecutor implements StatementExecutorInterface
         return $result;
     }
     
-    protected function executeDropView(Drop $statement, array $parameters = array())
+    protected function executeDropView(DropStatement $statement, ExecutionContext $context)
     {
         
         $result = new TemporaryResult();

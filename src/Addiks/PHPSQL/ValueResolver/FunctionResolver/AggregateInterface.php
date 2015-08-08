@@ -6,8 +6,7 @@ use Addiks\PHPSQL\Entity\Result\ResultInterface;
 
 interface AggregateInterface
 {
-    
-    function setRowIdsInCurrentGroup(array $rowIds);
+    public function setRowIdsInCurrentGroup(array $rowIds);
 
-    function setResultSet(ResultInterface $result);
+    public function setResultSet(ResultInterface $result);
 }

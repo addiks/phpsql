@@ -13,11 +13,12 @@ namespace Addiks\PHPSQL\Entity\Job\Statement;
 
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Executor\DropExecutor;
+use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 
 /**
  *
  */
-class DropStatement extends Statement
+class DropStatement extends StatementJob
 {
 
     const EXECUTOR_CLASS = DropExecutor::class;
@@ -44,9 +45,9 @@ class DropStatement extends Statement
     
     private $subjects = array();
     
-    public function addSubject($subject)
+    public function addSubject(ValuePart $subject)
     {
-        $this->subjects[] = (string)$subject;
+        $this->subjects[] = $subject;
     }
     
     public function getSubjects()

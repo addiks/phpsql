@@ -22,7 +22,7 @@ class UseTest extends PHPUnit_Framework_TestCase
     
     public function setUp()
     {
-        $this->pdo = new PDO("inmemory:some_example_database");
+        $this->pdo = new PDO("inmemory:phpunit");
     }
 
     public function testUseSQL()

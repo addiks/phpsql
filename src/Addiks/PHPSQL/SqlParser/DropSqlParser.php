@@ -11,17 +11,29 @@
 
 namespace Addiks\PHPSQL\SqlParser;
 
-use Addiks\PHPSQL\Entity\Job\Statement\DropStatement;
-
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\TokenIterator;
 use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\Entity\Job\Statement\DropStatement;
+use Addiks\PHPSQL\SqlParser\Part\ValueParser;
 
 class DropSqlParser extends SqlParser
 {
     
+    protected $valueParser;
+
+    public function getValueParser()
+    {
+        return $this->valueParser;
+    }
+
+    public function setValueParser(ValueParser $valueParser)
+    {
+        $this->valueParser = $valueParser;
+    }
+
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         return is_int($tokens->isTokenNum(SqlToken::T_DROP(), TokenIterator::CURRENT))
@@ -46,15 +58,15 @@ class DropSqlParser extends SqlParser
         switch(true){
             case $tokens->seekTokenNum(SqlToken::T_SCHEMA(), TokenIterator::NEXT):
             case $tokens->seekTokenNum(SqlToken::T_DATABASE()):
-                $dropJob->setType(Drop::TYPE_DATABASE);
+                $dropJob->setType(DropStatement::TYPE_DATABASE);
                 break;
                 
             case $tokens->seekTokenNum(SqlToken::T_TABLE()):
-                $dropJob->setType(Drop::TYPE_TABLE);
+                $dropJob->setType(DropStatement::TYPE_TABLE);
                 break;
             
             case $tokens->seekTokenNum(SqlToken::T_VIEW()):
-                $dropJob->setType(Drop::TYPE_VIEW);
+                $dropJob->setType(DropStatement::TYPE_VIEW);
                 break;
         }
         
@@ -68,11 +80,11 @@ class DropSqlParser extends SqlParser
         }
         
         do {
-            if (!$tokens->seekTokenNum(T_STRING)) {
+            if (!$this->valueParser->canParseTokens($tokens)) {
                 throw new MalformedSql("Missing a subject to drop for T_DROP statement!", $tokens);
             }
             
-            $subject = $tokens->getCurrentTokenString();
+            $subject = $this->valueParser->convertSqlToJob($tokens);
             $dropJob->addSubject($subject);
         } while ($tokens->seekTokenText(','));
         

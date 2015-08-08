@@ -21,6 +21,7 @@ use Addiks\PHPSQL\Entity\Job\Statement\Select;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Entity\Job\Statement\Create;
 use Addiks\PHPSQL\StatementExecutor\CreateTableExecutor;
+use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
 
 /**
  *
@@ -81,14 +82,14 @@ class CreateTableStatement extends CreateStatement
             $index = new Index();
             $index->setIsPrimary(true);
             $index->setName("PRIMARY");
-            $index->addColumn(Column::factory($column->getName()));
+            $index->addColumn(ColumnSpecifier::factory($column->getName()));
             $this->addIndex($index);
             
         } elseif ($column->getIsUnique()) {
             $index = new Index();
             $index->setIsUnique(true);
             $index->setName($column->getName());
-            $index->addColumn(Column::factory($column->getName()));
+            $index->addColumn(ColumnSpecifier::factory($column->getName()));
             $this->addIndex($index);
         }
     }
@@ -105,7 +106,7 @@ class CreateTableStatement extends CreateStatement
         if (is_array($this->columnDefinition)) {
             if ($index->getIsPrimary()) {
                 foreach ($index->getColumns() as $column) {
-                    /* @var $column Column */
+                    /* @var $column ColumnSpecifier */
                     
                     if (!isset($this->columnDefinition[$column->getColumn()])) {
                         throw new Conflict("Cannot set undefined column '{$column}' as primary key!");
@@ -425,7 +426,7 @@ class CreateTableStatement extends CreateStatement
                 $index = new Index();
                 $index->setIsPrimary(true);
                 $index->setName("PRIMARY");
-                $index->addColumn(Column::factory($columnName));
+                $index->addColumn(ColumnSpecifier::factory($columnName));
                 $this->addIndex($index);
             }
         }
