@@ -15,13 +15,17 @@ use Addiks\PHPSQL\Entity\Index\QuickSort;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
-use Addiks\PHPSQL\Table;
 use Addiks\PHPSQL\CustomIterator;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Countable;
 use SeekableIterator;
+use ErrorException;
+use IteratorAggregate;
+use Iterator;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 /**
  * The purspose of this component is to iterate sorted over one data-source.
@@ -30,21 +34,15 @@ use Addiks\PHPSQL\Filesystem\FilesystemInterface;
  * TODO: this iterator can currently only iterate over one index, implement the rest!
  *
  */
-class SortedResourceIterator implements Countable, SeekableIterator
+class SortedResourceIterator implements Countable, SeekableIterator, UsesBinaryDataInterface
 {
 
     public function __construct(
-        $resource,
+        Iterator $resource,
         ValueResolver $valueResolver
     ) {
+        $this->resource = $resource;
         $this->valueResolver = $valueResolver;
-        if ($resource instanceof Table) {
-            $this->setResourceTable($resource);
-        } elseif ($resource instanceof ResultInterface) {
-            $this->setResourceResult($resource);
-        } else {
-            throw new ErrorException("Resource for SortedResourceIterator has to be Table or ResultInterface!");
-        }
     }
 
     private $valueResolver;
@@ -55,16 +53,6 @@ class SortedResourceIterator implements Countable, SeekableIterator
     }
 
     private $resource;
-
-    public function setResourceTable(Table $table)
-    {
-        $this->resource = $table;
-    }
-
-    public function setResourceResult(ResultInterface $result)
-    {
-        $this->resource = $result;
-    }
 
     public function getResource()
     {
@@ -80,11 +68,7 @@ class SortedResourceIterator implements Countable, SeekableIterator
     
     public function getSortIndexByColumns(array $orderColumns)
     {
-        
-        $uniqid = uniqid();
-        $filePath = "TempTables/{$uniqid}";
-        $insertionSortFile = $this->getCache($filePath);
-        $insertionSortFile->setIsTemporary(true);
+        $insertionSortFile = new FileResourceProxy(fopen("php://memory", "w"));
         
         $columnPage = new ColumnPage();
             
@@ -100,7 +84,7 @@ class SortedResourceIterator implements Countable, SeekableIterator
                 /* @var $value Value */
                 $value = $columnDataset['value'];
                 
-                $columnPage->setDataType(DataType::VARCHAR());
+                $columnPage->setDataType(DataType::VARCHAR()); # TODO: get actual column-page if possible
                 $columnPage->setLength(64);
                 $columnPage->setName("INDEXVALUE_{$columnIndex}");
             }
@@ -116,8 +100,11 @@ class SortedResourceIterator implements Countable, SeekableIterator
         return $sortIndex;
     }
     
-    public function setTemporaryBuildChildIteratorByValue(array $orderColumns, ResultInterface $dataSource)
-    {
+    public function setTemporaryBuildChildIteratorByValue(
+        array $orderColumns,
+        ResultInterface $dataSource,
+        ExecutionContext $context
+    ) {
         
         /* @var $sortIndex QuickSort */
         $sortIndex = $this->getSortIndexByColumns($orderColumns);
@@ -129,7 +116,7 @@ class SortedResourceIterator implements Countable, SeekableIterator
         
         $indexAlreadyBuilt = false;
         
-        $rebuildIndex = function () use ($orderColumns, $dataSource, $sortIndex, $valueResolver) {
+        $rebuildIndex = function () use ($orderColumns, $dataSource, $sortIndex, $valueResolver, $context) {
             
             switch(true){
                 
@@ -141,25 +128,27 @@ class SortedResourceIterator implements Countable, SeekableIterator
                     $iterator = $dataSource->getIterator();
                     break;
             }
+
+            $indexBuildContext = clone $context;
             
             $dataSource->rewind();
             foreach ($iterator as $rowId => $rows) {
-                $mergedRow = array();
-                foreach ($rows as $alias => $sourceRow) {
-                    foreach ($sourceRow as $columnName => $cell) {
-                        $mergedRow[$columnName] = $cell;
-                        $mergedRow["{$alias}.{$columnName}"] = $cell;
-                    }
-                }
+                #$mergedRow = array();
+                #foreach ($rows as $alias => $sourceRow) {
+                #    foreach ($sourceRow as $columnName => $cell) {
+                #        $mergedRow[$columnName] = $cell;
+                #        $mergedRow["{$alias}.{$columnName}"] = $cell;
+                #    }
+                #}
                 
-                $valueResolver->setSourceRow($mergedRow);
+                $indexBuildContext->setCurrentSourceRow($rows);
                 
                 $insertRow = array();
                 foreach ($orderColumns as $columnIndex => $columnDataset) {
                     $value = $columnDataset['value'];
                     /* @var $value Value */
                     
-                    $insertRow[$columnIndex] = $valueResolver->resolveValue($value);
+                    $insertRow[$columnIndex] = $valueResolver->resolveValue($value, $indexBuildContext);
                 }
                 
                 $sortIndex->addRow($rowId, $insertRow);
@@ -168,7 +157,7 @@ class SortedResourceIterator implements Countable, SeekableIterator
             $sortIndex->sort();
         };
         
-        $iterator = new CustomIterator(null, [
+        $iterator = new CustomIterator($this, [
             'rewind' => function () use (&$indexAlreadyBuilt, $rebuildIndex, $sortIndex) {
                 if (!$indexAlreadyBuilt) {
                     $indexAlreadyBuilt = true;
@@ -246,19 +235,16 @@ class SortedResourceIterator implements Countable, SeekableIterator
 
         switch(true){
 
-            case $resource instanceof Table:
-                $row = $resource->getIterator()->current();
-                if (is_array($row)) {
-                    $row = $resource->convertDataRowToStringRow($row);
-                }
+            case $resource instanceof Iterator:
+                $row = $resource->current();
                 break;
 
-            case $resource instanceof SelectResult:
-                $row = current($resource);
+            case $resource instanceof IteratorAggregate:
+                $row = $resource->getIterator()->current();
                 break;
 
             default:
-                throw new \ErrorException("Invalid table-source type!");
+                throw new ErrorException("Invalid table-source type!");
         }
 
         return $row;
@@ -294,23 +280,14 @@ class SortedResourceIterator implements Countable, SeekableIterator
         /* @var $iterator \Iterator*/
         $iterator = $this->getChildIterator();
         
-    #	var_dump(
-    #       $iterator->getConstructorTrace(),
-    #       $iterator->getInnerIterator()->getConstructorTrace(),
-    #       $iterator->getInnerIterator()->getInnerIterator()->getArrayCopy(),
-    #		$iterator instanceof \ArrayIterator
-    #	);
-        
         switch(true){
             
-            case $iterator instanceof CustomIterator:
-            case $iterator instanceof \ArrayIterator:
+            case $iterator instanceof SeekableIterator:
                 $iterator->seek($rowId);
                 break;
                 
             default:
-                $iterator->seek($rowId);
-                break;
+                throw new ErrorException("Invalid resource to seek!");
         }
         
         $this->syncResourceToIterator();
@@ -337,13 +314,38 @@ class SortedResourceIterator implements Countable, SeekableIterator
         
         switch(true){
         
-            case $resource instanceof Table:
+            case $resource instanceof SeekableIterator:
                 $resource->seek($rowId);
                 break;
-        
-            case $resource instanceof SelectResult:
-                $resource->seek($rowId);
-                break;
+
+            default:
+                throw new ErrorException("Invalid resource to seek to 0!");
         }
     }
+
+    public function usesBinaryData()
+    {
+        $isBinary = false;
+        if ($this->tableResource instanceof UsesBinaryDataInterface) {
+            $isBinary = $this->tableResource->usesBinaryData();
+        }
+        return $isBinary;
+    }
+
+    public function convertDataRowToStringRow(array $row)
+    {
+        if ($this->tableResource instanceof UsesBinaryDataInterface) {
+            $row = $this->tableResource->convertDataRowToStringRow($row);
+        }
+        return $row;
+    }
+
+    public function convertStringRowToDataRow(array $row)
+    {
+        if ($this->tableResource instanceof UsesBinaryDataInterface) {
+            $row = $this->tableResource->convertStringRowToDataRow($row);
+        }
+        return $row;
+    }
+
 }

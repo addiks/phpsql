@@ -697,7 +697,7 @@ class TokenIterator implements \Iterator, \ArrayAccess
 
         $occourenceCount = 0;
         for ($index = $indexStart; $index <= $indexEnd; $index++) {
-            $token = $this->tokenArray[0];
+            $token = $this->tokenArray[$index];
             if ((is_array($token) && ($token[0] === $needle || $token[1] === $needle)) || $token === $needle) {
                 $occourenceCount++;
             }

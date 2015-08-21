@@ -25,7 +25,7 @@ class QuickSort extends Entity implements \Iterator
     /**
      *
      * @param FileResourceProxy $file
-     * @param array $columnPages [[(Column)$columnPage, 'ASC'], [$columnPage2, 'DESC'], $columnPage3, ...]
+     * @param array $columnPages [[(ColumnPage)$columnPage, 'ASC'], [$columnPage2, 'DESC'], $columnPage3, ...]
      * @throws ErrorException
      */
     public function __construct(FileResourceProxy $file, array $columnPages)
@@ -41,7 +41,7 @@ class QuickSort extends Entity implements \Iterator
                 $columnPage = current($columnDataset);
                 $direction = "ASC";
                 
-            } elseif ($columnDataset instanceof Column) {
+            } elseif ($columnDataset instanceof ColumnPage) {
                 $columnPage = $columnDataset;
                 $direction = "ASC";
                 
@@ -51,8 +51,8 @@ class QuickSort extends Entity implements \Iterator
             
             $direction = $direction === "ASC" ?"ASC" :"DESC";
             
-            if (!$columnPage instanceof Column) {
-                throw new ErrorException("Given column-page is not subclass of 'Column'!");
+            if (!$columnPage instanceof ColumnPage) {
+                throw new ErrorException("Given column-page is not subclass of 'ColumnPage'!");
             }
             
             $usedColumnPages[] = [
@@ -95,7 +95,7 @@ class QuickSort extends Entity implements \Iterator
             
             foreach ($this->getColumnPages() as $index => $columnDataset) {
                 list($columnPage, $direction) = $columnDataset;
-                /* @var $columnPage Column */
+                /* @var $columnPage ColumnPage */
             
                 $this->pageSize += $columnPage->getCellSize();
             }
@@ -184,11 +184,15 @@ class QuickSort extends Entity implements \Iterator
         
         $file = $this->getFile();
         $file->seek(0, SEEK_END);
+
+        if (is_int($rowId)) {
+            $rowId = $this->decstr($rowId);
+        }
         
-        $block = str_pad($this->decstr($rowId), 8, "\0", STR_PAD_LEFT);
+        $block = str_pad($rowId, 8, "\0", STR_PAD_LEFT);
         foreach ($this->getColumnPages() as $index => $columnDataset) {
             list($columnPage, $direction) = $columnDataset;
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
             
             $value = $row[$index];
             
@@ -212,10 +216,10 @@ class QuickSort extends Entity implements \Iterator
         ### READ
         
         $file->seek($blockIndexA * $this->getPageSize());
-        $blockA = fread($this->getPageSize());
+        $blockA = $file->read($this->getPageSize());
         
         $file->seek($blockIndexB * $this->getPageSize());
-        $blockB = fread($this->getPageSize());
+        $blockB = $file->read($this->getPageSize());
         
         ### WRITE
         
@@ -253,7 +257,7 @@ class QuickSort extends Entity implements \Iterator
             $rowA = array();
             foreach ($this->getColumnPages() as $index => $columnDataset) {
                 list($columnPage, $direction) = $columnDataset;
-                /* @var $columnPage Column */
+                /* @var $columnPage ColumnPage */
                 
                 $rowA[] = $file->read($columnPage->getCellSize());
             }
@@ -272,7 +276,7 @@ class QuickSort extends Entity implements \Iterator
             $rowB = array();
             foreach ($this->getColumnPages() as $index => $columnDataset) {
                 list($columnPage, $direction) = $columnDataset;
-                /* @var $columnPage Column */
+                /* @var $columnPage ColumnPage */
                 
                 $rowB[] = $file->read($columnPage->getCellSize());
             }
@@ -282,7 +286,7 @@ class QuickSort extends Entity implements \Iterator
         
         foreach ($this->getColumnPages() as $index => $columnDataset) {
             list($columnPage, $direction) = $columnDataset;
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
         
             $valueA = $rowA[$index];
             $valueB = $rowB[$index];
@@ -314,7 +318,7 @@ class QuickSort extends Entity implements \Iterator
         $blockData = array();
         foreach ($this->getColumnPages() as $index => $columnDataset) {
             list($columnPage, $direction) = $columnDataset;
-            /* @var $columnPage Column */
+            /* @var $columnPage ColumnPage */
         
             $blockData[] = $file->read($columnPage->getCellSize());
         }

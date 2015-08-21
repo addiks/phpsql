@@ -29,6 +29,7 @@ use ErrorException;
 use Addiks\PHPSQL\Entity\Exception\Conflict;
 use Addiks\PHPSQL\Entity\ExecutionContext;
 use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
+use Addiks\PHPSQL\Entity\Job\Part\ParenthesisPart;
 
 /**
  * This service can resolve any Value-Object into an scalar value.
@@ -50,30 +51,6 @@ class ValueResolver
 
     
     ### INPUT
-    
-    private $sourceRow = array();
-    
-    public function setSourceRow(array $row)
-    {
-        $this->sourceRow = $row;
-    }
-    
-    public function getSourceRow()
-    {
-        return $this->sourceRow;
-    }
-    
-    private $statement;
-    
-    public function setStatement(StatementJob $statement)
-    {
-        $this->statement = $statement;
-    }
-    
-    public function getStatement()
-    {
-        return $this->statement;
-    }
     
     private $resultSet;
     
@@ -138,7 +115,7 @@ class ValueResolver
                 
                 $columnIdentifier = (string)$schemaSource;
                 
-                $columnData = $this->getSourceRow()[$columnIdentifier];
+                $columnData = $context->getCurrentSourceRow()[$columnIdentifier];
                 
                 $resultRow[$columnIdentifier] = $columnData;
                 break;
@@ -148,14 +125,14 @@ class ValueResolver
                 $tables = $context->getStatement()->getJoinDefinition()->getTables();
                 
                 if (count($tables) === 1) {
-                    foreach ($this->getSourceRow() as $alias => $columnData) {
+                    foreach ($context->getCurrentSourceRow() as $alias => $columnData) {
                         if (substr_count($alias, '.')===0) {
                             $resultRow[$alias] = $columnData;
                         }
                     }
                     
                 } else {
-                    foreach ($this->getSourceRow() as $alias => $columnData) {
+                    foreach ($context->getCurrentSourceRow() as $alias => $columnData) {
                         if (substr_count($alias, '.')===1) {
                             $resultRow[$alias] = $columnData;
                         }
@@ -167,7 +144,7 @@ class ValueResolver
                 
                 $needleAlias = (string)$schemaSource;
                 
-                foreach ($this->getSourceRow() as $alias => $columnData) {
+                foreach ($context->getCurrentSourceRow() as $alias => $columnData) {
                     if (substr($alias, 0, strlen($needleAlias)) === $needleAlias) {
                         $columnName = substr($alias, strlen($needleAlias)+1);
                         $resultRow[$columnName] = $columnData;
@@ -217,7 +194,7 @@ class ValueResolver
                 );
                 break;
         
-            case $value instanceof Parenthesis:
+            case $value instanceof ParenthesisPart:
                 $returnValue = $this->resolveValue($value->getContain(), $context);
                 break;
                     
@@ -242,7 +219,7 @@ class ValueResolver
                 break;
                     
             case $value instanceof ColumnSpecifier:
-                $row = $this->getSourceRow();
+                $row = $context->getCurrentSourceRow();
                 if (!isset($row[(string)$value])) {
                     return null;
                 }
@@ -252,7 +229,7 @@ class ValueResolver
             case $value instanceof SqlToken:
                 $returnValue = $this->resolveSqlToken($value);
                 break;
-        
+
             case is_object($value):
                 $type = get_class($value);
                 throw new ErrorException("Cannot resolve object of type '{$type}'! (unimplemented!)");
@@ -297,7 +274,7 @@ class ValueResolver
                     $chainValue->setCheckValue($value);
                     break;
                     
-                case $chainValue instanceof Condition:
+                case $chainValue instanceof ConditionJob:
                     $chainValue->setFirstParameter($value);
                     break;
             }
@@ -464,11 +441,6 @@ class ValueResolver
     
     public function resolveFunction(FunctionJob $functionJob, ExecutionContext $context)
     {
-        
-
-
-
-        
         $functionName = $functionJob->getName();
         
         $classNameFunctionPart = str_replace("_", " ", strtolower($functionName));

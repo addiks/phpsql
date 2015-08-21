@@ -205,7 +205,7 @@ class ValueParser extends SqlParser
                 $variableString = $tokens->getCurrentTokenString();
                 $variable = Variable::factory($variableString);
                 if ($variableString === '?') {
-                    $variable->setIndex($tokens->countTokenOccourences(T_VARIABLE, 0, $tokens->getIndex()));
+                    $variable->setIndex($tokens->countTokenOccourences(T_VARIABLE, 0, $tokens->getIndex()-1));
                 }
                 $valueJob->addChainValue($variable);
                 break;

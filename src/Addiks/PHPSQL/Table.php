@@ -15,6 +15,8 @@ use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Table\InternalTable;
 use Addiks\PHPSQL\CustomIterator;
 use IteratorAggregate;
+use Iterator;
+use ErrorException;
 use Countable;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 use Addiks\PHPSQL\Schema\SchemaManager;
@@ -24,7 +26,7 @@ use Addiks\PHPSQL\Filesystem\FilePathes;
 /**
  * This represents a table.
  */
-class Table implements IteratorAggregate, Countable, TableInterface
+class Table implements IteratorAggregate, Countable, TableInterface, UsesBinaryDataInterface
 {
 
     public function __construct(
@@ -166,7 +168,19 @@ class Table implements IteratorAggregate, Countable, TableInterface
     
     public function getIterator()
     {
-        return $this->tableBackend->getIterator();
+        $iterator = null;
+
+        if ($this->tableBackend instanceof Iterator) {
+            $iterator = $this->tableBackend;
+
+        } elseif ($this->tableBackend instanceof IteratorAggregate) {
+            $iterator = $this->tableBackend->getIterator();
+
+        } else {
+            throw new ErrorException("Table-backend must either implement Iterator or IteratorAggregate!");
+        }
+
+        return $iterator;
     }
     
     public function getCellData($rowId, $columnId)
@@ -208,10 +222,15 @@ class Table implements IteratorAggregate, Countable, TableInterface
     {
         return $this->tableBackend->count();
     }
-    
+
     public function seek($rowId)
     {
         return $this->tableBackend->seek($rowId);
+    }
+
+    public function usesBinaryData()
+    {
+        return true;
     }
     
     public function convertStringRowToDataRow(array $row)

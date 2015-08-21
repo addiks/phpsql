@@ -11,6 +11,7 @@
 
 namespace Addiks\PHPSQL\Table;
 
+use Iterator;
 use ErrorException;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Entity\TableSchema;
@@ -21,14 +22,15 @@ use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\TableInterface;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\CustomIterator;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Filesystem\FilePathes;
+use Addiks\PHPSQL\TableInterface;
+use Addiks\PHPSQL\UsesBinaryDataInterface;
 
-class InternalTable implements TableInterface
+class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
 {
 
     use BinaryConverterTrait;
@@ -192,7 +194,10 @@ class InternalTable implements TableInterface
         
         if (!is_null($defaultValue)) {
             $defaultValueData = $this->valueResolver->resolveValue($defaultValue);
-            $defaultValueData = $this->dataConverter->convertStringToBinary($defaultValueData, $columnPage->getDataType());
+            $defaultValueData = $this->dataConverter->convertStringToBinary(
+                $defaultValueData,
+                $columnPage->getDataType()
+            );
         } else {
             $defaultValueData = null;
         }
@@ -235,9 +240,7 @@ class InternalTable implements TableInterface
     public function getColumnDataByRowIndex($rowIndex, $columnId, &$columnDataIndex = 0)
     {
 
-        if (is_numeric($columnId)) {
-            $columnId = $this->getTableSchema()->getColumn($columnId)->getName();
-        }
+        assert("is_int(\$columnId)");
 
         if (!isset($this->columnDataCache[$columnId])) {
             $this->columnDataCache[$columnId] = array();
@@ -314,7 +317,7 @@ class InternalTable implements TableInterface
             $columnName = $columnPage->getName();
             
             /* @var $columnData ColumnData */
-            $columnData = $this->getColumnDataByRowIndex($rowId, $columnName, $columnDataIndex);
+            $columnData = $this->getColumnDataByRowIndex($rowId, $columnId, $columnDataIndex);
                 
             $columnDataRowId = $rowId % $this->getRowsPerColumnData($columnId);
             
@@ -336,11 +339,11 @@ class InternalTable implements TableInterface
         /* @var $tableSchema TableSchema */
         $tableSchema = $this->getTableSchema();
         
-        foreach ($tableSchema->getPrimaryKeyColumns() as $columnPage) {
+        foreach ($tableSchema->getPrimaryKeyColumns() as $columnId => $columnPage) {
             /* @var $columnPage ColumnPage */
             
             $lastDataIndex = $this->getTableColumnDataLastDataIndex(
-                $columnPage->getName(),
+                $columnId,
                 $this->getTableName(),
                 $this->getDBSchemaId()
             );
@@ -354,7 +357,7 @@ class InternalTable implements TableInterface
                 $this->dbSchemaId,
                 $this->getTableName(),
                 $columnId,
-                $columnDataIndex
+                $lastDataIndex
             );
 
             $columnDataFile = $this->filesystem->getFile($columnDataFilePath);
@@ -379,14 +382,12 @@ class InternalTable implements TableInterface
     
     protected function getTableColumnDataLastDataIndex($columnId, $tableName, $schemaId = null)
     {
+        assert("is_int(\$columnId);");
+
         if (is_null($schemaId)) {
             $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
         }
 
-        if (is_numeric($columnId)) {
-            throw new Error("Column-Name '{$columnId}' cannot be numeric!");
-        }
-        
         $folderPath = sprintf(
             FilePathes::FILEPATH_COLUMN_DATA_FOLDER,
             $schemaId,
@@ -399,7 +400,7 @@ class InternalTable implements TableInterface
             /* @var $item DirectoryIterator */
 
             $fileName = $item->getFilename();
-            $dataIndex = substr($fileName, 0, strrpos(fileName, "."));
+            $dataIndex = substr($fileName, 0, strrpos($fileName, "."));
 
             if ($lastDataIndex < $dataIndex) {
                 $lastDataIndex = $dataIndex;
@@ -620,49 +621,16 @@ class InternalTable implements TableInterface
         return $this->currentRowIndex;
     }
 
-    public function getIterator()
-    {
-
-        if (is_null($this->iterator)) {
-            $tableResource = $this;
-
-            $this->iterator = new CustomIterator(null, [
-                'rewind' => function () use ($tableResource) {
-                    if ($tableResource->count()>0) {
-                        $tableResource->seek(0);
-                    }
-                },
-                'valid' => function () use ($tableResource) {
-                    return $tableResource->getRowExists();
-                },
-                'current' => function () use ($tableResource) {
-                    if (!$tableResource->getRowExists()) {
-                        return null;
-                    }
-                    return $tableResource->getNamedRowData();
-                },
-                'key' => function () use ($tableResource) {
-                    return $tableResource->getCurrentRowIndex();
-                },
-                'next' => function () use ($tableResource) {
-                    $newRowId = $tableResource->getCurrentRowIndex()+1;
-                    if ($tableResource->getRowExists($newRowId)) {
-                        $tableResource->seek($newRowId);
-                    } else {
-                        $tableResource->seek(null);
-                    }
-                }
-            ]);
-        }
-
-        return $this->iterator;
-    }
-
     public function count()
     {
         return $this->getRowCount();
     }
 
+    public function usesBinaryData()
+    {
+        return true;
+    }
+    
     public function convertStringRowToDataRow(array $row)
     {
 
@@ -705,5 +673,42 @@ class InternalTable implements TableInterface
         }
 
         return $row;
+    }
+
+    ### ITERATOR
+
+    public function rewind()
+    {
+        if ($this->count()>0) {
+            $this->seek(0);
+        }
+    }
+
+    public function valid()
+    {
+        return $this->getRowExists();
+    }
+
+    public function current()
+    {
+        if (!$this->getRowExists()) {
+            return null;
+        }
+        return $this->getNamedRowData();
+    }
+
+    public function key()
+    {
+        return $this->getCurrentRowIndex();
+    }
+
+    public function next()
+    {
+        $newRowId = $this->getCurrentRowIndex()+1;
+        if ($this->getRowExists($newRowId)) {
+            $this->seek($newRowId);
+        } else {
+            $this->seek(null);
+        }
     }
 }

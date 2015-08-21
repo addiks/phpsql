@@ -266,6 +266,11 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
                 $reference = $node->getNearestReferenceByValue($value);
         
                 if (ltrim($reference, "\0")!=='') {
+
+                    if (in_array($reference, $nodePathKeys)) {
+                        throw new ErrorException("Circular refrence in B-Tree! ('{$this->strdec($reference)}')!");
+                    }
+
                     $node = $this->getNode($reference);
                     
                     if (!is_object($node)) {
@@ -778,18 +783,18 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $node->setForkRate($this->forkRate);
         
         return new CustomIterator(null, [
-            'rewind' => function () use ($keyLength) {
+            'rewind' => function () use ($keyLength, $file) {
                 $file->seek($keyLength*2, SEEK_SET);
             },
-            'valid' => function () use ($node) {
+            'valid' => function () use ($node, $file) {
                 $data = $file->read($node->getPageSize());
                 $file->seek(0-strlen($data), SEEK_CUR);
                 return strlen($data) === $node->getPageSize();
             },
-            'key' => function () use ($node) {
+            'key' => function () use ($node, $file) {
                 return (int)(($file->tell() -$node->getKeyLength()) / $node->getPageSize());
             },
-            'current' => function () use ($node) {
+            'current' => function () use ($node, $file) {
                 $data = $file->read($node->getPageSize());
                 $file->seek(0-strlen($data), SEEK_CUR);
                 
@@ -800,7 +805,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
                 $node->setData($data);
                 return $node;
             },
-            'next' => function () use ($node) {
+            'next' => function () use ($node, $file) {
                 $file->seek($node->getPageSize(), SEEK_CUR);
             }
         ]);
@@ -934,6 +939,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $reference = $file->read($this->getKeyLength());
     
         if (strlen($reference) === 0 || trim($reference, "\0") === '') {
+            $file->seek(0, SEEK_SET);
             $file->write(str_pad(chr(1), $this->getKeyLength(), "\0"));
             $file->seek(0, SEEK_SET);
             $reference = $file->read($this->getKeyLength());
@@ -963,7 +969,8 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
      */
     protected function getRootNode()
     {
-        if (is_null($node = $this->getNode($this->getRootReference()))) {
+        $node = $this->getNode($this->getRootReference());
+        if (is_null($node)) {
             $node = new Node();
             $node->setKeyLength($this->getKeyLength());
             $node->setForkRate($this->forkRate);
@@ -1533,7 +1540,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             $row[] = $lastReference;
         
             $string .= implode("_t_t", $row)."\n";
-            $file->write($outHandle, implode("_t_t", $row)."\n");
+            fwrite($outHandle, implode("_t_t", $row)."\n");
         }
         
         $string .= "root: {$this->getRootReference()}\n\n";

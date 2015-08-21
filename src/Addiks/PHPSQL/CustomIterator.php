@@ -11,6 +11,10 @@
 
 namespace Addiks\PHPSQL;
 
+use ArrayAccess;
+use IteratorIterator;
+use Addiks\PHPSQL\UsesBinaryDataInterface;
+
 /**
  * Iterator object where every action can be controlled by lambda-functions.
  *
@@ -40,7 +44,7 @@ namespace Addiks\PHPSQL;
  * @author Gerrit Addiks <gerrit@addiks.de>
  * @package Addiks
  */
-class CustomIterator extends \IteratorIterator implements \ArrayAccess
+class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinaryDataInterface
 {
     
     /**
@@ -65,9 +69,9 @@ class CustomIterator extends \IteratorIterator implements \ArrayAccess
                     break;
                 case 'valid':   $this->setValidCallback($lambda);
                     break;
-                case 'current':     $this->setCurrentCallback($lambda);
+                case 'current': $this->setCurrentCallback($lambda);
                     break;
-                case 'key':         $this->setKeyCallback($lambda);
+                case 'key':     $this->setKeyCallback($lambda);
                     break;
                 case 'next':    $this->setNextCallback($lambda);
                     break;
@@ -461,4 +465,32 @@ class CustomIterator extends \IteratorIterator implements \ArrayAccess
     {
         return $this->__unset($offset);
     }
+
+    ### BINARY INTERFACE
+
+    public function usesBinaryData()
+    {
+        $isBinary = false;
+        if ($this->getInnerIterator() instanceof UsesBinaryDataInterface) {
+            $isBinary = $this->getInnerIterator()->usesBinaryData();
+        }
+        return $isBinary;
+    }
+
+    public function convertDataRowToStringRow(array $row)
+    {
+        if ($this->getInnerIterator() instanceof UsesBinaryDataInterface) {
+            $row = $this->getInnerIterator()->convertDataRowToStringRow($row);
+        }
+        return $row;
+    }
+
+    public function convertStringRowToDataRow(array $row)
+    {
+        if ($this->getInnerIterator() instanceof UsesBinaryDataInterface) {
+            $row = $this->getInnerIterator()->convertStringRowToDataRow($row);
+        }
+        return $row;
+    }
+
 }

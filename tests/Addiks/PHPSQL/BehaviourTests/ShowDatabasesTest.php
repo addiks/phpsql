@@ -10,44 +10,43 @@
 
 namespace Addiks\PHPSQL\BehaviourTests;
 
-use Addiks\PHPSQL\PDO;
 use PHPUnit_Framework_TestCase;
+use Addiks\PHPSQL\PDO;
 
-/**
- * Tests if SHOW TABLES works as expected
- */
-class ShowTablesTest extends PHPUnit_Framework_TestCase
+class ShowDatabasesTest extends PHPUnit_Framework_TestCase
 {
+    
     public function setUp()
     {
         $this->pdo = new PDO("inmemory:phpunit");
     }
 
-    public function testShowTables()
+    public function testShowDatabases()
     {
+        
         ### PREPARE
 
-        $expectedTables = [
-            'phpunit_foo',
-            'phpunit_bar',
-            'phpunit_baz',
+        $expextedDatabases = [
+            'phpunit_showdatabases_foo',
+            'phpunit_showdatabases_bar',
+            'phpunit_showdatabases_baz',
         ];
 
-        foreach ($expectedTables as $expectedTableName) {
-            $this->pdo->query("CREATE TABLE ? (id INT PRIMARY KEY NOT NULL AUTO_INCREMENT)", [$expectedTableName]);
+        foreach ($expextedDatabases as $databaseName) {
+            $this->pdo->query("CREATE DATABASE ?", [$databaseName]);
         }
 
         ### EXECUTE
 
-        $result = $this->pdo->query("SHOW TABLES");
+        $result = $this->pdo->query("SHOW DATABASES");
 
         ### COMPARE RESULTS
 
-        $actualTables = array();
+        $actualDatabaseNames = array();
         foreach ($result->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            $actualTables[] = $row['TABLE'];
+            $actualDatabaseNames[] = $row['DATABASE'];
         }
-
-        $this->assertEmpty(array_diff($expectedTables, $actualTables));
+        
+        $this->assertEmpty(array_diff($expextedDatabases, $actualDatabaseNames), "Could not correctly show databases!");
     }
 }

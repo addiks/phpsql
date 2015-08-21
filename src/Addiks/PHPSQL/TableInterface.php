@@ -32,8 +32,6 @@ interface TableInterface
     
     public function addColumnDefinition(ColumnDefinition $columnDefinition);
     
-    public function getIterator();
-    
     public function getCellData($rowId, $columnId);
     
     public function setCellData($rowId, $columnId, $data);

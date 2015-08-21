@@ -99,8 +99,9 @@ class DropExecutor implements StatementExecutorInterface
     
     protected function executeDropTable(DropStatement $statement, ExecutionContext $context)
     {
-        
-        foreach ($statement->getSubjects() as $tableName) {
+
+        foreach ($statement->getSubjects() as $tableNameValue) {
+            $tableName = $this->valueResolver->resolveValue($tableNameValue, $context);
             $this->schemaManager->dropTable($tableName);
         }
         

@@ -62,6 +62,7 @@ class FileResourceProxy
         $this->checkUsable();
         fseek($this->resource, $this->index, SEEK_SET);
         fwrite($this->resource, $data);
+        $this->index = ftell($this->resource);
     }
 
     public function read($length)
@@ -69,6 +70,7 @@ class FileResourceProxy
         $this->checkUsable();
         fseek($this->resource, $this->index, SEEK_SET);
         $data = fread($this->resource, $length);
+        $this->index += strlen($data);
         return $data;
     }
 
@@ -76,12 +78,21 @@ class FileResourceProxy
     {
         $this->checkUsable();
         ftruncate($this->resource, $size);
+        $this->index = ftell($this->resource);
     }
 
     public function seek($offset, $seekMode = SEEK_SET)
     {
         $this->checkUsable();
-        fseek($this->resource, $offset, $seekMode);
+        $size = $this->getSize();
+        if ($offset > $size) {
+            // with php://memory streams, fseek does not work when offset > size.
+            fseek($this->resource, 0, SEEK_END);
+            fwrite($this->resource, str_pad('', ($offset - $size), "\0"));
+
+        } else {
+            fseek($this->resource, $offset, $seekMode);
+        }
         $this->index = ftell($this->resource);
     }
 
@@ -101,6 +112,20 @@ class FileResourceProxy
     public function lock($mode)
     {
         flock($this->resource, $mode);
+    }
+
+    public function flush()
+    {
+        fflush($this->resource);
+    }
+
+    public function getSize()
+    {
+        $seekBefore = ftell($this->resource);
+        fseek($this->resource, 0, SEEK_END);
+        $fileSize = ftell($this->resource);
+        fseek($this->resource, $seekBefore, SEEK_SET);
+        return $fileSize;
     }
 
     public function readLine()
@@ -144,4 +169,5 @@ class FileResourceProxy
         $this->seek($seekBefore, SEEK_SET);
         return $fileSize;
     }
+
 }

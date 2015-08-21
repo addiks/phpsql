@@ -519,8 +519,14 @@ class Node extends Entity
     public function getNearestReferenceByValue($needle)
     {
     #	$this->checkValue($needle);
+        $reference = null;
         $index = $this->getNearestIndexByValue($needle);
-        return is_null($index) ?$this->getLastReference() :substr($this->data, $index*$this->keyLength*3, $this->keyLength);
+        if (is_null($index)) {
+            $reference = $this->getLastReference();
+        } else {
+            $reference = substr($this->data, $index*$this->keyLength*3, $this->keyLength);
+        }
+        return $reference;
     }
     
     public function getNearestIndexByRowId($needle)

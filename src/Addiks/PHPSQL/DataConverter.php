@@ -11,6 +11,7 @@
 
 namespace Addiks\PHPSQL;
 
+use InvalidArgumentException;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 
 class DataConverter
@@ -43,7 +44,7 @@ class DataConverter
                 
             case DataType::TINYINT():
                 if (!is_numeric($string)) {
-                    throw new InvalidArgument("Value '{$string}' is not numerical!");
+                    throw new InvalidArgumentException("Value '{$string}' is not numerical!");
                 }
                 return chr((int)$string);
                 
@@ -52,7 +53,7 @@ class DataConverter
             case DataType::INT():
             case DataType::BIGINT():
                 if (!is_numeric($string)) {
-                    throw new InvalidArgument("Value '{$string}' is not numerical!");
+                    throw new InvalidArgumentException("Value '{$string}' is not numerical!");
                 }
                 return $this->decstr((int)$string);
                 
@@ -60,7 +61,7 @@ class DataConverter
             case DataType::FLOAT():
             case DataType::DOUBLE():
                 if (!is_numeric($string)) {
-                    throw new InvalidArgument("Value '{$string}' is not numerical!");
+                    throw new InvalidArgumentException("Value '{$string}' is not numerical!");
                 }
                 return $string;
             

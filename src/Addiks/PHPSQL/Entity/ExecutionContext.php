@@ -13,6 +13,8 @@ namespace Addiks\PHPSQL\Entity;
 
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\TableInterface;
+use Addiks\PHPSQL\Entity\Exception\Conflict;
 
 /**
  * Contains information about and for the currently executed statement.

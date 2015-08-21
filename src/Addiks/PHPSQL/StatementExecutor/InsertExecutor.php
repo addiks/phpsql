@@ -26,6 +26,8 @@ use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Entity\Job\Statement\InsertStatement;
 use Addiks\PHPSQL\TableManager;
 use Addiks\PHPSQL\Filesystem\FilePathes;
+use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Schema\SchemaManager;
 
 class InsertExecutor implements StatementExecutorInterface
 {
@@ -35,12 +37,16 @@ class InsertExecutor implements StatementExecutorInterface
     public function __construct(
         ValueResolver $valueResolver,
         TableManager $tableManager,
-        SelectExecutor $selectExecutor
+        SelectExecutor $selectExecutor,
+        SchemaManager $schemaManager
     ) {
         $this->valueResolver = $valueResolver;
         $this->tableManager = $tableManager;
         $this->selectExecutor = $selectExecutor;
+        $this->schemaManager = $schemaManager;
     }
+
+    protected $schemaManager;
 
     protected $valueResolver;
 
@@ -73,6 +79,12 @@ class InsertExecutor implements StatementExecutorInterface
         /* @var $statement InsertStatement */
         
         $result = new TemporaryResult();
+
+        $context = new ExecutionContext(
+            $this->schemaManager,
+            $statement,
+            $parameters
+        );
 
         $tableName = (string)$statement->getTable();
         
@@ -154,7 +166,7 @@ class InsertExecutor implements StatementExecutorInterface
                         
                         if (isset($sourceRow[$columnName])) {
                             $value = $sourceRow[$columnName];
-                            $value = $this->valueResolver->resolveValue($value, $parameters);
+                            $value = $this->valueResolver->resolveValue($value, $context);
                         } else {
                             $value = null;
                         }
@@ -276,7 +288,7 @@ class InsertExecutor implements StatementExecutorInterface
                 }
             }
             
-            throw new ErrorException("Exception in INSERT statement, rollback executed.", null, $exception);
+            throw new ErrorException("Exception in INSERT statement, rollback executed.", null, null, null, 0, $exception);
         }
         
         ### RESULT

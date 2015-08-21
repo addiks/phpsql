@@ -60,7 +60,8 @@ class Schema extends Entity implements SchemaInterface
         
         $skipDeleted = function () use ($file) {
             while (true) {
-                if (trim($data = $file->read(SchemaPage::PAGE_SIZE), "\0")!=='') {
+                $data = $file->read(SchemaPage::PAGE_SIZE);
+                if (trim($data, "\0")!=='') {
                     $file->seek(0-strlen($data), SEEK_CUR);
                     break;
                 }

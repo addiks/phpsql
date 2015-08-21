@@ -332,22 +332,20 @@ class ColumnPage extends Entity
     {
         
         if (is_null($this->cellsizeCache)) {
+            $dataType = $this->getDataType();
+
+            if ($dataType->isInFile()) {
+                throw new ErrorException("Size-getter for data-cells stored in file is not implemented yet!");
+            }
+
             if (!is_null($this->length)) {
-                $dataType = $this->getDataType();
-
-                $length = $dataType->getByteLength();
-                    
-                if ($dataType->isInFile()) {
-                    throw new ErrorException("Size-getter for data-cells stored in file is not implemented yet!");
-
-                } else {
-                    $this->cellsizeCache = (int)$length;
-                }
+                $this->cellsizeCache = $this->getLength()+$this->getSecondLength();
 
             } else {
-                $this->cellsizeCache = $this->getLength()+$this->getSecondLength();
+                $length = $dataType->getByteLength();
+                    
+                $this->cellsizeCache = (int)$length;
             }
-            
         }
         
         return $this->cellsizeCache;

@@ -12,47 +12,50 @@
 namespace Addiks\PHPSQL;
 
 use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
-use Addiks\PHPSQL\Table;
 use Addiks\PHPSQL\SortedResourceIterator;
 use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
-use Addiks\PHPSQL\CustomIterator;
 use ErrorException;
+use SeekableIterator;
+use Countable;
+use IteratorAggregate;
+use Iterator;
 use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\Table\TableContainer;
 use Addiks\PHPSQL\StatementExecutor\SelectExecutor;
 use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Entity\Job\Part\Join;
+use Addiks\PHPSQL\Entity\Job\Part\Join\TableJoin;
+use Addiks\PHPSQL\Entity\Job\Part\ParenthesisPart;
+use Addiks\PHPSQL\FilteredResourceIterator;
+use Addiks\PHPSQL\UsesBinaryDataInterface;
 
 /**
  * The purpose of this component is to cross-join in any needed way
  * between multiple data-sources (tables, resultsets, indexes, ...).
  */
-class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
+class JoinIterator implements SeekableIterator, Countable, ResultInterface
 {
 
     public function __construct(
-        TableContainer $tableContainer,
+        Join $joinDefinition,
+        ExecutionContext $executionContext,
         SelectExecutor $selectExecutor,
-        ValueResolver $valueResolver,
-        SelectStatement $statement,
-        $schemaId = null,
-        array $parameters = array()
+        ValueResolver $valueResolver
     ) {
-        $this->tableContainer = $tableContainer;
+        $this->joinDefinition = $joinDefinition;
+        $this->executionContext = $executionContext;
         $this->selectExecutor = $selectExecutor;
         $this->valueResolver = $valueResolver;
-        $this->statement = $statement;
-        $this->schemaId = $schemaId;
-        $this->parameters = $parameters;
     }
 
     protected $valueResolver;
 
-    protected $tableContainer;
+    protected $executionContext;
 
-    public function gettableContainer()
+    public function getExecutionContext()
     {
-        return $this->tableContainer;
+        return $this->executionContext;
     }
 
     protected $selectExecutor;
@@ -160,9 +163,11 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
         return $this->statement;
     }
 
+    private $joinDefinition;
+
     public function getJoinDefinition()
     {
-        return $this->getStatement()->getJoinDefinition();
+        return $this->joinDefinition;
     }
 
     private $rowCounter;
@@ -177,101 +182,26 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
 
     protected function init()
     {
-        
-        $this->tableResources = array();
-        foreach ($this->getJoinDefinition()->getTables() as $table) {
-            /* @var $table Table */
-        
-            /* @var $parenthesis Parenthesis */
-            $parenthesis = $table->getDataSource();
-        
-            $alias      = $parenthesis->getAlias();
-            $dataSource = $parenthesis->getContain();
-        
-            switch(true){
-        
-                case $dataSource instanceof TableSpecifier:
-        
-                    if (strlen($alias)<=0) {
-                        $alias = (string)$dataSource;
-                    }
-        
-                    if (!is_null($dataSource->getDatabase())) {
-                        $databaseId = $dataSource->getDatabase();
-        
-                    } else {
-                        $databaseId = $this->schemaId;
-                    }
-        
-                    /* @var $tableResource Table */
-                    $tableResource = $this->tableContainer->getTable(
-                        $dataSource->getTable(),
-                        $databaseId
-                    );
-        
-                    $resourceIterator = new SortedResourceIterator(
-                        $tableResource,
-                        $this->valueResolver
-                    );
-            
-                    if (count($this->getStatement()->getOrderColumns())>0) {
-                        $orderColumns = $this->getStatement()->getOrderColumns();
-                        
-                        $resourceIterator->setTemporaryBuildChildIteratorByValue($orderColumns, $this);
-                    }
-                    
-                    if (is_null($resourceIterator->getChildIterator())) {
-                        /* @var $tableSchema TableSchema */
-                        $tableSchema = $tableResource->getTableSchema();
-        
-                        $primaryKeyColumns = $tableSchema->getPrimaryKeyColumns();
-        
-                        $primaryIndexId = $tableSchema->getIndexIdByColumns(array_keys($primaryKeyColumns));
-        
-                        if (!is_null($primaryIndexId)) {
-                            /* @var $index Index */
-                            $index = $tableResource->getIndex($primaryIndexId);
-                                
-                            // TODO: try to extract begin/end values from conditions
-                            $beginValue = null;
-                            $endValue = null;
-                                
-                            $iterator = $index->getIterator($beginValue, $endValue);
-                            
-                            $resourceIterator->setChildIterator($iterator);
-                                
-                        } else {
-                            // no index usable, build temporary index using insertion-sort
-                            
-                            /* @var $sortIndex Quicksort */
-                            $sortIndex = $resourceIterator->getSortIndexByColumns($primaryKeyColumns);
-                            
-                            foreach ($tableResource as $rowId => $row) {
-                                $sortIndex->addRow($rowId, $row);
-                            }
-                            $sortIndex->sort();
-                                
-                            $resourceIterator->setChildIterator($sortIndex);
-                        }
-        
-                    }
-        
-                    $this->tableResources[$alias] = $resourceIterator;
-                    break;
-        
-                case $dataSource instanceof Select:
-        
-                    print((string)$dataSource);
-                    
-                    /* @var $result SelectResult */
-                    $result = $this->selectExecutor->executeJob($dataSource, $this->getParameters());
-        
-                    $this->tableResources[$alias] = $result;
-                    break;
-        
+        foreach ($this->getJoinDefinition()->getTables() as $alias => $joinTable) {
+            /* @var $joinTable TableJoin */
+
+            $tableSpecifier = $joinTable->getDataSource();
+
+            if ($tableSpecifier instanceof ParenthesisPart) {
+                $alias = $tableSpecifier->getAlias();
+                $tableSpecifier = $tableSpecifier->getContain();
             }
+
+            if (is_null($alias)) {
+                $alias = (string)$tableSpecifier;
+            }
+
+            $tableResource = $this->executionContext->getTable($alias);
+
+            ### TODO: implement a filter here to skip non-relevant rows in $tableResource
+
+            $this->tableResources[$alias] = $tableResource;
         }
-        
     }
     
     private $initialized = false;
@@ -287,15 +217,11 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
         foreach ($this->tableResources as $tableResource) {
             switch(true){
             
-                case $tableResource instanceof SortedResourceIterator:
-                    $tableResource->getIterator()->rewind();
+                case $tableResource instanceof Iterator:
+                    $tableResource->rewind();
                     break;
             
-                case $tableResource instanceof Table:
-                    $tableResource->getIterator()->rewind();
-                    break;
-            
-                case $tableResource instanceof SelectResult:
+                case $tableResource instanceof IteratorAggregate:
                     $tableResource->getIterator()->rewind();
                     break;
             
@@ -315,18 +241,17 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
         
         switch(true){
 
-            case $tableResource instanceof SortedResourceIterator:
+            case $tableResource instanceof Iterator:
+                return $tableResource->valid();
+                    
+            case $tableResource instanceof IteratorAggregate:
                 return $tableResource->getIterator()->valid();
                     
-            case $tableResource instanceof Table:
-                return $tableResource->getIterator()->valid();
-                    
-            case $tableResource instanceof SelectResult:
-                return $tableResource->getIterator()->valid();
-                
-            default:
+            case count($this->tableResources)>0:
                 throw new ErrorException("Invalid table-source type!");
         }
+
+        return false;
     }
 
     public function current()
@@ -337,39 +262,31 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
         foreach ($this->tableResources as $alias => $tableResource) {
             switch(true){
 
-                case $tableResource instanceof SortedResourceIterator:
+                case $tableResource instanceof Iterator:
                     $rows[$alias] = $tableResource->current();
                     break;
 
-                case $tableResource instanceof Table:
+                case $tableResource instanceof IteratorAggregate:
                     $rows[$alias] = $tableResource->getIterator()->current();
-                    if (is_array($rows[$alias])) {
-                        $rows[$alias] = $tableResource->convertDataRowToStringRow($rows[$alias]);
-                    }
-                    break;
-
-                case $tableResource instanceof SelectResult:
-                    $rows[$alias] = current($tableResource);
                     break;
 
                 default:
                     throw new ErrorException("Invalid table-source type!");
             }
-            
+
             if (!is_array($rows[$alias])) {
-                throw new ErrorException("Table-Resource '{$alias}' returned non-array as row!");
+                $type = get_class($tableResource);
+                throw new ErrorException("Table-Resource '{$alias}' ({$type}) returned non-array as row!");
+            }
+            
+            if ($tableResource instanceof UsesBinaryDataInterface && $tableResource->usesBinaryData()) {
+                $rows[$alias] = $tableResource->convertDataRowToStringRow($rows[$alias]);
             }
         }
 
-        return $rows;
-    }
-    
-    public function getMergedCurrentRow()
-    {
-
         $mergedRow = array();
         
-        foreach ($this->current() as $alias => $row) {
+        foreach ($rows as $alias => $row) {
             foreach ($row as $columnName => $cellData) {
                 $mergedRow[$columnName] = $cellData;
                 $mergedRow["{$alias}.{$columnName}"] = $cellData;
@@ -378,7 +295,7 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
         
         return $mergedRow;
     }
-
+    
     public function key()
     {
         return $this->rowCounter;
@@ -395,22 +312,25 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
         
         $index = 0;
         foreach (array_reverse($this->tableResources) as $alias => $tableResource) {
-            $tableResource->getIterator()->next();
+            if ($tableResource instanceof IteratorAggregate) {
+                $tableResource = $tableResource->getIterator();
+            }
+
+            $tableResource->next();
             
-            if ($tableResource->getIterator()->valid()) {
+            if ($tableResource->valid()) {
                 /* @var $table Table */
                 $table = $this->getJoinDefinition()->getTables()[$index];
         
-                // TODO: skip row when INNER and key is null
                 if ($table->getIsInner()) {
-                    break;
-                } else {
-                    break;
+                    // TODO: skip row when INNER and key is null
                 }
+                break;
+
             } else {
                 $index++;
                 if ($index < count($this->tableResources)) {
-                    $tableResource->getIterator()->rewind();
+                    $tableResource->rewind();
                 }
             }
             
@@ -424,9 +344,10 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
         foreach ($this->tableResources as $alias => $tableResource) {
             $count = $tableResource->count();
             
-            $tableResource->seek($rowId % $count);
-            
-            $rowId = floor($rowId / $count);
+            if ($count>0) {
+                $tableResource->seek($rowId % $count);
+                $rowId = floor($rowId / $count);
+            }
         }
     }
     
@@ -451,37 +372,19 @@ class JoinIterator implements \SeekableIterator, \Countable, ResultInterface
     {
         
         $unsortedJoinIterator = new JoinIterator(
-            $this->gettableContainer(),
-            $this->getDatabase(),
-            $this->getStatement(),
-            $this->getSchemaId(),
-            $this->getParameters()
+            $this->joinDefinition,
+            $this->executionContext,
+            $this->selectExecutor,
+            $this->valueResolver
         );
 
         $tableResources = array();
-        
-        foreach ($this->tableResources as $alias => $tableResource) {
-            switch(true){
-            
-                case $tableResource instanceof SortedResourceIterator:
-                    $tableResources[$alias] = $tableResource->getResource();
-                    break;
-            
-                case $tableResource instanceof Table:
-                    $tableResources[$alias] = $tableResource;
-                    break;
-            
-                case $tableResource instanceof SelectResult:
-                    $tableResources[$alias] = $tableResource;
-                    break;
-            
-                default:
-                    throw new ErrorException("Invalid table-source type!");
-            }
-                
+
+        if (count($this->tableResources)<=0) {
+            $this->init();
         }
         
-        $unsortedJoinIterator->setTableResources($tableResources);
+        $unsortedJoinIterator->setTableResources($this->tableResources);
         
         return $unsortedJoinIterator;
     }

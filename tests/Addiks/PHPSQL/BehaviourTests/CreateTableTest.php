@@ -45,13 +45,12 @@ class CreateTableTest extends PHPUnit_Framework_TestCase
         ### COMPARE RESULTS
 
         $result = $this->pdo->query("SHOW TABLES");
-
-        $tables = array();
+        $actualTables = array();
         foreach ($result->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            $tables[] = $row['TABLE'];
+            $actualTables[] = $row['TABLE'];
         }
 
-        $this->assertContains($expectedTableName, $tables, "Could not create table!");
+        $this->assertContains($expectedTableName, $actualTables, "Could not create table!");
     }
 
 }

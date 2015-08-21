@@ -23,6 +23,7 @@ use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
 use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
 use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 use Addiks\PHPSQL\Entity\Result\Specifier\Column;
+use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
 
 /**
  *
@@ -437,7 +438,7 @@ class SelectStatement extends StatementJob
     
     private $unionSelect;
     
-    public function setUnionSelect(Select $select, $isDistinct = false)
+    public function setUnionSelect(SelectStatement $select, $isDistinct = false)
     {
         if ($isDistinct) {
         }

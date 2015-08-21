@@ -31,6 +31,10 @@ use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 use Addiks\PHPSQL\JoinIterator;
 use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\SortedResourceIterator;
+use Addiks\PHPSQL\FilteredResourceIterator;
+use Addiks\PHPSQL\Entity\Job\Part\Join;
+use Addiks\PHPSQL\Entity\Job\Part\Join\TableJoin;
 
 class SelectExecutor implements StatementExecutorInterface
 {
@@ -152,8 +156,12 @@ class SelectExecutor implements StatementExecutorInterface
 
         $result = new TemporaryResult($resultColumns);
 
+        /* @var $joinDefinition Join */
+        $joinDefinition = $statement->getJoinDefinition();
+
         if (!is_null($statement->getJoinDefinition())) {
-            $joinIterator = new JoinIterator(
+            $iterator = new JoinIterator(
+                $joinDefinition,
                 $executionContext,
                 $this,
                 $this->valueResolver,
@@ -161,7 +169,52 @@ class SelectExecutor implements StatementExecutorInterface
                 null # TODO: schemaId
             );
 
-            foreach ($joinIterator as $dataRow) {
+            $orderColumns = $statement->getOrderColumns();
+            if (count($orderColumns)>0) {
+                $joinIterator = $iterator;
+                $iterator = new SortedResourceIterator(
+                    $iterator,
+                    $this->valueResolver
+                );
+
+                $iterator->setTemporaryBuildChildIteratorByValue(
+                    $orderColumns,
+                    $joinIterator,
+                    $executionContext
+                );
+            }
+
+            $condition = $statement->getCondition();
+            if (!is_null($condition)) {
+                if ($iterator instanceof IteratorAggreagte) {
+                    $iterator = $iterator->getIterator();
+                }
+                $iterator = new FilteredResourceIterator(
+                    $iterator,
+                    $condition,
+                    $this->valueResolver,
+                    $executionContext
+                );
+            }
+
+            foreach ($joinDefinition->getTables() as $joinTable) {
+                /* @var $joinTable TableJoin */
+
+                $joinCondition = $joinTable->getCondition();
+                if (!is_null($joinCondition)) {
+                    if ($iterator instanceof IteratorAggreagte) {
+                        $iterator = $iterator->getIterator();
+                    }
+                    $iterator = new FilteredResourceIterator(
+                        $iterator,
+                        $joinCondition,
+                        $this->valueResolver,
+                        $executionContext
+                    );
+                }
+            }
+
+            foreach ($iterator as $dataRow) {
                 $executionContext->setCurrentSourceRow($dataRow);
                 $resolvedRow = $this->valueResolver->resolveSourceRow($statement->getColumns(), $executionContext);
 
@@ -174,15 +227,14 @@ class SelectExecutor implements StatementExecutorInterface
             $result->addRow($resolvedRow);
         }
 
-        return $result;
-        
-        $result = new SelectResult(
-            $this->filesystem,
-            $this->schemaManager,
-            $this->valueResolver,
-            $statement,
-            $parameters
-        );
+        $unionSelect = $statement->getUnionSelect();
+        if (!is_null($unionSelect)) {
+            $unionResult = $this->executeJob($unionSelect, $parameters);
+
+            foreach ($unionResult as $unionRow) {
+                $result->addRow($unionRow);
+            }
+        }
 
         return $result;
     }
