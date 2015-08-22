@@ -76,6 +76,8 @@ class SelectExecutor implements StatementExecutorInterface
             $parameters
         );
 
+        ### COLLECT SOURCE TABLES
+
         if (!is_null($statement->getJoinDefinition())) {
             foreach ($statement->getJoinDefinition()->getTables() as $joinTable) {
                 /* @var $joinTable TableJoin */
@@ -123,6 +125,8 @@ class SelectExecutor implements StatementExecutorInterface
             }
         }
 
+        ### INIT RESULTSET
+
         $resultColumns = array();
         foreach ($statement->getColumns() as $column) {
             if ($column === '*') {
@@ -150,16 +154,20 @@ class SelectExecutor implements StatementExecutorInterface
 
         }
 
-        if (!is_null($statement->getCondition())) {
-            # TODO: filter tables into temptables
-        }
-
         $result = new TemporaryResult($resultColumns);
+
+        ### PRE-FILTER SOURCE COLUMNS (currently not implemented)
+
+        if (!is_null($statement->getCondition())) {
+            # TODO: filter tables into temptables, replace them in the ExecutionContext, release locks
+        }
 
         /* @var $joinDefinition Join */
         $joinDefinition = $statement->getJoinDefinition();
 
         if (!is_null($statement->getJoinDefinition())) {
+            ### BUILD JOIN
+
             $iterator = new JoinIterator(
                 $joinDefinition,
                 $executionContext,
@@ -168,6 +176,8 @@ class SelectExecutor implements StatementExecutorInterface
                 $statement,
                 null # TODO: schemaId
             );
+
+            ### SET UP SORTING
 
             $orderColumns = $statement->getOrderColumns();
             if (count($orderColumns)>0) {
@@ -184,6 +194,9 @@ class SelectExecutor implements StatementExecutorInterface
                 );
             }
 
+            ### FILTER RESULT
+
+            // WHERE condition
             $condition = $statement->getCondition();
             if (!is_null($condition)) {
                 if ($iterator instanceof IteratorAggreagte) {
@@ -197,6 +210,7 @@ class SelectExecutor implements StatementExecutorInterface
                 );
             }
 
+            // ON/USING conditions from joins
             foreach ($joinDefinition->getTables() as $joinTable) {
                 /* @var $joinTable TableJoin */
 
@@ -214,6 +228,8 @@ class SelectExecutor implements StatementExecutorInterface
                 }
             }
 
+            ### WRITE RESULTSET
+
             foreach ($iterator as $dataRow) {
                 $executionContext->setCurrentSourceRow($dataRow);
                 $resolvedRow = $this->valueResolver->resolveSourceRow($statement->getColumns(), $executionContext);
@@ -221,11 +237,31 @@ class SelectExecutor implements StatementExecutorInterface
                 $result->addRow($resolvedRow);
             }
 
-        } else {
-            $resolvedRow = $this->valueResolver->resolveSourceRow($statement->getColumns(), $executionContext);
+            ### UNLOCK TABLES
 
+            ### APPLY RESULT-FILTER (HAVING)
+
+            /* @var $resultFilter ConditionJob */
+            $resultFilter = $statement->getResultFilter();
+            if (!is_null($resultFilter)) {
+                $filteredResult = new TemporaryResult($resultColumns);
+                foreach ($result as $row) {
+                    $executionContext->setCurrentSourceRow($row);
+                    $passesFilter = (bool)$this->valueResolver->resolveValue($resultFilter, $executionContext);
+                    if ($passesFilter) {
+                        $filteredResult->addRow($row);
+                    }
+                }
+                $result = $filteredResult;
+            }
+
+        } else {
+            // no joining (something like "SELECT 5+5 as foo")
+            $resolvedRow = $this->valueResolver->resolveSourceRow($statement->getColumns(), $executionContext);
             $result->addRow($resolvedRow);
         }
+
+        ### APPEND UNIONED SELECT
 
         $unionSelect = $statement->getUnionSelect();
         if (!is_null($unionSelect)) {

@@ -101,6 +101,63 @@ class SelectTest extends PHPUnit_Framework_TestCase
      * @depends testSelectSimple
      * @group behaviour.select
      */
+    public function testSelectWhere()
+    {
+        
+        ### EXECUTE
+
+        try {
+            $result = $this->pdo->query("
+                SELECT foo, bar, baz
+                FROM `phpunit_select_first`
+                WHERE foo > 400
+                ORDER BY baz DESC
+            ");
+        } catch(Exception $exception) {
+            throw $exception;
+        }
+
+        ### CHECK RESULTS
+        
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $this->assertEquals([
+            ["789", "sit amet",    "2029-06-15 12:00:00"],
+            ["456", "dolor",       "1984-10-26 00:00:00"],
+        ], $actualRows);
+    }
+
+    /**
+     * @depends testSelectWhere
+     * @group behaviour.select
+     */
+    public function testSelectHaving()
+    {
+        ### EXECUTE
+
+        try {
+            $result = $this->pdo->query("
+                SELECT foo, bar, baz
+                FROM `phpunit_select_first`
+                HAVING foo > 400
+                ORDER BY baz DESC
+            ");
+        } catch(Exception $exception) {
+            throw $exception;
+        }
+
+        ### CHECK RESULTS
+        
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $this->assertEquals([
+            ["789", "sit amet",    "2029-06-15 12:00:00"],
+            ["456", "dolor",       "1984-10-26 00:00:00"],
+        ], $actualRows);
+    }
+
+    /**
+     * @depends testSelectSimple
+     * @group behaviour.select
+     */
     public function testSelectJoin()
     {
         
