@@ -7,7 +7,7 @@ use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
 use Addiks\PHPSQL\Entity\ExecutionContext;
 
-class CountFunction implements AggregateInterface, FunctionResolverInterface
+class CountFunction implements FunctionResolverInterface
 {
     public function __construct(ValueResolver $valueResolver)
     {
@@ -16,25 +16,10 @@ class CountFunction implements AggregateInterface, FunctionResolverInterface
 
     private $valueResolver;
 
-    private $rowIdsInGrouping = array();
-    
-    public function setRowIdsInCurrentGroup(array $rowIds)
-    {
-        $this->rowIdsInGrouping = $rowIds;
-    }
-    
-    private $resultSet;
-    
-    public function setResultSet(ResultInterface $result)
-    {
-        $this->resultSet = $result;
-    }
-    
     public function executeFunction(
         FunctionJob $function,
         ExecutionContext $context
     ) {
-        
         /* @var $result SelectResult */
         $result = $this->resultSet;
         
@@ -42,11 +27,11 @@ class CountFunction implements AggregateInterface, FunctionResolverInterface
         $argumentValue = current($function->getArguments());
         
         $count = 0;
+
+        $beforeSourceRow = $context->getCurrentSourceRow();
         
-        foreach ($this->rowIdsInGrouping as $rowId) {
-            $row = $result->getRowUnresolved($rowId);
-            
-            $this->valueResolver->setSourceRow($row);
+        foreach ($context->getCurrentSourceSet() as $row) {
+            $context->setCurrentSourceRow($row);
             
             $value = $this->valueResolver->resolveValue($argumentValue);
             
@@ -54,6 +39,8 @@ class CountFunction implements AggregateInterface, FunctionResolverInterface
                 $count++;
             }
         }
+
+        $context->setCurrentSourceRow($beforeSourceRow);
         
         return $count;
     }

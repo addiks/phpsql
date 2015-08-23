@@ -109,7 +109,7 @@ class TemporaryResult extends Entity implements ResultInterface, \IteratorAggreg
     public function addRow(array $row)
     {
 
-        if (count($row) !== count($this->getColumnNames())) {
+        if (count($this->getColumnNames()) > 0 && count($row) !== count($this->getColumnNames())) {
             throw new \ErrorException("Tried to insert row into temporary-result which does not comply with result-schema!");
         }
 
@@ -123,6 +123,7 @@ class TemporaryResult extends Entity implements ResultInterface, \IteratorAggreg
         }
 
         $this->rows[] = $newRow;
+        $this->iterator = null;
     }
     
     /**

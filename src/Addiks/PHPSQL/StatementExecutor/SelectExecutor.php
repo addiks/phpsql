@@ -35,6 +35,8 @@ use Addiks\PHPSQL\SortedResourceIterator;
 use Addiks\PHPSQL\FilteredResourceIterator;
 use Addiks\PHPSQL\Entity\Job\Part\Join;
 use Addiks\PHPSQL\Entity\Job\Part\Join\TableJoin;
+use Addiks\PHPSQL\Entity\Job\Part\GroupingDefinition;
+use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 
 class SelectExecutor implements StatementExecutorInterface
 {
@@ -156,6 +158,10 @@ class SelectExecutor implements StatementExecutorInterface
 
         $result = new TemporaryResult($resultColumns);
 
+        $executionContext->setCurrentResultSet(new TemporaryResult($resultColumns));
+
+        $executionContext->setCurrentSourceSet(new TemporaryResult());
+
         ### PRE-FILTER SOURCE COLUMNS (currently not implemented)
 
         if (!is_null($statement->getCondition())) {
@@ -231,34 +237,94 @@ class SelectExecutor implements StatementExecutorInterface
             ### WRITE RESULTSET
 
             foreach ($iterator as $dataRow) {
+                $executionContext->getCurrentSourceSet()->addRow($dataRow);
                 $executionContext->setCurrentSourceRow($dataRow);
                 $resolvedRow = $this->valueResolver->resolveSourceRow($statement->getColumns(), $executionContext);
 
-                $result->addRow($resolvedRow);
-            }
-
-            ### UNLOCK TABLES
-
-            ### APPLY RESULT-FILTER (HAVING)
-
-            /* @var $resultFilter ConditionJob */
-            $resultFilter = $statement->getResultFilter();
-            if (!is_null($resultFilter)) {
-                $filteredResult = new TemporaryResult($resultColumns);
-                foreach ($result as $row) {
-                    $executionContext->setCurrentSourceRow($row);
-                    $passesFilter = (bool)$this->valueResolver->resolveValue($resultFilter, $executionContext);
-                    if ($passesFilter) {
-                        $filteredResult->addRow($row);
-                    }
-                }
-                $result = $filteredResult;
+                $executionContext->getCurrentResultSet()->addRow($resolvedRow);
             }
 
         } else {
             // no joining (something like "SELECT 5+5 as foo")
             $resolvedRow = $this->valueResolver->resolveSourceRow($statement->getColumns(), $executionContext);
-            $result->addRow($resolvedRow);
+            $executionContext->getCurrentResultSet()->addRow($resolvedRow);
+        }
+
+        ### UNLOCK TABLES
+
+        foreach ($executionContext->getTables() as $table) {
+            # TODO: unlock tables
+        }
+
+        ### APPLY GROUPING
+
+        $groupings = $statement->getGroupings();
+        if (count($groupings)>0) {
+            foreach ($groupings as $groupingDefinition) {
+                /* @var $groupingDefinition GroupingDefinition */
+
+                /* @var $groupingValue ValuePart */
+                $groupingValue = $groupingDefinition->getValue();
+
+                $beforeSourceRow = $executionContext->getCurrentSourceRow();
+
+                $groupedRows = array();
+                foreach ($executionContext->getCurrentSourceSet() as $row) {
+                    $executionContext->setCurrentSourceRow($row);
+                    $groupId = $this->valueResolver->resolveValue($groupingValue, $executionContext);
+
+                    if (!isset($groupedRows[$groupId])) {
+                        $groupedRows[$groupId] = array();
+                    }
+
+                    $groupedRows[$groupId][] = $row;
+                }
+
+                $groupedResultSet = new TemporaryResult($resultColumns);
+
+                foreach ($groupedRows as $groupId => $rows) {
+                    if ($groupingDefinition->getDirection() === SqlToken::T_ASC()) {
+                        $groupingMainRow = reset($rows);
+                    } else {
+                        $groupingMainRow = end($rows);
+                    }
+
+                    $currentGroupResultSet = new TemporaryResult();
+
+                    foreach ($rows as $row) {
+                        $currentGroupResultSet->addRow($row);
+                    }
+
+                    $executionContext->setCurrentSourceRow($groupingMainRow);
+                    $executionContext->setCurrentSourceSet($currentGroupResultSet);
+
+                    $resolvedRow = $this->valueResolver->resolveSourceRow(
+                        $statement->getColumns(),
+                        $executionContext
+                    );
+
+                    $groupedResultSet->addRow($resolvedRow);
+                }
+                
+                $executionContext->setCurrentSourceRow($beforeSourceRow);
+                $executionContext->setCurrentResultSet($groupedResultSet);
+            }
+        }
+
+        ### APPLY RESULT-FILTER (HAVING)
+
+        /* @var $resultFilter ConditionJob */
+        $resultFilter = $statement->getResultFilter();
+        if (!is_null($resultFilter)) {
+            $filteredResult = new TemporaryResult($resultColumns);
+            foreach ($executionContext->getCurrentResultSet() as $row) {
+                $executionContext->setCurrentSourceRow($row);
+                $passesFilter = (bool)$this->valueResolver->resolveValue($resultFilter, $executionContext);
+                if ($passesFilter) {
+                    $filteredResult->addRow($row);
+                }
+            }
+            $executionContext->setCurrentResultSet($filteredResult);
         }
 
         ### APPEND UNIONED SELECT
@@ -268,10 +334,10 @@ class SelectExecutor implements StatementExecutorInterface
             $unionResult = $this->executeJob($unionSelect, $parameters);
 
             foreach ($unionResult as $unionRow) {
-                $result->addRow($unionRow);
+                $executionContext->getCurrentResultSet()->addRow($unionRow);
             }
         }
 
-        return $result;
+        return $executionContext->getCurrentResultSet();
     }
 }

@@ -6,8 +6,9 @@ use Addiks\PHPSQL\ValueResolver\FunctionResolver;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
 use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\ValueResolver;
 
-class SumFunction implements FunctionResolverInterface, AggregateInterface
+class SumFunction implements FunctionResolverInterface
 {
     public function __construct(ValueResolver $valueResolver)
     {
@@ -16,44 +17,27 @@ class SumFunction implements FunctionResolverInterface, AggregateInterface
 
     private $valueResolver;
 
-    private $rowIdsInGrouping = array();
-    
-    public function setRowIdsInCurrentGroup(array $rowIds)
-    {
-        $this->rowIdsInGrouping = $rowIds;
-    }
-    
-    private $resultSet;
-    
-    public function setResultSet(ResultInterface $result)
-    {
-        $this->resultSet = $result;
-    }
-    
     public function executeFunction(
         FunctionJob $function,
         ExecutionContext $context
     ) {
-        
-        /* @var $result SelectResult */
-        $result = $this->resultSet;
-        
         /* @var $argumentValue Value */
         $argumentValue = current($function->getArguments());
         
-        $sum = 0;
+        $beforeSourceRow = $context->getCurrentSourceRow();
         
-        foreach ($this->rowIdsInGrouping as $rowId) {
-            $row = $result->getRowUnresolved($rowId);
+        $sum = 0;
+        foreach ($context->getCurrentSourceSet() as $row) {
+            $context->setCurrentSourceRow($row);
             
-            $this->valueResolver->setSourceRow($row);
-            
-            $value = $this->valueResolver->resolveValue($argumentValue);
+            $value = $this->valueResolver->resolveValue($argumentValue, $context);
             
             if (is_numeric($value)) {
                 $sum += $value;
             }
         }
+
+        $context->setCurrentSourceRow($beforeSourceRow);
         
         return $sum;
     }

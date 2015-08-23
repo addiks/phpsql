@@ -31,6 +31,7 @@ use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;
 use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\JoinDefinitionParser;
+use Addiks\PHPSQL\Entity\Job\Part\GroupingDefinition;
 
 /**
  * This class converts a tokenized sql-select-statement into an job-entity.
@@ -224,22 +225,22 @@ class SelectSqlParser extends SqlParser
                 throw new MalformedSql("Missing BY after GROUP in SELECT statement!", $tokens);
             }
             do {
-                switch(true){
-                    case $this->columnParser->canParseTokens($tokens):
-                        $groupValue = $this->columnParser->convertSqlToJob($tokens);
-                        break;
-                        
-                    default:
-                        throw new MalformedSql("Invalid grouping value in SELECT statement!!", $tokens);
+                $groupingDefinition = new GroupingDefinition();
+
+                if (!$this->columnParser->canParseTokens($tokens)) {
+                    throw new MalformedSql("Invalid grouping value in SELECT statement!!", $tokens);
                 }
+
+                $groupingDefinition->setValue($this->columnParser->convertSqlToJob($tokens));
                 
                 if ($tokens->seekTokenNum(SqlToken::T_DESC())) {
-                    $entitySelect->addGrouping($groupValue, SqlToken::T_DESC());
+                    $groupingDefinition->setDirection(SqlToken::T_DESC());
                     
-                } else {
-                    $tokens->seekTokenNum(SqlToken::T_ASC());
-                    $entitySelect->addGrouping($groupValue, SqlToken::T_ASC());
+                } elseif ($tokens->seekTokenNum(SqlToken::T_ASC())) {
+                    $groupingDefinition->setDirection(SqlToken::T_ASC());
                 }
+
+                $entitySelect->addGrouping($groupingDefinition);
                 
             } while ($tokens->seekTokenText(','));
         }

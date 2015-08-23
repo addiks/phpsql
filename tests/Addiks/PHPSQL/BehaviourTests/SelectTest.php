@@ -187,6 +187,38 @@ class SelectTest extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * @ depends testSelectSimple
+     * @group behaviour.select
+     * @group DEV
+     */
+    public function testSelectGroupBy()
+    {
+        ### EXECUTE
+
+        try {
+            $result = $this->pdo->query("
+                SELECT
+                    first_id,
+                    SUM(boo) as sum
+                FROM
+                    `phpunit_select_second`
+                GROUP BY
+                    first_id
+            ");
+        } catch(Exception $exception) {
+            throw $exception;
+        }
+
+        ### CHECK RESULTS
+
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $this->assertEquals([
+            ["1", "405"],
+            ["3", "369"],
+        ], $actualRows);
+    }
+
+    /**
      * @depends testSelectSimple
      * @group behaviour.select
      */

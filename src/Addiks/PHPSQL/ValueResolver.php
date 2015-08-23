@@ -470,25 +470,6 @@ class ValueResolver
             $functionArguments[] = $value;
         }
         
-        if ($functionExecuter instanceof AggregateInterface) {
-            /* @var $resultSet SelectResult */
-            $resultSet = $this->getResultSet();
-            
-            if (!$resultSet instanceof SelectResult) {
-                throw new Conflict("Cannot use aggregate-function '{$functionName}' without select-result!");
-            }
-            
-            if (count($resultSet->getStatement()->getGroupings())<=0) {
-                throw new Conflict("Cannot use aggregate-function '{$functionName}' without GROUP BY in statement!");
-            }
-            
-            $rowIds = $resultSet->getCurrentGroupedRowIds();
-            
-            $functionExecuter->setResultSet($resultSet);
-            $functionExecuter->setRowIdsInCurrentGroup($rowIds);
-            
-        }
-        
         return $functionExecuter->executeFunction($functionJob, $functionArguments);
     }
 }

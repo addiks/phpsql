@@ -15,6 +15,7 @@ use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\TableInterface;
 use Addiks\PHPSQL\Entity\Exception\Conflict;
+use Addiks\PHPSQL\Entity\Result\ResultInterface;
 
 /**
  * Contains information about and for the currently executed statement.
@@ -102,6 +103,30 @@ class ExecutionContext
     public function getCurrentSourceRow()
     {
         return $this->currentSourceRow;
+    }
+
+    protected $currentSourceSet;
+
+    public function setCurrentSourceSet(ResultInterface $currentSourceSet)
+    {
+        $this->currentSourceSet = $currentSourceSet;
+    }
+
+    public function getCurrentSourceSet()
+    {
+        return $this->currentSourceSet;
+    }
+
+    protected $currentResultSet;
+
+    public function setCurrentResultSet(ResultInterface $currentResultSet)
+    {
+        $this->currentResultSet = $currentResultSet;
+    }
+
+    public function getCurrentResultSet()
+    {
+        return $this->currentResultSet;
     }
 
 }
