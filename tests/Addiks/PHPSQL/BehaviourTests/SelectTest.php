@@ -187,9 +187,37 @@ class SelectTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @ depends testSelectSimple
+     * @depends testSelectJoin
      * @group behaviour.select
-     * @group DEV
+     */
+    public function testSelectSubQuery()
+    {
+        ### EXECUTE
+
+        try {
+            $result = $this->pdo->query("
+                SELECT
+                    *
+                FROM 
+                    (SELECT id, foo FROM `phpunit_select_first` WHERE foo > 200) as `a`
+                ORDER BY a.id
+            ");
+        } catch(Exception $exception) {
+            throw $exception;
+        }
+
+        ### CHECK RESULTS
+
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $this->assertEquals([
+            ["2", "456"],
+            ["3", "789"],
+        ], $actualRows);
+    }
+
+    /**
+     * @depends testSelectSimple
+     * @group behaviour.select
      */
     public function testSelectGroupBy()
     {

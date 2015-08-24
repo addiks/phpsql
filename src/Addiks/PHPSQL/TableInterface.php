@@ -49,8 +49,4 @@ interface TableInterface
     public function count();
     
     public function seek($rowId);
-    
-    public function convertStringRowToDataRow(array $row);
-    
-    public function convertDataRowToStringRow(array $row);
 }

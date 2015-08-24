@@ -23,6 +23,7 @@ use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;
 use Addiks\PHPSQL\Entity\Job\Part\ParenthesisPart;
 use Addiks\PHPSQL\Entity\Job\Part\Join;
+use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
 
 class JoinDefinitionParser extends Part
 {
@@ -223,7 +224,7 @@ class JoinDefinitionParser extends Part
                     $extractParenthesis = $extractParenthesis->getContain();
                 }
                 
-                if ($extractParenthesis->getContain() instanceof Select) {
+                if ($extractParenthesis->getContain() instanceof SelectStatement) {
                     $parenthesis = $parenthesisJob; // return original parenthesis for correct alias
                     
                 } else {

@@ -100,6 +100,11 @@ class SelectExecutor implements StatementExecutorInterface
 
                 }
 
+                if ($dataSource instanceof SelectStatement) {
+                    /* @var $subQueryResult TemporaryResult */
+                    $tableResource = $this->executeJob($dataSource, $parameters);
+                }
+
                 if ($dataSource instanceof TableSpecifier) {
                     if (!is_null($dataSource->getDatabase())) {
                         if (!$this->schemaManager->schemaExists($dataSource->getDatabase())) {

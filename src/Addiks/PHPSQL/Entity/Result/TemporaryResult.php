@@ -12,6 +12,12 @@
 namespace Addiks\PHPSQL\Entity\Result;
 
 use Addiks\PHPSQL\Entity;
+use Addiks\PHPSQL\TableInterface;
+use Addiks\PHPSQL\Entity\TableSchema;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Entity\Page\ColumnPage;
+use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
+use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 
 /**
  * This resultset will not be stored permanent but only to the RAM.
@@ -20,7 +26,7 @@ use Addiks\PHPSQL\Entity;
  * @author gerrit
  *
  */
-class TemporaryResult extends Entity implements ResultInterface, \IteratorAggregate
+class TemporaryResult extends Entity implements ResultInterface, TableInterface, \IteratorAggregate
 {
 
     public function __construct(array $columnNames = array())
@@ -209,4 +215,78 @@ class TemporaryResult extends Entity implements ResultInterface, \IteratorAggreg
     {
         return $this->columnMetaData[$columnName];
     }
+
+    public function getDBSchemaId()
+    {
+    }
+    
+    public function getDBSchema()
+    {
+    }
+    
+    public function getTableName()
+    {
+    }
+    
+    public function getTableId()
+    {
+    }
+
+    protected $tableSchema;
+    
+    /**
+     *
+     * @return TableSchema
+     */
+    public function getTableSchema()
+    {
+        if (is_null($this->tableSchema)) {
+            $columnFile = new FileResourceProxy(fopen("php://memory", "w"));
+            $indexFile  = new FileResourceProxy(fopen("php://memory", "w"));
+            $this->tableSchema = new TableSchema($columnFile, $indexFile);
+
+            foreach ($this->columnNames as $columnName) {
+                $columnPage = new ColumnPage();
+                $columnPage->setName($columnName);
+                $columnPage->setDataType(DataType::VARCHAR());
+                $columnPage->setLength(1024);
+                $this->tableSchema->addColumnPage($columnPage);
+            }
+        }
+        return $this->tableSchema;
+    }
+    
+    public function addColumnDefinition(ColumnDefinition $columnDefinition)
+    {
+    }
+    
+    public function getCellData($rowId, $columnId)
+    {
+    }
+    
+    public function setCellData($rowId, $columnId, $data)
+    {
+    }
+    
+    public function getRowData($rowId = null)
+    {
+    }
+    
+    public function setRowData($rowId, array $rowData)
+    {
+    }
+    
+    public function addRowData(array $rowData)
+    {
+    }
+    
+    public function removeRow($rowId)
+    {
+    }
+    
+    public function getRowExists($rowId = null)
+    {
+        return $this->count() >= $rowId;
+    }
+    
 }
