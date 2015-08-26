@@ -19,16 +19,22 @@ use Addiks\PHPSQL\Entity\Job\Statement\UpdateStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Entity\Result\TemporaryResult;
+use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\UsesBinaryDataInterface;
 
 class UpdateExecutor implements StatementExecutorInterface
 {
     
     public function __construct(
         ValueResolver $valueResolver,
+        SchemaManager $schemaManager,
         TableManager $tableManager
     ) {
         $this->valueResolver = $valueResolver;
         $this->tableManager = $tableManager;
+        $this->schemaManager = $schemaManager;
     }
 
     protected $valueResolver;
@@ -44,6 +50,8 @@ class UpdateExecutor implements StatementExecutorInterface
     {
         return $this->tableManager;
     }
+
+    protected $schemaManager;
     
     public function canExecuteJob(StatementJob $statement)
     {
@@ -57,6 +65,13 @@ class UpdateExecutor implements StatementExecutorInterface
         $result = new TemporaryResult();
         // TODO: multiple tables or not?
         
+        $executionContext = new ExecutionContext(
+            $this->schemaManager,
+            $statement,
+            $parameters,
+            $this->valueResolver
+        );
+
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTables()[0];
         
@@ -71,10 +86,8 @@ class UpdateExecutor implements StatementExecutorInterface
             /* @var $indexPage Index */
             
             /* @var $index Index */
-            $index = $this->tableManager->getIndex(
-                $indexPage->getName(),
-                $tableSpecifier->getTable(),
-                $tableSpecifier->getDatabase()
+            $index = $tableResource->getIndex(
+                $indexPage->getName()
             );
 
             $indicies[] = $index;
@@ -84,23 +97,29 @@ class UpdateExecutor implements StatementExecutorInterface
         $condition = $statement->getCondition();
         
         foreach ($tableResource->getIterator() as $rowId => $row) {
-            $row = $tableResource->convertDataRowToStringRow($row);
+            if ($tableResource instanceof UsesBinaryDataInterface
+            &&  $tableResource->usesBinaryData()) {
+                $row = $tableResource->convertDataRowToStringRow($row);
+            }
+
+            $executionContext->setCurrentSourceRow($row);
             
-            $conditionResult = $this->valueResolver->resolveValue($condition, $parameters);
+            $conditionResult = $this->valueResolver->resolveValue($condition, $executionContext);
             
             if ($conditionResult) {
-                $newRow = array();
+                $newRow = $row;
                 foreach ($statement->getDataChanges() as $dataChange) {
                     /* @var $dataChange DataChange */
                     
                     $columnName = (string)$dataChange->getColumn();
                     
                     $newValue = $dataChange->getValue();
-                    $newValue = $this->valueResolver->resolveValue($newValue, $parameters);
+                    $newValue = $this->valueResolver->resolveValue($newValue, $executionContext);
                     
                     $newRow[$columnName] = $newValue;
                 }
                 
+                $row    = $tableResource->convertStringRowToDataRow($row);
                 $newRow = $tableResource->convertStringRowToDataRow($newRow);
                 
                 foreach ($indicies as $index) {

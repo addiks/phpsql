@@ -130,7 +130,7 @@ class StatementExecutor implements StatementExecutorInterface
         $this->addStatementExecutor($selectExecutor);
         $this->addStatementExecutor(new SetExecutor($valueResolver));
         $this->addStatementExecutor(new ShowExecutor($schemaManager));
-        $this->addStatementExecutor(new UpdateExecutor($valueResolver, $tableManager));
+        $this->addStatementExecutor(new UpdateExecutor($valueResolver, $schemaManager, $tableManager));
         $this->addStatementExecutor(new UseExecutor($schemaManager, $valueResolver));
     }
 }

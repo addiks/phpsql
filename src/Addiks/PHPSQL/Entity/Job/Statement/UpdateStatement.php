@@ -15,6 +15,10 @@ use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Executor\UpdateExecutor;
+use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
+use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
+use Addiks\PHPSQL\Entity\Job\DataChange\UpdateDataChange;
+use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 
 /**
  *
@@ -22,14 +26,14 @@ use Addiks\PHPSQL\Executor\UpdateExecutor;
  * @author gerrit
  *
  */
-class UpdateStatement extends Statement
+class UpdateStatement extends StatementJob
 {
 
     const EXECUTOR_CLASS = UpdateExecutor::class;
 
     private $tables = array();
     
-    public function addTable(Table $table)
+    public function addTable(TableSpecifier $table)
     {
         $this->tables[] = $table;
     }
@@ -41,7 +45,7 @@ class UpdateStatement extends Statement
     
     private $dataChanges = array();
     
-    public function addDataChange(DataChange $change)
+    public function addDataChange(UpdateDataChange $change)
     {
         $this->dataChanges[] = $change;
     }
@@ -53,7 +57,7 @@ class UpdateStatement extends Statement
     
     private $condition;
     
-    public function setCondition(Value $condition)
+    public function setCondition(ValuePart $condition)
     {
         $this->condition = $condition;
     }
@@ -65,7 +69,7 @@ class UpdateStatement extends Statement
     
     private $orderColumn;
     
-    public function setOrderColumn(Column $column)
+    public function setOrderColumn(ColumnSpecifier $column)
     {
         $this->orderColumn = $column;
     }

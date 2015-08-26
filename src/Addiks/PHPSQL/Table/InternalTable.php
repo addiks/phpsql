@@ -240,6 +240,10 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
     public function getColumnDataByRowIndex($rowIndex, $columnId, &$columnDataIndex = 0)
     {
 
+        if (is_string($columnId)) {
+            $columnId = $this->getTableSchema()->getColumnIndex($columnId);
+        }
+
         assert("is_int(\$columnId)");
 
         if (!isset($this->columnDataCache[$columnId])) {
@@ -480,6 +484,8 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
 
             $columnData->setCellData($rowId, $data);
         }
+
+        unset($this->rowCache[$rowId]);
     }
 
     public function addRowData(array $rowData)

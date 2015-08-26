@@ -230,8 +230,15 @@ class Index implements \IteratorAggregate
             
             $keyLength = $columnPage->getCellSize();
             
-            $valueCellOld = $oldRow[$columnId];
-            $valueCellNew = $newRow[$columnId];
+            $valueCellOld = "";
+            $valueCellNew = "";
+
+            if (isset($oldRow[$columnId])) {
+                $valueCellOld = $oldRow[$columnId];
+            }
+            if (isset($newRow[$columnId])) {
+                $valueCellNew = $newRow[$columnId];
+            }
             
             $useValueOld .= str_pad($valueCellOld, $keyLength, "\0", STR_PAD_LEFT);
             $useValueNew .= str_pad($valueCellNew, $keyLength, "\0", STR_PAD_LEFT);

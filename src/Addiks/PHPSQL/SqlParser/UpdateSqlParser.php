@@ -21,6 +21,7 @@ use Addiks\PHPSQL\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
+use Addiks\PHPSQL\Entity\Job\DataChange\UpdateDataChange;
 
 class UpdateSqlParser extends SqlParser
 {
@@ -76,7 +77,7 @@ class UpdateSqlParser extends SqlParser
             throw new ErrorException("Tried to parse update statement when token-iterator does not point to T_UPDATE!");
         }
         
-        $dataChange = new DataChange();
+        $dataChange = new UpdateDataChange();
         $updateJob = new UpdateStatement();
         
         if ($tokens->seekTokenNum(SqlToken::T_LOW_PRIORITY())) {

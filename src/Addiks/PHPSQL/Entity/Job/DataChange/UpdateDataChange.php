@@ -11,16 +11,15 @@
 
 namespace Addiks\PHPSQL\Entity\Job\DataChange;
 
-use Addiks\PHPSQL\Entity\Result\Specifier\Column;
-
 use Addiks\PHPSQL\Entity\Job;
+use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
 
 class UpdateDataChange extends Job
 {
 
     private $column;
     
-    public function setColumn(Column $column)
+    public function setColumn(ColumnSpecifier $column)
     {
         $this->column = $column;
     }
