@@ -15,10 +15,13 @@ use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
-use Addiks\PHPSQL\SqlParser\DeleteSqlParser;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\TableManager;
 use Addiks\PHPSQL\BinaryConverterTrait;
+use Addiks\PHPSQL\Entity\Job\Statement\DeleteStatement;
+use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\SortedResourceIterator;
 
 class DeleteExecutor implements StatementExecutorInterface
 {
@@ -27,11 +30,15 @@ class DeleteExecutor implements StatementExecutorInterface
     
     public function __construct(
         ValueResolver $valueResolver,
+        SchemaManager $schemaManager,
         TableManager $tableManager
     ) {
         $this->valueResolver = $valueResolver;
+        $this->schemaManager = $schemaManager;
         $this->tableManager = $tableManager;
     }
+
+    protected $schemaManager;
 
     protected $valueResolver;
 
@@ -49,16 +56,20 @@ class DeleteExecutor implements StatementExecutorInterface
     
     public function canExecuteJob(StatementJob $statement)
     {
-        return $statement instanceof DeleteSqlParser;
+        return $statement instanceof DeleteStatement;
     }
 
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
-        /* @var $statement DeleteSqlParser */
+        /* @var $statement DeleteStatement */
         
         $result = new TemporaryResult();
         
-        $this->valueResolver->resetParameterCurrentIndex();
+        $executionContext = new ExecutionContext(
+            $this->schemaManager,
+            $statement,
+            $parameters
+        );
         
         /* @var $conditionValue Value */
         $conditionValue = $statement->getCondition();
@@ -78,12 +89,10 @@ class DeleteExecutor implements StatementExecutorInterface
                 $tableSpecifier->getDatabase()
             );
 
-            $sortedIterator = new SortedResourceIterator();
+            $sortedIterator = new SortedResourceIterator($tableResource, $this->valueResolver);
             
             /* @var $tableSchema TableSchema */
             $tableSchema = $tableResource->getTableSchema();
-            
-            $sortedIterator->setResourceTable($tableResource);
             
             if (!is_null($statement->getOrderColumn())) {
                 $orderColumns = $statement->getOrderColumn();
@@ -97,10 +106,8 @@ class DeleteExecutor implements StatementExecutorInterface
                 
                 if (!is_null($primaryIndexId)) {
                     /* @var $index Index */
-                    $index = $this->tableManager->getIndex(
-                        $primaryIndexId,
-                        $tableSpecifier->getTable(),
-                        $tableSpecifier->getDatabase()
+                    $index = $tableResource->getIndex(
+                        $primaryIndexId
                     );
                     
                     // TODO: try to extract begin/end values from conditions
@@ -124,13 +131,12 @@ class DeleteExecutor implements StatementExecutorInterface
                 }
             }
             
-            foreach ($sortedIterator->getIterator() as $rowId => $row) {
-                $this->valueResolver->setSourceRow($row);
-                $this->valueResolver->resetParameterCurrentIndex();
+            foreach ($sortedIterator as $rowId => $row) {
+                $executionContext->setCurrentSourceRow($row);
                 
                 $isConditionMatch = true;
                 if (!is_null($conditionValue)) {
-                    $isConditionMatch = $this->valueResolver->resolveValue($conditionValue, $parameters);
+                    $isConditionMatch = $this->valueResolver->resolveValue($conditionValue, $executionContext);
                 }
                 
                 if ($isConditionMatch) {
@@ -148,10 +154,8 @@ class DeleteExecutor implements StatementExecutorInterface
                         /* @var $indexPage Index */
                         
                         /* @var $indexResource Index */
-                        $indexResource = $this->tableManager->getIndex(
-                            $indexId,
-                            $tableSpecifier->getTable(),
-                            $tableSpecifier->getDatabase()
+                        $indexResource = $tableResource->getIndex(
+                            $indexId
                         );
                         
                         $indexResource->remove($tableResource->getRowData($rowId), $this->decstr($rowId));

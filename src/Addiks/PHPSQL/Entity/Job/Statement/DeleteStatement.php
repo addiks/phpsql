@@ -13,18 +13,23 @@ namespace Addiks\PHPSQL\Entity\Job\Statement;
 
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Executor\DeleteExecutor;
+use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
+use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
+use Addiks\PHPSQL\Entity\Job\Part\Join;
+use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
+use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 
 /**
  *
  */
-class DeleteStatement extends Statement
+class DeleteStatement extends StatementJob
 {
     
     const EXECUTOR_CLASS = DeleteExecutor::class;
 
     private $deleteTables = array();
     
-    public function addDeleteTable(Table $table)
+    public function addDeleteTable(TableSpecifier $table)
     {
         $this->deleteTables[] = $table;
     }
@@ -48,7 +53,7 @@ class DeleteStatement extends Statement
     
     private $condition;
     
-    public function setCondition(Value $condition)
+    public function setCondition(ValuePart $condition)
     {
         $this->condition = $condition;
     }
@@ -64,7 +69,7 @@ class DeleteStatement extends Statement
     
     private $orderColumn;
     
-    public function setOrderColumn(Column $column)
+    public function setOrderColumn(ColumnSpecifier $column)
     {
         $this->orderColumn = $column;
     }
@@ -76,9 +81,9 @@ class DeleteStatement extends Statement
     
     private $orderDirection;
     
-    public function setOrderDirection(Token $direction)
+    public function setOrderDirection(SqlToken $direction)
     {
-        $this->orderDirection = $direction === Token::T_ASC() ?$direction :Token::T_DESC();
+        $this->orderDirection = $direction === SqlToken::T_ASC() ?$direction :SqlToken::T_DESC();
     }
     
     public function getOrderDirection()

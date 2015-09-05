@@ -301,11 +301,11 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
         $columnData->setCellData($rowId, $data);
     }
 
-    public function getRowExists($rowId = null)
+    public function doesRowExists($rowId = null)
     {
 
         if (is_null($rowId)) {
-            $rowId = $this->getCurrentRowIndex();
+            $rowId = $this->tell();
         }
 
         if (is_null($rowId)) {
@@ -377,7 +377,7 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
             
             $lastIndex = $lastColumnDataIndex + $beforeLastColumnDataRowCount;
             
-            return $lastIndex +1 -$this->getDeletedRowsCount();
+            return (int)($lastIndex +1 -$this->getDeletedRowsCount());
             
         }
         
@@ -418,7 +418,7 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
     {
         
         if (is_null($rowId)) {
-            $rowId = $this->getCurrentRowIndex();
+            $rowId = $this->tell();
         }
         
         $rowData = $this->getRowData($rowId);
@@ -442,7 +442,7 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
     {
 
         if (is_null($rowId)) {
-            $rowId = $this->getCurrentRowIndex();
+            $rowId = $this->tell();
         }
 
         if (isset($this->rowCache[$rowId])) {
@@ -615,14 +615,15 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
         if (!is_int($rowId)) {
             throw new ErrorException("Row-id has to be integer!");
         }
-        if (!$this->getRowExists($rowId)) {
+        if (!$this->doesRowExists($rowId)) {
             throw new ErrorException("Seek to non-existing row-id '{$rowId}'!");
         }
 
         $this->currentRowIndex = $rowId;
+        $this->isValid = true;
     }
 
-    public function getCurrentRowIndex()
+    public function tell()
     {
         return $this->currentRowIndex;
     }
@@ -683,38 +684,46 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
 
     ### ITERATOR
 
+    protected $isValid = false;
+
     public function rewind()
     {
         if ($this->count()>0) {
             $this->seek(0);
+            $this->isValid = true;
         }
     }
 
     public function valid()
     {
-        return $this->getRowExists();
+        return $this->isValid;
     }
 
     public function current()
     {
-        if (!$this->getRowExists()) {
-            return null;
+        if ($this->isValid) {
+            return $this->getNamedRowData();
         }
-        return $this->getNamedRowData();
     }
 
     public function key()
     {
-        return $this->getCurrentRowIndex();
+        if ($this->isValid) {
+            return $this->tell();
+        }
     }
 
     public function next()
     {
-        $newRowId = $this->getCurrentRowIndex()+1;
-        if ($this->getRowExists($newRowId)) {
+        $newRowId = $this->tell()+1;
+        $rowCount = $this->getRowCount();
+        while (!$this->doesRowExists($newRowId) && $newRowId < $rowCount) {
+            $newRowId++;
+        }
+        if ($this->doesRowExists($newRowId)) {
             $this->seek($newRowId);
         } else {
-            $this->seek(null);
+            $this->isValid = false;
         }
     }
 }

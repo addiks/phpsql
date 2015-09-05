@@ -157,6 +157,7 @@ class SelectTest extends PHPUnit_Framework_TestCase
     /**
      * @depends testSelectSimple
      * @group behaviour.select
+     * @group behaviour.select.join
      */
     public function testSelectJoin()
     {

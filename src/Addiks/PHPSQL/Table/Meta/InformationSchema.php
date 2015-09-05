@@ -108,7 +108,7 @@ abstract class InformationSchema implements IndexInterface
         
     }
     
-    public function getRowExists($rowId = null)
+    public function doesRowExists($rowId = null)
     {
         return false;
     }

@@ -114,7 +114,7 @@ class ResultWriter implements IteratorAggregate
         
         $writer = $this;
         
-        $iterator = $result->getIterator();
+        $iterator = $result;#->getIterator();
         
         return new CustomIterator($iterator, [
             'rewind' => function ($rewindClosure) use (&$step, $result) {

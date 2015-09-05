@@ -11,7 +11,9 @@
 
 namespace Addiks\PHPSQL\Entity\Result;
 
-interface ResultInterface
+use Addiks\PHPSQL\TableInterface;
+
+interface ResultInterface extends TableInterface
 {
 
     /**
@@ -25,45 +27,9 @@ interface ResultInterface
     public function getHeaders();
     
     /**
-     * Gets meta-data for column.
-     *
-     * array(
-     *  'datatype'  => DataType,
-     *  'length'    => int|null,
-     *  'precision' => int|null,
-     * )
-     *
-     * @param string $columnName
-     * @return array
-     */
-    public function getColumnMetaData($columnName);
-    
-    public function setColumnMetaData($columnName, array $data);
-    
-    /**
-     * @return bool
-     */
-    public function getHasResultRows();
-    
-    /**
      * @return array
      */
     public function getLastInsertId();
-    
-    /**
-     * @return void
-     */
-    public function seek($rowId);
-    
-    /**
-     * @see IteratorAggregate::getIterator()
-     */
-    public function getIterator();
-    
-    /**
-     * @return int
-     */
-    public function count();
     
     /**
      * @return array

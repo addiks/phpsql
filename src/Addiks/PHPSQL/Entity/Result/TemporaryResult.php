@@ -26,7 +26,7 @@ use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
  * @author gerrit
  *
  */
-class TemporaryResult extends Entity implements ResultInterface, TableInterface, \IteratorAggregate
+class TemporaryResult extends Entity implements ResultInterface
 {
 
     public function __construct(array $columnNames = array())
@@ -74,15 +74,6 @@ class TemporaryResult extends Entity implements ResultInterface, TableInterface,
         $this->lastInsertId = $row;
     }
     
-    public function seek($rowId)
-    {
-
-        /* @var $iterator \ArrayIterator */
-        $iterator = $this->getIterator();
-
-        $iterator->seek($rowId);
-    }
-
     private $columnNames;
 
     public function getColumnNames()
@@ -97,21 +88,6 @@ class TemporaryResult extends Entity implements ResultInterface, TableInterface,
         return $this->rows;
     }
 
-    private $iterator;
-
-    public function getIterator()
-    {
-        if (is_null($this->iterator)) {
-            $this->iterator = new \ArrayIterator($this->getRows());
-        }
-        return $this->iterator;
-    }
-
-    public function count()
-    {
-        return count($this->rows);
-    }
-    
     public function addRow(array $row)
     {
 
@@ -146,11 +122,8 @@ class TemporaryResult extends Entity implements ResultInterface, TableInterface,
      */
     public function fetchArray()
     {
-    
-        $iterator = $this->getIterator();
-        
-        $row = $iterator->current();
-        $iterator->next();
+        $row = $this->current();
+        $this->next();
     
         if (!is_array($row)) {
             return $row;
@@ -170,11 +143,8 @@ class TemporaryResult extends Entity implements ResultInterface, TableInterface,
      */
     public function fetchAssoc()
     {
-        
-        $iterator = $this->getIterator();
-        
-        $row = $iterator->current();
-        $iterator->next();
+        $row = $this->current();
+        $this->next();
         
         return $row;
     }
@@ -184,11 +154,8 @@ class TemporaryResult extends Entity implements ResultInterface, TableInterface,
      */
     public function fetchRow()
     {
-
-        $iterator = $this->getIterator();
-        
-        $row = $iterator->current();
-        $iterator->next();
+        $row = $this->current();
+        $this->next();
         
         if (!is_array($row)) {
             return $row;
@@ -284,9 +251,55 @@ class TemporaryResult extends Entity implements ResultInterface, TableInterface,
     {
     }
     
-    public function getRowExists($rowId = null)
+    public function doesRowExists($rowId = null)
     {
         return $this->count() >= $rowId;
     }
+
+    ### ITERATOR
+
+    protected $index = 0;
+
+    public function rewind()
+    {
+        $this->index = 0;
+    }
     
+    public function valid()
+    {
+        return $this->index < count($this->rows);
+    }
+
+    public function current()
+    {
+        if (isset($this->rows[$this->index])) {
+            return $this->rows[$this->index];
+        }
+    }
+
+    public function key()
+    {
+        return $this->index;
+    }
+
+    public function next()
+    {
+        $this->index++;
+    }
+    
+    public function tell()
+    {
+        return $this->index;
+    }
+    
+    public function count()
+    {
+        return count($this->rows);
+    }
+    
+    public function seek($rowId)
+    {
+        $this->index = (int)$rowId;
+    }
+
 }

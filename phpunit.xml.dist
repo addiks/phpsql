@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<phpunit colors="true" bootstrap="scripts/bootstrap.php">
+<phpunit colors="true" bootstrap="bin/bootstrap.php">
     <testsuites>
         <testsuite name="PHPSQL test suite">
             <directory>./tests/</directory>

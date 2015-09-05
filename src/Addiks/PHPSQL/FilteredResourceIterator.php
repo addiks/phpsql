@@ -18,8 +18,9 @@ use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\TableInterface;
 use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\DataProviderInterface;
 
-class FilteredResourceIterator implements SeekableIterator, Countable, UsesBinaryDataInterface
+class FilteredResourceIterator implements DataProviderInterface, UsesBinaryDataInterface
 {
     public function __construct(
         Iterator $tableResource,
@@ -88,6 +89,21 @@ class FilteredResourceIterator implements SeekableIterator, Countable, UsesBinar
     public function count()
     {
         return $this->tableResource->count();
+    }
+
+    public function tell()
+    {
+        return $this->tableResource->tell();
+    }
+
+    public function doesRowExists($rowId = null)
+    {
+        return $this->tableResource->doesRowExists($rowId);
+    }
+
+    public function getRowData($rowId = null)
+    {
+        return $this->tableResource->getRowData($rowId);
     }
 
     private function skipNotMatchingRows()

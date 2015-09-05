@@ -26,7 +26,7 @@ use Addiks\PHPSQL\Filesystem\FilePathes;
 /**
  * This represents a table.
  */
-class Table implements IteratorAggregate, Countable, TableInterface, UsesBinaryDataInterface
+class Table implements Iterator, Countable, TableInterface, UsesBinaryDataInterface
 {
 
     public function __construct(
@@ -213,9 +213,9 @@ class Table implements IteratorAggregate, Countable, TableInterface, UsesBinaryD
         return $this->tableBackend->removeRow($rowId);
     }
     
-    public function getRowExists($rowId = null)
+    public function doesRowExists($rowId = null)
     {
-        return $this->tableBackend->getRowExists($rowId);
+        return $this->tableBackend->doesRowExists($rowId);
     }
     
     public function count()
@@ -228,6 +228,11 @@ class Table implements IteratorAggregate, Countable, TableInterface, UsesBinaryD
         return $this->tableBackend->seek($rowId);
     }
 
+    public function tell()
+    {
+        return $this->tableBackend->tell();
+    }
+    
     public function usesBinaryData()
     {
         return true;
@@ -359,5 +364,32 @@ class Table implements IteratorAggregate, Countable, TableInterface, UsesBinaryD
     public function getColumnMetaData($columnName)
     {
         return $this->columnMetaData[$columnName];
+    }
+
+    ### ITERATOR
+
+    public function rewind()
+    {
+        $this->tableBackend->rewind();
+    }
+
+    public function valid()
+    {
+        return $this->tableBackend->valid();
+    }
+
+    public function current()
+    {
+        return $this->tableBackend->current();
+    }
+
+    public function key()
+    {
+        return $this->tableBackend->key();
+    }
+
+    public function next()
+    {
+        $this->tableBackend->next();
     }
 }

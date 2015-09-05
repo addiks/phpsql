@@ -29,13 +29,16 @@ use Addiks\PHPSQL\Entity\Job\Part\Join\TableJoin;
 use Addiks\PHPSQL\Entity\Job\Part\ParenthesisPart;
 use Addiks\PHPSQL\FilteredResourceIterator;
 use Addiks\PHPSQL\UsesBinaryDataInterface;
+use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
+use Addiks\PHPSQL\BinaryConverterTrait;
 
 /**
  * The purpose of this component is to cross-join in any needed way
  * between multiple data-sources (tables, resultsets, indexes, ...).
  */
-class JoinIterator implements SeekableIterator, Countable, ResultInterface
+class JoinIterator implements DataProviderInterface
 {
+    use BinaryConverterTrait;
 
     public function __construct(
         Join $joinDefinition,
@@ -63,37 +66,6 @@ class JoinIterator implements SeekableIterator, Countable, ResultInterface
     public function getSelectExecutor()
     {
         return $this->selectExecutor;
-    }
-    
-    public function getIsSuccess()
-    {
-        return true;
-    }
-    
-    public function getHeaders()
-    {
-    
-        return array(); # TODO: implement this (although nobody currently uses this)
-    }
-    
-    public function getHasResultRows()
-    {
-        return $this->count() > 0;
-    }
-    
-    private $lastInsertId = array();
-    
-    /**
-     * @return array
-     */
-    public function getLastInsertId()
-    {
-        return $this->lastInsertId;
-    }
-    
-    public function setLastInsertId(array $row)
-    {
-        $this->lastInsertId;
     }
     
     /**
@@ -172,6 +144,8 @@ class JoinIterator implements SeekableIterator, Countable, ResultInterface
 
     private $rowCounter;
 
+    private $rowPath = array();
+
     private $tableResources = array();
     
     public function setTableResources(array $tableResources)
@@ -214,44 +188,20 @@ class JoinIterator implements SeekableIterator, Countable, ResultInterface
             $this->init();
         }
         
+        $rowPath = array();
         foreach ($this->tableResources as $tableResource) {
-            switch(true){
-            
-                case $tableResource instanceof Iterator:
-                    $tableResource->rewind();
-                    break;
-            
-                case $tableResource instanceof IteratorAggregate:
-                    $tableResource->getIterator()->rewind();
-                    break;
-            
-                default:
-                    throw new ErrorException("Invalid table-source type!");
-            }
-                
+            $tableResource->rewind();
+            $rowPath[] = $tableResource->tell();
         }
         
+        $this->rowPath = $rowPath;
         $this->rowCounter = 0;
     }
 
     public function valid()
     {
-
         $tableResource = reset($this->tableResources);
-        
-        switch(true){
-
-            case $tableResource instanceof Iterator:
-                return $tableResource->valid();
-                    
-            case $tableResource instanceof IteratorAggregate:
-                return $tableResource->getIterator()->valid();
-                    
-            case count($this->tableResources)>0:
-                throw new ErrorException("Invalid table-source type!");
-        }
-
-        return false;
+        return $tableResource->valid();
     }
 
     public function current()
@@ -298,7 +248,9 @@ class JoinIterator implements SeekableIterator, Countable, ResultInterface
     
     public function key()
     {
-        return $this->rowCounter;
+        $rowPath = implode(":", $this->rowPath);
+        $rowPath = $this->strdec($rowPath);
+        return $rowPath;
     }
 
     public function next()
@@ -317,6 +269,7 @@ class JoinIterator implements SeekableIterator, Countable, ResultInterface
             }
 
             $tableResource->next();
+            $this->rowPath[$index] = $tableResource->tell();
             
             if ($tableResource->valid()) {
                 /* @var $table Table */
@@ -332,40 +285,35 @@ class JoinIterator implements SeekableIterator, Countable, ResultInterface
                 if ($index < count($this->tableResources)) {
                     $tableResource->rewind();
                 }
+                $this->rowPath[$index-1] = $tableResource->tell();
             }
             
         }
         
     }
     
-    public function seek($rowId)
+    public function seek($rowPath)
     {
+        $rowPath = $this->decstr($rowPath);
+        $rowPathArray = explode(':', $rowPath);
 
-        foreach ($this->tableResources as $alias => $tableResource) {
-            $count = $tableResource->count();
-            
-            if ($count>0) {
-                $tableResource->seek($rowId % $count);
-                $rowId = floor($rowId / $count);
-            }
+        $index = 0;
+        foreach (array_reverse($this->tableResources) as $alias => $tableResource) {
+            $tableResource->seek((int)$rowPathArray[$index]);
+            $index++;
         }
     }
     
     public function count()
     {
-        
         $count = 1;
         
         foreach ($this->tableResources as $alias => $tableResource) {
+            # TODO: give better count taking INNER/OUTER-JOIN with NULL values in consideration.
             $count *= $tableResource->count();
         }
         
         return $count;
-    }
-    
-    public function getIterator()
-    {
-        return $this;
     }
     
     public function getUnsortedIterator()
@@ -400,4 +348,35 @@ class JoinIterator implements SeekableIterator, Countable, ResultInterface
     {
         return $this->columnMetaData[$columnName];
     }
+
+    public function doesRowExists($rowId = null)
+    {
+        if (is_null($rowId)) {
+            $rowId = $this->tell();
+        }
+        return $rowId < $this->count();
+    }
+
+    public function tell()
+    {
+        return $this->key();
+    }
+
+    public function getRowData($rowIndex = null)
+    {
+        if (is_null($rowId)) {
+            $rowId = $this->tell();
+        }
+
+        $beforeSeek = $this->tell();
+
+        $this->seek($rowIndex);
+
+        $row = $this->current();
+
+        $this->seek($beforeSeek);
+
+        return $row;
+    }
+
 }

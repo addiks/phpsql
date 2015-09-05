@@ -188,23 +188,6 @@ class SelectExecutor implements StatementExecutorInterface
                 null # TODO: schemaId
             );
 
-            ### SET UP SORTING
-
-            $orderColumns = $statement->getOrderColumns();
-            if (count($orderColumns)>0) {
-                $joinIterator = $iterator;
-                $iterator = new SortedResourceIterator(
-                    $iterator,
-                    $this->valueResolver
-                );
-
-                $iterator->setTemporaryBuildChildIteratorByValue(
-                    $orderColumns,
-                    $joinIterator,
-                    $executionContext
-                );
-            }
-
             ### FILTER RESULT
 
             // WHERE condition
@@ -237,6 +220,23 @@ class SelectExecutor implements StatementExecutorInterface
                         $executionContext
                     );
                 }
+            }
+
+            ### SET UP SORTING
+
+            $orderColumns = $statement->getOrderColumns();
+            if (count($orderColumns)>0) {
+                $innerIterator = $iterator;
+                $iterator = new SortedResourceIterator(
+                    $iterator,
+                    $this->valueResolver
+                );
+
+                $iterator->setTemporaryBuildChildIteratorByValue(
+                    $orderColumns,
+                    $innerIterator,
+                    $executionContext
+                );
             }
 
             ### WRITE RESULTSET

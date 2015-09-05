@@ -12,17 +12,10 @@
 namespace Addiks\PHPSQL;
 
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
+use Addiks\PHPSQL\DataProviderInterface;
 
-interface TableInterface
+interface TableInterface extends DataProviderInterface
 {
-    
-    public function getDBSchemaId();
-    
-    public function getDBSchema();
-    
-    public function getTableName();
-    
-    public function getTableId();
     
     /**
      *
@@ -36,17 +29,10 @@ interface TableInterface
     
     public function setCellData($rowId, $columnId, $data);
     
-    public function getRowData($rowId = null);
-    
     public function setRowData($rowId, array $rowData);
     
     public function addRowData(array $rowData);
     
     public function removeRow($rowId);
     
-    public function getRowExists($rowId = null);
-    
-    public function count();
-    
-    public function seek($rowId);
 }

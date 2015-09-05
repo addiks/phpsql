@@ -26,6 +26,7 @@ use Iterator;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\DataProviderInterface;
 
 /**
  * The purspose of this component is to iterate sorted over one data-source.
@@ -34,7 +35,7 @@ use Addiks\PHPSQL\Entity\ExecutionContext;
  * TODO: this iterator can currently only iterate over one index, implement the rest!
  *
  */
-class SortedResourceIterator implements Countable, SeekableIterator, UsesBinaryDataInterface
+class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInterface
 {
 
     public function __construct(
@@ -102,7 +103,7 @@ class SortedResourceIterator implements Countable, SeekableIterator, UsesBinaryD
     
     public function setTemporaryBuildChildIteratorByValue(
         array $orderColumns,
-        ResultInterface $dataSource,
+        DataProviderInterface $dataSource,
         ExecutionContext $context
     ) {
         
@@ -118,15 +119,10 @@ class SortedResourceIterator implements Countable, SeekableIterator, UsesBinaryD
         
         $rebuildIndex = function () use ($orderColumns, $dataSource, $sortIndex, $valueResolver, $context) {
             
-            switch(true){
-                
-                case $dataSource instanceof JoinIterator:
-                    $iterator = $dataSource->getUnsortedIterator();
-                    break;
-                
-                default:
-                    $iterator = $dataSource->getIterator();
-                    break;
+            $iterator = $dataSource;
+            
+            if ($iterator instanceof JoinIterator) {
+                $iterator = $iterator->getUnsortedIterator();
             }
 
             $indexBuildContext = clone $context;
@@ -230,22 +226,9 @@ class SortedResourceIterator implements Countable, SeekableIterator, UsesBinaryD
 
     public function current()
     {
-
         $resource = $this->getResource();
 
-        switch(true){
-
-            case $resource instanceof Iterator:
-                $row = $resource->current();
-                break;
-
-            case $resource instanceof IteratorAggregate:
-                $row = $resource->getIterator()->current();
-                break;
-
-            default:
-                throw new ErrorException("Invalid table-source type!");
-        }
+        $row = $resource->current();
 
         return $row;
     }
@@ -273,24 +256,35 @@ class SortedResourceIterator implements Countable, SeekableIterator, UsesBinaryD
         
         return $resource->count();
     }
+
+    public function doesRowExists($rowId = null)
+    {
+        return $this->getResource()->doesRowExists();
+    }
     
+    public function tell()
+    {
+        return $this->getChildIterator()->tell();
+    }
+
     public function seek($rowId)
     {
         
         /* @var $iterator \Iterator*/
         $iterator = $this->getChildIterator();
         
-        switch(true){
-            
-            case $iterator instanceof SeekableIterator:
-                $iterator->seek($rowId);
-                break;
-                
-            default:
-                throw new ErrorException("Invalid resource to seek!");
-        }
-        
+        $iterator->seek($rowId);
+
         $this->syncResourceToIterator();
+    }
+
+    public function getRowData($rowId = null)
+    {
+        $beforeSeek = $this->tell();
+        $this->seek($rowId);
+        $row = $this->current();
+        $this->seek($beforeSeek);
+        return $row;
     }
     
     protected function syncResourceToIterator()
@@ -310,17 +304,10 @@ class SortedResourceIterator implements Countable, SeekableIterator, UsesBinaryD
             if (is_array($rowId)) {
                 $rowId = reset($rowId);
             }
-        }
-        
-        switch(true){
-        
-            case $resource instanceof SeekableIterator:
-                $resource->seek($rowId);
-                break;
 
-            default:
-                throw new ErrorException("Invalid resource to seek to 0!");
+            $resource->seek($rowId);
         }
+        
     }
 
     public function usesBinaryData()

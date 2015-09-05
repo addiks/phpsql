@@ -14,6 +14,7 @@ namespace Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
 use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Entity\Exception\Conflict;
 
 class FunctionResolver
 {
@@ -50,6 +51,10 @@ class FunctionResolver
         } else {
             $functionResolverClassName = ucfirst(strtolower($functionName))."Function";
             $functionResolverClass = "Addiks\PHPSQL\ValueResolver\FunctionResolver\\{$functionResolverClassName}";
+
+            if (!class_exists($functionResolverClass)) {
+                throw new Conflict("Function '{$functionName}' does not exist!");
+            }
 
             $functionResolver = new $functionResolverClass($this->valueResolver);
         }

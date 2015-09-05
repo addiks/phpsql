@@ -85,7 +85,12 @@ class FileResourceProxy
     {
         $this->checkUsable();
         $size = $this->getSize();
-        if ($offset > $size) {
+        $targetOffset = [
+            SEEK_SET => $offset,
+            SEEK_CUR => $offset + $this->index,
+            SEEK_END => $offset + $size
+        ][$seekMode];
+        if ($targetOffset > $size) {
             // with php://memory streams, fseek does not work when offset > size.
             fseek($this->resource, 0, SEEK_END);
             fwrite($this->resource, str_pad('', ($offset - $size), "\0"));

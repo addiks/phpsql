@@ -189,7 +189,7 @@ class Table extends InformationSchema
         return $this->iterator;
     }
     
-    public function getRowExists($rowId = null)
+    public function doesRowExists($rowId = null)
     {
         
         if (is_null($rowId)) {
@@ -208,4 +208,5 @@ class Table extends InformationSchema
     {
         return count($this->getInternalTables());
     }
+
 }

@@ -167,7 +167,7 @@ class InternalIndices implements IndexInterface
         
     }
     
-    public function getRowExists($rowId = null)
+    public function doesRowExists($rowId = null)
     {
         
     }
