@@ -14,6 +14,7 @@ namespace Addiks\PHPSQL\Entity\Job\DataChange;
 use Addiks\PHPSQL\Entity\Job;
 use Addiks\PHPSQL\Value\Enum\Sql\Alter\DataChange\AlterAttributeType;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
+use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
 
 class AlterTableDataChange extends Job
 {
@@ -49,7 +50,7 @@ class AlterTableDataChange extends Job
      * For table-actions, te table part is used.
      * @param Column $subject
      */
-    public function setSubject(Column $subject)
+    public function setSubject(ColumnSpecifier $subject)
     {
         $this->subject = $subject;
     }

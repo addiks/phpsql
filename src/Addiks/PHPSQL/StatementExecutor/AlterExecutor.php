@@ -21,6 +21,7 @@ use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\Entity\Job\Statement\AlterStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 class AlterExecutor implements StatementExecutorInterface
 {
@@ -56,6 +57,11 @@ class AlterExecutor implements StatementExecutorInterface
     {
         /* @var $statement AlterStatement */
         
+        $executionContext = new ExecutionContext(
+            $this->schemaManager,
+            $statement
+        );
+
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTable();
         
@@ -78,7 +84,7 @@ class AlterExecutor implements StatementExecutorInterface
                     /* @var $columnDefinition ColumnDefinition */
                     $columnDefinition = $dataChange->getSubject();
                     
-                    $tableResource->addColumnDefinition($columnDefinition);
+                    $tableResource->addColumnDefinition($columnDefinition, $executionContext);
                     break;
                     
                 case AlterAttributeType::DROP():

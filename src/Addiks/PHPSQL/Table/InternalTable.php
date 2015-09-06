@@ -29,6 +29,7 @@ use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Filesystem\FilePathes;
 use Addiks\PHPSQL\TableInterface;
 use Addiks\PHPSQL\UsesBinaryDataInterface;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
 {
@@ -136,7 +137,7 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
         return $this->tableSchema;
     }
     
-    public function addColumnDefinition(ColumnDefinition $columnDefinition)
+    public function addColumnDefinition(ColumnDefinition $columnDefinition, ExecutionContext $executionContext)
     {
     
         /* @var $tableSchema TableSchema */
@@ -193,7 +194,7 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
         $defaultValue = $columnDefinition->getDefaultValue();
         
         if (!is_null($defaultValue)) {
-            $defaultValueData = $this->valueResolver->resolveValue($defaultValue);
+            $defaultValueData = $this->valueResolver->resolveValue($defaultValue, $executionContext);
             $defaultValueData = $this->dataConverter->convertStringToBinary(
                 $defaultValueData,
                 $columnPage->getDataType()
@@ -201,6 +202,10 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
         } else {
             $defaultValueData = null;
         }
+
+        $columnPage->setDefaultValue($defaultValue);
+    
+        $comment = $columnDefinition->getComment();
         
         $columnIndex = $this->getTableSchema()->addColumnPage($columnPage);
         
@@ -214,8 +219,6 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
             
             $columnData->setCellData($columnDataRowId, $defaultValueData);
         }
-    
-        $comment = $columnDefinition->getComment();
     }
     
     const BYTES_PER_DATAFILE = 131072; # = 128*1024;

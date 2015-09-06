@@ -23,7 +23,7 @@ class DeleteTest extends PHPUnit_Framework_TestCase
     }
     
     /**
-     * @group DEV
+     * @group behaviour.delete
      */
     public function testDelete()
     {

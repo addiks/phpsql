@@ -22,6 +22,7 @@ use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Filesystem\FilePathes;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 /**
  * This represents a table.
@@ -161,9 +162,9 @@ class Table implements Iterator, Countable, TableInterface, UsesBinaryDataInterf
         return $this->tableBackend->getTableSchema();
     }
     
-    public function addColumnDefinition(ColumnDefinition $columnDefinition)
+    public function addColumnDefinition(ColumnDefinition $columnDefinition, ExecutionContext $executionContext)
     {
-        return $this->tableBackend->addColumnDefinition($columnDefinition);
+        return $this->tableBackend->addColumnDefinition($columnDefinition, $executionContext);
     }
     
     public function getIterator()

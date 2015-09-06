@@ -13,6 +13,7 @@ namespace Addiks\PHPSQL;
 
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\DataProviderInterface;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 interface TableInterface extends DataProviderInterface
 {
@@ -23,7 +24,10 @@ interface TableInterface extends DataProviderInterface
      */
     public function getTableSchema();
     
-    public function addColumnDefinition(ColumnDefinition $columnDefinition);
+    public function addColumnDefinition(
+        ColumnDefinition $columnDefinition,
+        ExecutionContext $executionContext
+    );
     
     public function getCellData($rowId, $columnId);
     

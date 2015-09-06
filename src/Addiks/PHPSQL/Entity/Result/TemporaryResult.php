@@ -18,6 +18,7 @@ use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
+use Addiks\PHPSQL\Entity\ExecutionContext;
 
 /**
  * This resultset will not be stored permanent but only to the RAM.
@@ -223,7 +224,7 @@ class TemporaryResult extends Entity implements ResultInterface
         return $this->tableSchema;
     }
     
-    public function addColumnDefinition(ColumnDefinition $columnDefinition)
+    public function addColumnDefinition(ColumnDefinition $columnDefinition, ExecutionContext $executionContext)
     {
     }
     
