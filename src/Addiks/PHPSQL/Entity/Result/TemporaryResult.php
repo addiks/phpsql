@@ -228,6 +228,12 @@ class TemporaryResult extends Entity implements ResultInterface
     {
     }
     
+    public function modifyColumnDefinition(
+        ColumnDefinition $columnDefinition,
+        ExecutionContext $executionContext
+    ) {
+    }
+ 
     public function getCellData($rowId, $columnId)
     {
     }

@@ -600,6 +600,8 @@ class SqlToken extends Enum
 #	const T_KEYS = 558;
     const T_NO = 572;
 #	const T_ACTION = 573;
+    const T_FIRST = 583;
+    const T_AFTER = 584;
 
 # FOR INSERT
 #	const T_LOW_PRIORITY = 559;

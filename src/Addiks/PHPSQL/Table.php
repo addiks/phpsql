@@ -167,6 +167,16 @@ class Table implements Iterator, Countable, TableInterface, UsesBinaryDataInterf
         return $this->tableBackend->addColumnDefinition($columnDefinition, $executionContext);
     }
     
+    public function modifyColumnDefinition(
+        ColumnDefinition $columnDefinition,
+        ExecutionContext $executionContext
+    ) {
+        return $this->tableBackend->modifyColumnDefinition(
+            $columnDefinition,
+            $executionContext
+        );
+    }
+
     public function getIterator()
     {
         $iterator = null;

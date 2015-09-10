@@ -28,7 +28,12 @@ interface TableInterface extends DataProviderInterface
         ColumnDefinition $columnDefinition,
         ExecutionContext $executionContext
     );
-    
+
+    public function modifyColumnDefinition(
+        ColumnDefinition $columnDefinition,
+        ExecutionContext $executionContext
+    );
+
     public function getCellData($rowId, $columnId);
     
     public function setCellData($rowId, $columnId, $data);

@@ -172,4 +172,32 @@ class DataType extends Enum
             self::TINYBLOB
         ]);
     }
+
+    public function hasLength()
+    {
+        return !in_array($this->getValue(), [
+            self::MEDIUMTEXT,
+            self::MEDIUMBLOB,
+            self::LONGBLOB,
+            self::TEXT,
+            self::CLOB,
+            self::BLOB,
+            self::DATE,
+            self::DATETIME,
+            self::TIMESTAMP,
+            self::TIME,
+            self::YEAR
+        ]);
+    }
+
+    public function mustResolveDefaultValue()
+    {
+        return in_array($this->getValue(), [
+            self::DATE,
+            self::DATETIME,
+            self::TIMESTAMP,
+            self::TIME,
+            self::YEAR
+        ]);
+    }
 }

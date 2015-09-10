@@ -22,15 +22,25 @@ use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Filesystem\FilePathes;
+use Addiks\PHPSQL\DataConverter;
 
 class DescribeExecutor implements StatementExecutorInterface
 {
     
     public function __construct(
-        SchemaManager $schemaManager
+        SchemaManager $schemaManager,
+        $dataConverter = null
     ) {
         $this->schemaManager = $schemaManager;
+
+        if (is_null($dataConverter)) {
+            $dataConverter = new DataConverter();
+        }
+
+        $this->dataConverter = $dataConverter;
     }
+
+    private $dataConverter;
 
     protected $schemaManager;
 
@@ -67,15 +77,31 @@ class DescribeExecutor implements StatementExecutorInterface
             $dataType = $columnPage->getDataType();
             $length = $columnPage->getLength();
 
-            if ($columnPage->getSecondLength() > 0) {
-                $length = "{$length},{$columnPage->getSecondLength()}";
-            }
+            $hasIndex = !is_null($tableSchema->getIndexIdByColumns([$columnId]));
+
+            $typeString = strtolower($dataType->getName());
+
+            if ($dataType->hasLength()) {
+                if ($columnPage->getSecondLength() > 0) {
+                    $length = "{$length},{$columnPage->getSecondLength()}";
+                }
             
-            $typeString = "{$dataType->getName()}({$length})";
+                $typeString .= "({$length})";
+            }
             
             $null = $columnPage->isNotNull() ?'NO' :'YES';
             
-            $key = $columnPage->isPrimaryKey() ?'PRI' :($columnPage->isUniqueKey() ?'UNQ' :'MUL');
+            $key = '';
+            if ($hasIndex) {
+                $key = 'MUL';
+
+                if ($columnPage->isUniqueKey()) {
+                    $key = 'UNI';
+                }
+                if ($columnPage->isPrimaryKey()) {
+                    $key = 'PRI';
+                }
+            }
                 
             $default = "";
             if ($columnPage->hasDefaultValue()) {
@@ -91,8 +117,14 @@ class DescribeExecutor implements StatementExecutorInterface
                 } else {
                     $default = $columnPage->getDefaultValue();
                 }
+                if (!$dataType->mustResolveDefaultValue()) {
+                    $default = $this->dataConverter->convertBinaryToString(
+                        $default,
+                        $dataType
+                    );
+                }
             }
-            
+
             $extraArray = array();
             
             if ($columnPage->isAutoIncrement()) {

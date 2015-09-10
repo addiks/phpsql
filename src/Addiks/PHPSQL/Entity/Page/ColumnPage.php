@@ -207,7 +207,7 @@ class ColumnPage extends Entity
 
     public function setDefaultValue($defaultValue)
     {
-        $this->defaultValue = (string)$defaultValue;
+        $this->defaultValue = $defaultValue;
     }
 
     public function getDefaultValue()
@@ -238,7 +238,8 @@ class ColumnPage extends Entity
         $rawDataType     = substr($data, 128, 2);
         $rawLength       = substr($data, 130, 16);
         $rawSecondLength = substr($data, 146, 16);
-        $rawDefaultValue = substr($data, 162, 64);
+        $hasDefaultValue = substr($data, 162, 1);
+        $rawDefaultValue = substr($data, 163, 63);
         $rawExtra        = substr($data, 226, 2);
         $rawFkTable      = substr($data, 228, 8);
         $rawFkColumn     = substr($data, 236, 4);
@@ -256,7 +257,13 @@ class ColumnPage extends Entity
         $extra        = unpack("n", $rawExtra)[1];
         $fkTable      = $this->strdec($fkTable);
         $fkColumn     = $this->strdec($fkColumn);
+
+        $hasDefaultValue = (bool)ord($hasDefaultValue);
         
+        if (!$hasDefaultValue) {
+            $defaultValue = null;
+        }
+
         $this->setName($name);
         $this->setDataType(DataType::getByValue($dataType));
         $this->setLength($length);
@@ -289,14 +296,17 @@ class ColumnPage extends Entity
         $rawName         = str_pad($name, 128, "\0", STR_PAD_RIGHT);
         $rawLength       = str_pad($rawLength, 16, "\0", STR_PAD_LEFT);
         $rawSecondLength = str_pad($rawSecondLength, 16, "\0", STR_PAD_LEFT);
-        $rawDefaultValue = str_pad($defaultValue, 64, "\0", STR_PAD_RIGHT);
+        $rawDefaultValue = str_pad($defaultValue, 63, "\0", STR_PAD_RIGHT);
         $rawFkTable      = str_pad($rawFkTable, 8, "\0", STR_PAD_LEFT);
         $rawFkColumn     = str_pad($rawFkColumn, 4, "\0", STR_PAD_LEFT);
         
+        $hasDefaultValue = chr($this->hasDefaultValue() ?0x01 :0x00);
+
         $data = $rawName.
                 $rawDataType.
                 $rawLength.
                 $rawSecondLength.
+                $hasDefaultValue.
                 $rawDefaultValue.
                 $rawExtra.
                 $rawFkTable.

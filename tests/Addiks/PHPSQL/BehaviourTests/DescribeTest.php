@@ -34,6 +34,7 @@ class DescribeTest extends PHPUnit_Framework_TestCase
 
     /**
      * @group behaviour.describe
+     * @group DEV2
      */
     public function testDescribe()
     {
@@ -49,10 +50,10 @@ class DescribeTest extends PHPUnit_Framework_TestCase
 
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
-            ["id",  "INT(4)",       "NO",  "PRI", "", "auto_increment"],
-            ["foo", "INT(4)",       "YES", "MUL", "", ""],
-            ["bar", "VARCHAR(32)",  "YES", "MUL", "", ""],
-            ["baz", "DATETIME(19)", "YES", "MUL", "", ""],
+            ["id",  "int(4)",      "NO",  "PRI", "", "auto_increment"],
+            ["foo", "int(4)",      "YES", "",    "", ""],
+            ["bar", "varchar(32)", "YES", "",    "", ""],
+            ["baz", "datetime",    "YES", "",    "", ""],
         ], $actualRows);
     }
 }

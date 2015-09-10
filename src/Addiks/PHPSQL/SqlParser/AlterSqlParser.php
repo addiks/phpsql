@@ -366,12 +366,12 @@ class AlterSqlParser extends SqlParser
                     break;
                     
                 case $tokens->seekTokenNum(SqlToken::T_MODIFY()):
-                    $alterJob->setAction(Action::MODIFY());
+                    $dataChange->setAttribute(AlterAttributeType::MODIFY());
                     $tokens->seekTokenNum(SqlToken::T_COLUMN());
                     if (!$this->columnDefinitionParser->canParseTokens($tokens)) {
                         throw new MalformedSql("Missing valid column definition for ALTER TABLE MODIFY COLUMN statement!", $tokens);
                     }
-                    $alterJob->addSubjectColumnDefinition($this->columnDefinitionParser->convertSqlToJob($tokens));
+                    $dataChange->setSubjectColumnDefinition($this->columnDefinitionParser->convertSqlToJob($tokens));
                     switch(true){
                         case $tokens->seekTokenNum(SqlToken::T_FIRST()):
                             $dataChange->setAttribute(AlterAttributeType::SET_FIRST());
@@ -383,8 +383,6 @@ class AlterSqlParser extends SqlParser
                             }
                             $dataChange->setValue($this->columnParser->convertSqlToJob($tokens));
                             break;
-                        default:
-                            throw new MalformedSql("Invalid parameter for ALTER TABLE MODIFY COLUMN statement! (allowed are FIRST or AFTER)", $tokens);
                     }
                     $alterJob->addDataChange(clone $dataChange);
                     break;

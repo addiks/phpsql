@@ -22,6 +22,8 @@ use Addiks\PHPSQL\Entity\Job\Statement\AlterStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
+use Addiks\PHPSQL\Table;
 
 class AlterExecutor implements StatementExecutorInterface
 {
@@ -59,7 +61,8 @@ class AlterExecutor implements StatementExecutorInterface
         
         $executionContext = new ExecutionContext(
             $this->schemaManager,
-            $statement
+            $statement,
+            $parameters
         );
 
         /* @var $tableSpecifier TableSpecifier */
@@ -80,7 +83,6 @@ class AlterExecutor implements StatementExecutorInterface
             switch($dataChange->getAttribute()){
                 
                 case AlterAttributeType::ADD():
-                    
                     /* @var $columnDefinition ColumnDefinition */
                     $columnDefinition = $dataChange->getSubject();
                     
@@ -88,19 +90,19 @@ class AlterExecutor implements StatementExecutorInterface
                     break;
                     
                 case AlterAttributeType::DROP():
-                    
-                    /* @var $columnSpecifier Column */
+                    /* @var $columnSpecifier ColumnSpecifier */
                     $columnSpecifier = $dataChange->getSubject();
                     
                     $columnId = $tableSchema->getColumnIndex($columnSpecifier->getColumn());
                     
                     $tableSchema->removeColumn($columnId);
-                    
-                    
-                    
                     break;
                         
                 case AlterAttributeType::MODIFY():
+                    /* @var $columnDefinition ColumnDefinition */
+                    $columnDefinition = $dataChange->getSubject();
+                    
+                    $tableResource->modifyColumnDefinition($columnDefinition, $executionContext);
                     break;
                     
                 case AlterAttributeType::RENAME():

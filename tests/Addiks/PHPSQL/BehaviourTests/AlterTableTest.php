@@ -32,7 +32,8 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @group DEV
+     * @group behaviour.alter
+     * @group behaviour.alter.add
      */
     public function testAddSimpleColumn()
     {
@@ -50,14 +51,18 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
         
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
-            ["id",  "INT(4)",       "NO",  "PRI", "",  "auto_increment"],
-            ["foo", "INT(4)",       "YES", "MUL", "",  ""],
-            ["bar", "VARCHAR(32)",  "YES", "MUL", "",  ""],
-            ["baz", "DATETIME(19)", "YES", "MUL", "",  ""],
-            ["faz", "TINYINT(1)",   "YES", "MUL", "1", ""],
+            ["id",  "int(4)",      "NO",  "PRI", "",  "auto_increment"],
+            ["foo", "int(4)",      "YES", "",    "",  ""],
+            ["bar", "varchar(32)", "YES", "",    "",  ""],
+            ["baz", "datetime",    "YES", "",    "",  ""],
+            ["faz", "tinyint(1)",  "YES", "",    "1", ""],
         ], $actualRows);
     }
 
+    /**
+     * @group behaviour.alter
+     * @group behaviour.alter.remove
+     */
     public function testRemoveColumn()
     {
         ### EXECUTE
@@ -74,9 +79,37 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
         
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
-            ["id",  "INT(4)",       "NO",  "PRI", "",  "auto_increment"],
-            ["foo", "INT(4)",       "YES", "MUL", "",  ""],
-            ["baz", "DATETIME(19)", "YES", "MUL", "",  ""],
+            ["id",  "int(4)",   "NO",  "PRI", "",  "auto_increment"],
+            ["foo", "int(4)",   "YES", "",    "",  ""],
+            ["baz", "datetime", "YES", "",    "",  ""],
+        ], $actualRows);
+    }
+
+    /**
+     * @group behaviour.alter
+     * @group behaviour.alter.modify
+     * @group DEV
+     */
+    public function testModifyColumn()
+    {
+        ### EXECUTE
+
+        try {
+            $this->pdo->query("ALTER TABLE `phpunit_alter_table` MODIFY COLUMN bar MEDIUMTEXT NOT NULL DEFAULT 'test'");
+        } catch(Exception $exception) {
+            throw $exception;
+        }
+
+        ### CHECK RESULTS
+
+        $result = $this->pdo->query("DESCRIBE `phpunit_alter_table`");
+        
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $this->assertEquals([
+            ["id",  "int(4)",     "NO",  "PRI", null,    "auto_increment"],
+            ["foo", "int(4)",     "YES", "",    null,    ""],
+            ["bar", "mediumtext", "NO",  "",    "test",  ""],
+            ["baz", "datetime",   "YES", "",    null,    ""],
         ], $actualRows);
     }
 }

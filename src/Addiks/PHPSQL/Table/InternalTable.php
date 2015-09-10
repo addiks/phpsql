@@ -147,9 +147,53 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
             throw new Conflict("Column '{$columnDefinition->getName()}' already exist!");
         }
         
+        $columnPage = $this->convertColumnDefinitionToColumnPage($columnDefinition, $executionContext);
+
+        $columnIndex = $this->getTableSchema()->addColumnPage($columnPage);
+        
+        $rowCount = $this->count();
+    
+        for ($rowId=0; $rowId<$rowCount; $rowId++) {
+            /* @var $columnData ColumnData */
+            $columnData = $this->getColumnDataByRowIndex($rowId, $columnIndex);
+            
+            $columnDataRowId = $rowId % $this->getRowsPerColumnData($columnIndex);
+            
+            $columnData->setCellData($columnDataRowId, $defaultValueData);
+        }
+    }
+
+    public function modifyColumnDefinition(
+        ColumnDefinition $columnDefinition,
+        ExecutionContext $executionContext
+    ) {
+        
+        /* @var $tableSchema TableSchema */
+        $tableSchema = $this->getTableSchema();
+        
+        $columnIndex = $tableSchema->getColumnIndex($columnDefinition->getName());
+        
+        if (is_null($columnIndex)) {
+            throw new Conflict("Column '{$columnDefinition->getName()}' does not exist!");
+        }
+
+        $columnPage = $this->convertColumnDefinitionToColumnPage($columnDefinition, $executionContext);
+
+        $tableSchema->writeColumn($columnIndex, $columnPage);
+    }
+
+    protected function convertColumnDefinitionToColumnPage(
+        ColumnDefinition $columnDefinition,
+        ExecutionContext $executionContext
+    ) {
+        
         $columnPage = new ColumnPage();
         $columnPage->setName($columnDefinition->getName());
-        $columnPage->setDataType($columnDefinition->getDataType());
+        
+        /* @var $dataType DataType */
+        $dataType = $columnDefinition->getDataType();
+
+        $columnPage->setDataType($dataType);
     
         if (!is_null($columnDefinition->getDataTypeLength())) {
             $columnPage->setLength($columnDefinition->getDataTypeLength());
@@ -194,31 +238,27 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
         $defaultValue = $columnDefinition->getDefaultValue();
         
         if (!is_null($defaultValue)) {
-            $defaultValueData = $this->valueResolver->resolveValue($defaultValue, $executionContext);
-            $defaultValueData = $this->dataConverter->convertStringToBinary(
-                $defaultValueData,
-                $columnPage->getDataType()
-            );
+            if (!$dataType->mustResolveDefaultValue()) {
+                # default value must be resolved at insertion-time => save unresolved
+                $defaultValueData = $this->valueResolver->resolveValue($defaultValue, $executionContext);
+                $defaultValueData = $this->dataConverter->convertStringToBinary(
+                    $defaultValueData,
+                    $columnPage->getDataType()
+                );
+            } else {
+                $defaultValueData = (string)$defaultValue;
+            }
         } else {
             $defaultValueData = null;
         }
 
-        $columnPage->setDefaultValue($defaultValue);
+        $columnPage->setDefaultValue($defaultValueData);
     
         $comment = $columnDefinition->getComment();
         
-        $columnIndex = $this->getTableSchema()->addColumnPage($columnPage);
-        
-        $rowCount = $this->count();
-    
-        for ($rowId=0; $rowId<$rowCount; $rowId++) {
-            /* @var $columnData ColumnData */
-            $columnData = $this->getColumnDataByRowIndex($rowId, $columnIndex);
-            
-            $columnDataRowId = $rowId % $this->getRowsPerColumnData($columnIndex);
-            
-            $columnData->setCellData($columnDataRowId, $defaultValueData);
-        }
+        # TODO: save column comment
+
+        return $columnPage;
     }
     
     const BYTES_PER_DATAFILE = 131072; # = 128*1024;

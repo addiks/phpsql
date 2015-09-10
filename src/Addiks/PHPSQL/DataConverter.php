@@ -142,7 +142,7 @@ class DataConverter
                 ### NUMERIC
         
             case DataType::TINYINT():
-                return chr((int)$binary);
+                return (int)ord($binary);
         
             case DataType::SMALLINT():
             case DataType::MEDIUMINT():
