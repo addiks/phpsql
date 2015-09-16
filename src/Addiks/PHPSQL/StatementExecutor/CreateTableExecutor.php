@@ -163,7 +163,7 @@ class CreateTableExecutor implements StatementExecutorInterface
                         $columnPage->setDefaultValue($column->getDefaultValue());
                     }
                     
-                    $columnIndex = $tableSchema->writeColumn(null, $columnPage);
+                    $columnIndex = $tableSchema->addColumnPage($columnPage);
 
                     if (!is_null($column->getDefaultValue())
                     && $columnPage->isDefaultValueInFile()) {

@@ -170,7 +170,7 @@ class Schema extends Entity implements SchemaInterface
         $indexFile->addData($schemaPage->getData());
     }
     
-    public function registerTableSchema(SchemaPage $schemaPage)
+    public function registerTableSchema(SchemaPage $schemaPage, $index = null)
     {
         
         switch($schemaPage->getType()){
@@ -191,7 +191,13 @@ class Schema extends Entity implements SchemaInterface
         }
         
         $indexFile = $this->getSchemaIndexFile();
-        $indexFile->addData($schemaPage->getData());
+        
+        if (is_null($index)) {
+            $indexFile->addData($schemaPage->getData());
+        } else {
+            $indexFile->seek($index * SchemaPage::PAGE_SIZE);
+            $indexFile->write($schemaPage->getData());
+        }
     }
     
     public function unregisterTable($tableName)

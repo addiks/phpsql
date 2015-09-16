@@ -11,6 +11,7 @@
 
 namespace Addiks\PHPSQL\StatementExecutor;
 
+use InvalidArgumentException;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
@@ -66,7 +67,7 @@ class DescribeExecutor implements StatementExecutorInterface
         $tableSchema = $this->schemaManager->getTableSchema($statement->getTable()->getTable(), $statement->getTable()->getDatabase());
         
         if (is_null($tableSchema)) {
-            throw new InvalidArgument("Table '{$statement->getTable()}' not found!");
+            throw new InvalidArgumentException("Table '{$statement->getTable()}' not found!");
         }
         
         foreach ($tableSchema->getColumnIterator() as $columnId => $columnPage) {

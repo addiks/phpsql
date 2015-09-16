@@ -11,6 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity;
 
+use ArrayIterator;
 use Addiks\PHPSQL\Entity\Page\Schema\IndexPage;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Entity;
@@ -148,6 +149,8 @@ class TableSchema extends Entity implements TableSchemaInterface
         } else {
             $writeIndex = $this->getLastIndex()+1;
         }
+        
+        $column->setIndex($writeIndex);
 
         $this->writeColumn($writeIndex, $column);
         
@@ -190,50 +193,29 @@ class TableSchema extends Entity implements TableSchemaInterface
 
     public function getColumnIterator()
     {
-
         $file = $this->getColumnFile();
 
         $iteratorEntity = new ColumnPage();
 
-        return new CustomIterator(null, [
-            'rewind' => function () use ($file) {
-                $file->seek(0, SEEK_SET);
-            },
-            'valid' => function () use ($file) {
+        $columnPages = array();
 
-                $beforeSeek = $file->tell();
-                $data = $file->read(ColumnPage::PAGE_SIZE);
-                $file->seek($beforeSeek, SEEK_SET);
+        $file->seek(0, SEEK_SET);
+        while (strlen($data = $file->read(ColumnPage::PAGE_SIZE)) === ColumnPage::PAGE_SIZE) {
+            $key = ($file->tell() / ColumnPage::PAGE_SIZE) -1;
 
-                return strlen($data) === ColumnPage::PAGE_SIZE;
-            },
-            'key' => function () use ($file) {
+            if (trim($data, "\0") !== '') {
+                $columnPage = new ColumnPage();
+                $columnPage->setData($data);
 
-                return ($file->tell() / ColumnPage::PAGE_SIZE);
-            },
-            'current' => function () use ($file, $iteratorEntity) {
-                $beforeSeek = $file->tell();
-                $data = $file->read(ColumnPage::PAGE_SIZE);
-                $file->seek($beforeSeek, SEEK_SET);
-                if (strlen($data)!==ColumnPage::PAGE_SIZE) {
-                    return null;
-                }
-                $iteratorEntity->setData($data);
-                $iteratorEntity->setId($file->tell() / ColumnPage::PAGE_SIZE);
-
-                return clone $iteratorEntity;
-            },
-            'next' => function () use ($file) {
-
-                do {
-                    $file->seek(ColumnPage::PAGE_SIZE, SEEK_CUR);
-                    
-                    $checkData = $file->read(ColumnPage::PAGE_SIZE);
-                    $file->seek(0-strlen($checkData), SEEK_CUR);
-                    
-                } while (trim($checkData, "\0")==='' && strlen($checkData) === ColumnPage::PAGE_SIZE);
+                $columnPages[$key] = $columnPage;
             }
-        ]);
+        }
+
+        uasort($columnPages, function($columnPageA, $columnPageB){
+            return $columnPageA->getIndex() - $columnPageB->getIndex();
+        });
+
+        return new ArrayIterator($columnPages);
     }
 
     private $columnIdCache;

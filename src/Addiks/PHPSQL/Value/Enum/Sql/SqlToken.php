@@ -589,8 +589,8 @@ class SqlToken extends Enum
 
 # FOR ALTER
 #	const T_CHANGE = 549;
-#	const T_DISABLE = 550;
-#	const T_ENABLE = 551;
+	const T_DISABLE = 550;
+	const T_ENABLE = 551;
 #	const T_DISCARD = 552;
 #	const T_IMPORT = 553;
 #	const T_REORGANIZE = 554;

@@ -21,6 +21,7 @@ use Addiks\PHPSQL\Filesystem\FileResourceProxy;
  * A page in an table-index containing information about a column in the table.
  *
  * name         128byte
+ * index          2byte
  * datatype       2byte
  * extra          2byte
  * length        16byte
@@ -60,6 +61,24 @@ class ColumnPage extends Entity
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * The index of the column.
+     * Determines the order of the columns.
+     * (16 bit / 2byte)
+     * @var int
+     */
+    private $index = 0;
+
+    public function setIndex($index)
+    {
+        $this->index = (int)$index;
+    }
+
+    public function getIndex()
+    {
+        return $this->index;
     }
     
     /**
@@ -235,14 +254,15 @@ class ColumnPage extends Entity
         }
         
         $rawName         = substr($data, 0, 128);
-        $rawDataType     = substr($data, 128, 2);
-        $rawLength       = substr($data, 130, 16);
-        $rawSecondLength = substr($data, 146, 16);
-        $hasDefaultValue = substr($data, 162, 1);
-        $rawDefaultValue = substr($data, 163, 63);
-        $rawExtra        = substr($data, 226, 2);
-        $rawFkTable      = substr($data, 228, 8);
-        $rawFkColumn     = substr($data, 236, 4);
+        $rawIndex        = substr($data, 128, 2);
+        $rawDataType     = substr($data, 130, 2);
+        $rawLength       = substr($data, 132, 16);
+        $rawSecondLength = substr($data, 148, 16);
+        $hasDefaultValue = substr($data, 164, 1);
+        $rawDefaultValue = substr($data, 165, 63);
+        $rawExtra        = substr($data, 228, 2);
+        $rawFkTable      = substr($data, 230, 8);
+        $rawFkColumn     = substr($data, 238, 4);
         
         $name         = rtrim($rawName, "\0");
         $length       = ltrim($rawLength, "\0");
@@ -252,6 +272,7 @@ class ColumnPage extends Entity
         $fkColumn     = ltrim($rawFkColumn, "\0");
         
         $dataType     = unpack("n", $rawDataType)[1];
+        $index        = unpack("n", $rawIndex)[1];
         $length       = $this->strdec($length);
         $secondLength = $this->strdec($secondLength);
         $extra        = unpack("n", $rawExtra)[1];
@@ -265,6 +286,7 @@ class ColumnPage extends Entity
         }
 
         $this->setName($name);
+        $this->setIndex($index);
         $this->setDataType(DataType::getByValue($dataType));
         $this->setLength($length);
         $this->setSecondLength($secondLength);
@@ -278,6 +300,7 @@ class ColumnPage extends Entity
     {
         
         $name          = $this->getName();
+        $index         = $this->getIndex();
         $dataType      = $this->getDataType()->getValue();
         $length        = $this->getLength();
         $secondLength  = $this->getSecondLength();
@@ -287,6 +310,7 @@ class ColumnPage extends Entity
         $fkColumnIndex = $this->getFKColumnIndex();
         
         $rawDataType     = pack("n", $dataType);
+        $rawIndex        = pack("n", $index);
         $rawLength       = $this->decstr($length);
         $rawSecondLength = $this->decstr($secondLength);
         $rawExtra        = pack("n", $extra);
@@ -303,6 +327,7 @@ class ColumnPage extends Entity
         $hasDefaultValue = chr($this->hasDefaultValue() ?0x01 :0x00);
 
         $data = $rawName.
+                $rawIndex.
                 $rawDataType.
                 $rawLength.
                 $rawSecondLength.

@@ -228,9 +228,10 @@ class SchemaManager
             return null;
         }
         
-        if (!isset($this->tableSchemas["{$schemaId}.{$tableName}"])) {
-            $tableSchemaFilepath = sprintf(FilePathes::FILEPATH_TABLE_SCHEMA, $schemaId, $tableName);
-            $indexSchemaFilepath = sprintf(FilePathes::FILEPATH_TABLE_INDEX_SCHEMA, $schemaId, $tableName);
+        $cacheKey = "{$schemaId}.{$tableIndex}";
+        if (!isset($this->tableSchemas[$cacheKey])) {
+            $tableSchemaFilepath = sprintf(FilePathes::FILEPATH_TABLE_SCHEMA, $schemaId, $tableIndex);
+            $indexSchemaFilepath = sprintf(FilePathes::FILEPATH_TABLE_INDEX_SCHEMA, $schemaId, $tableIndex);
 
             $tableSchemaFile = $this->filesystem->getFile($tableSchemaFilepath);
             $indexSchemaFile = $this->filesystem->getFile($indexSchemaFilepath);
@@ -238,7 +239,7 @@ class SchemaManager
             switch($schemaId){
                 
                 case self::DATABASE_ID_META_INFORMATION_SCHEMA:
-                    $this->tableSchemas["{$schemaId}.{$tableName}"] = new InformationSchema(
+                    $this->tableSchemas[$cacheKey] = new InformationSchema(
                         $tableSchemaFile,
                         $indexSchemaFile,
                         $tableName
@@ -246,7 +247,7 @@ class SchemaManager
                     break;
                 
                 default:
-                    $this->tableSchemas["{$schemaId}.{$tableName}"] = new TableSchema(
+                    $this->tableSchemas[$cacheKey] = new TableSchema(
                         $tableSchemaFile,
                         $indexSchemaFile
                     );
@@ -254,9 +255,9 @@ class SchemaManager
             }
         }
         
-        $this->tableSchemas["{$schemaId}.{$tableName}"]->setDatabaseSchema($schema);
+        $this->tableSchemas[$cacheKey]->setDatabaseSchema($schema);
         
-        return $this->tableSchemas["{$schemaId}.{$tableName}"];
+        return $this->tableSchemas[$cacheKey];
     }
     
     public function dropTable($tableName, $schemaId = null)

@@ -12,6 +12,7 @@ namespace Addiks\PHPSQL\BehaviourTests;
 
 use PHPUnit_Framework_TestCase;
 use Addiks\PHPSQL\PDO;
+use Addiks\PHPSQL\ResultWriter;
 
 class AlterTableTest extends PHPUnit_Framework_TestCase
 {
@@ -29,6 +30,17 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
             )
         ");
 
+        ### CHECK BEFORE STATE
+
+        $result = $this->pdo->query("DESCRIBE `phpunit_alter_table`");
+        
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $this->assertEquals([
+            ["id",  "int(4)",      "NO",  "PRI", "",  "auto_increment"],
+            ["foo", "int(4)",      "YES", "",    "",  ""],
+            ["bar", "varchar(32)", "YES", "",    "",  ""],
+            ["baz", "datetime",    "YES", "",    "",  ""],
+        ], $actualRows);
     }
 
     /**
@@ -49,6 +61,8 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
 
         $result = $this->pdo->query("DESCRIBE `phpunit_alter_table`");
         
+        #echo new ResultWriter($result->getResult());
+
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
             ["id",  "int(4)",      "NO",  "PRI", "",  "auto_increment"],
@@ -88,7 +102,6 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
     /**
      * @group behaviour.alter
      * @group behaviour.alter.modify
-     * @group DEV
      */
     public function testModifyColumn()
     {
@@ -109,6 +122,84 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
             ["id",  "int(4)",     "NO",  "PRI", null,    "auto_increment"],
             ["foo", "int(4)",     "YES", "",    null,    ""],
             ["bar", "mediumtext", "NO",  "",    "test",  ""],
+            ["baz", "datetime",   "YES", "",    null,    ""],
+        ], $actualRows);
+    }
+
+    /**
+     * @group behaviour.alter
+     * @group behaviour.alter.rename
+     */
+    public function testRenameTable()
+    {
+        ### EXECUTE
+
+        try {
+            $this->pdo->query("ALTER TABLE `phpunit_alter_table` RENAME TO `phpunit_schnitzel_table`");
+        } catch(Exception $exception) {
+            throw $exception;
+        }
+
+        ### CHECK RESULTS
+
+        $result = $this->pdo->query("DESCRIBE `phpunit_schnitzel_table`");
+        
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $this->assertEquals([
+            ["id",  "int(4)",      "NO",  "PRI", "", "auto_increment"],
+            ["foo", "int(4)",      "YES", "",    "", ""],
+            ["bar", "varchar(32)", "YES", "",    "", ""],
+            ["baz", "datetime",    "YES", "",    "", ""],
+        ], $actualRows);
+    }
+
+    /**
+     * @group behaviour.alter
+     * @group behaviour.alter.set_first
+     * @group DEV
+     */
+    public function testSetFirst()
+    {
+        ### EXECUTE
+
+        try {
+            $this->pdo->query("ALTER TABLE `phpunit_alter_table` MODIFY COLUMN bar MEDIUMTEXT NOT NULL DEFAULT 'test' FIRST");
+        } catch(Exception $exception) {
+            throw $exception;
+        }
+
+        ### CHECK RESULTS
+
+        $result = $this->pdo->query("DESCRIBE `phpunit_alter_table`");
+
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $this->assertEquals([
+            ["bar", "mediumtext", "NO",  "",    "test",  ""],
+            ["id",  "int(4)",     "NO",  "PRI", null,    "auto_increment"],
+            ["foo", "int(4)",     "YES", "",    null,    ""],
+            ["baz", "datetime",   "YES", "",    null,    ""],
+        ], $actualRows);
+    }
+
+    public function testSetAfter()
+    {
+        ### EXECUTE
+
+        try {
+            $this->pdo->query("ALTER TABLE `phpunit_alter_table` MODIFY COLUMN bar MEDIUMTEXT NOT NULL DEFAULT 'test' AFTER `id`");
+        } catch(Exception $exception) {
+            throw $exception;
+        }
+
+        ### CHECK RESULTS
+
+        $result = $this->pdo->query("DESCRIBE `phpunit_alter_table`");
+
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $this->assertEquals([
+            ["id",  "int(4)",     "NO",  "PRI", null,    "auto_increment"],
+            ["bar", "mediumtext", "NO",  "",    "test",  ""],
+            ["foo", "int(4)",     "YES", "",    null,    ""],
             ["baz", "datetime",   "YES", "",    null,    ""],
         ], $actualRows);
     }

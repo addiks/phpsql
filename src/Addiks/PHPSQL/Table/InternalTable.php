@@ -172,13 +172,14 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
         $tableSchema = $this->getTableSchema();
         
         $columnIndex = $tableSchema->getColumnIndex($columnDefinition->getName());
+        $originalColumn = $tableSchema->getColumn($columnIndex);
         
         if (is_null($columnIndex)) {
             throw new Conflict("Column '{$columnDefinition->getName()}' does not exist!");
         }
 
         $columnPage = $this->convertColumnDefinitionToColumnPage($columnDefinition, $executionContext);
-
+        $columnPage->setIndex($originalColumn->getIndex());
         $tableSchema->writeColumn($columnIndex, $columnPage);
     }
 
