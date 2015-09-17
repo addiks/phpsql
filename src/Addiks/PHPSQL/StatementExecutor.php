@@ -26,7 +26,7 @@ use Addiks\PHPSQL\StatementExecutor\ShowExecutor;
 use Addiks\PHPSQL\StatementExecutor\UpdateExecutor;
 use Addiks\PHPSQL\StatementExecutor\UseExecutor;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 

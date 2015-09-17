@@ -16,13 +16,12 @@ use Addiks\PHPSQL\Value\Enum\Page\Schema\InsertMethod;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\RowFormat;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Engine;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Type;
-use Addiks\PHPSQL\Entity;
 
 /**
  * A page in the database index containing information about tables, views, ... in the database.
  *
  */
-class Schema extends Entity
+class SchemaPage
 {
     
     /**

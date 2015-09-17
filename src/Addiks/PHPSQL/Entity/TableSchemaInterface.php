@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL\Entity;
 
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
-use Addiks\PHPSQL\Entity\Page\Schema\IndexPage;
+use Addiks\PHPSQL\Entity\Page\SchemaPage\IndexPage;
 
 interface TableSchemaInterface
 {

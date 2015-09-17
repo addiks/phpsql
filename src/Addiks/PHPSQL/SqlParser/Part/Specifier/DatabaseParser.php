@@ -13,9 +13,9 @@ namespace Addiks\PHPSQL\SqlParser\Part\Specifier;
 
 use Addiks\PHPSQL\Value\Specifier\DatabaseSpecifier;
 use Addiks\PHPSQL\SqlParser\Part;
-use Addiks\PHPSQL\TokenIterator;
+use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\SQLTokenIterator;
+use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 
 class DatabaseParser extends Part
 {

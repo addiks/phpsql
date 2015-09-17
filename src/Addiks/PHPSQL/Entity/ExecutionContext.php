@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Entity;
 
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\TableInterface;
+use Addiks\PHPSQL\Table\TableInterface;
 use Addiks\PHPSQL\Entity\Exception\Conflict;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 

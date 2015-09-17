@@ -11,7 +11,6 @@
 
 namespace Addiks\PHPSQL\Entity\TableSchema\Meta;
 
-use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\TableSchemaInterface;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\TableSchema\Meta\InformationSchema\Tables;
@@ -21,7 +20,7 @@ use ErrorException;
 /**
  *
  */
-abstract class InformationSchema extends Entity implements IndexInterface
+abstract class InformationSchema implements IndexInterface
 {
 
     private $databaseSchema;

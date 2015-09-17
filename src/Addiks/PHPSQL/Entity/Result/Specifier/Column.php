@@ -11,10 +11,9 @@
 
 namespace Addiks\PHPSQL\Entity\Result\Specifier;
 
-use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 
-class Column extends Entity
+class Column
 {
     
     private $name;

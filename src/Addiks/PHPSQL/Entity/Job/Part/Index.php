@@ -22,7 +22,6 @@ class Index extends Part
     
     public function __construct()
     {
-        parent::__construct();
         $this->setType(IndexType::BTREE());
     }
     

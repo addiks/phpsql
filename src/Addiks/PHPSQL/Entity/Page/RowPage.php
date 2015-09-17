@@ -11,9 +11,13 @@
 
 namespace Addiks\PHPSQL\Entity\Page;
 
-use Addiks\PHPSQL\Entity;
-
-class Row extends Entity
+/**
+ * A fixed size data-block representing a data-row.
+ *
+ * TODO: does this even get used somewhere?
+ *       Maybe it can be used in the future when column-data's are not is seperate files.
+ */
+class RowPage
 {
     
     public function __construct(TableSchema $schema)

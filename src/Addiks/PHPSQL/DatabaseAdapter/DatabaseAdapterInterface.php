@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL\DatabaseAdapter;
 
 use Addiks\PHPSQL\Entity\Job\StatementJob;
-use Addiks\PHPSQL\SQLTokenIterator;
+use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 
 /**
  *

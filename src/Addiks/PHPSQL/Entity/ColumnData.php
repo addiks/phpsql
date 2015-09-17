@@ -11,13 +11,12 @@
 
 namespace Addiks\PHPSQL\Entity;
 
-use Addiks\PHPSQL\Entity\Page\ColumnPage;
-use Addiks\PHPSQL\Entity;
 use ErrorException;
-use Addiks\PHPSQL\CustomIterator;
+use Addiks\PHPSQL\Entity\Page\ColumnPage;
+use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
-class ColumnData extends Entity implements \Countable, \IteratorAggregate
+class ColumnData implements \Countable, \IteratorAggregate
 {
     
     public function __construct(FileResourceProxy $file, ColumnPage $columnPage)

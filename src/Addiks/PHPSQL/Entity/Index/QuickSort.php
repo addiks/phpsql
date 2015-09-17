@@ -14,10 +14,9 @@ namespace Addiks\PHPSQL\Entity\Index;
 use ErrorException;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\BinaryConverterTrait;
-use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
-class QuickSort extends Entity implements \Iterator
+class QuickSort implements \Iterator
 {
     
     use BinaryConverterTrait;

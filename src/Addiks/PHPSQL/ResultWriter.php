@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL;
 
 use IteratorAggregate;
-use Addiks\PHPSQL\CustomIterator;
+use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 
 /**

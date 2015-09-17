@@ -9,10 +9,10 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL;
+namespace Addiks\PHPSQL\Iterators;
 
 use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
-use Addiks\PHPSQL\SortedResourceIterator;
+use Addiks\PHPSQL\Iterators\SortedResourceIterator;
 use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use ErrorException;
@@ -27,10 +27,11 @@ use Addiks\PHPSQL\Entity\ExecutionContext;
 use Addiks\PHPSQL\Entity\Job\Part\Join;
 use Addiks\PHPSQL\Entity\Job\Part\Join\TableJoin;
 use Addiks\PHPSQL\Entity\Job\Part\ParenthesisPart;
-use Addiks\PHPSQL\FilteredResourceIterator;
-use Addiks\PHPSQL\UsesBinaryDataInterface;
+use Addiks\PHPSQL\Iterators\FilteredResourceIterator;
+use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\BinaryConverterTrait;
+use Addiks\PHPSQL\Iterators\DataProviderInterface;
 
 /**
  * The purpose of this component is to cross-join in any needed way

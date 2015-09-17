@@ -23,15 +23,16 @@ use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\BinaryConverterTrait;
-use Addiks\PHPSQL\CustomIterator;
+use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Filesystem\FilePathes;
-use Addiks\PHPSQL\TableInterface;
-use Addiks\PHPSQL\UsesBinaryDataInterface;
+use Addiks\PHPSQL\Table\TableInterface;
+use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
 use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Index;
 
-class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
+class Table implements Iterator, TableInterface, UsesBinaryDataInterface
 {
 
     use BinaryConverterTrait;
@@ -63,7 +64,7 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
         $this->filesystem = $filesystem;
         $this->valueResolver = $valueResolver;
         $this->dataConverter = $dataConverter;
-        $this->dbSchemaId = $schemaId;
+        $this->schemaId = $schemaId;
         $this->dbSchema = $schema;
         $this->tableSchema = $schemaManager->getTableSchema($tableName, $schemaId);
         $this->tableId = $schema->getTableIndex($tableName);
@@ -98,11 +99,11 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
         return $this->filesystem;
     }
 
-    private $dbSchemaId;
+    private $schemaId;
 
     public function getDBSchemaId()
     {
-        return $this->dbSchemaId;
+        return $this->schemaId;
     }
 
     private $dbSchema;
@@ -301,7 +302,7 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
         if (!isset($this->columnDataCache[$columnId][$columnDataIndex])) {
             $columnDataFilePath = sprintf(
                 FilePathes::FILEPATH_COLUMN_DATA_FILE,
-                $this->dbSchemaId,
+                $this->schemaId,
                 $this->getTableName(),
                 $columnId,
                 $columnDataIndex
@@ -402,7 +403,7 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
             
             $columnDataFilePath = sprintf(
                 FilePathes::FILEPATH_COLUMN_DATA_FILE,
-                $this->dbSchemaId,
+                $this->schemaId,
                 $this->getTableName(),
                 $columnId,
                 $lastDataIndex
@@ -636,6 +637,68 @@ class InternalTable implements Iterator, TableInterface, UsesBinaryDataInterface
         return $count;
     }
     
+    ### INDICIES
+
+    protected $indicies = array();
+
+    public function getIndex($indexName)
+    {
+        if (!isset($this->indicies[$indexName])) {
+            $this->indicies[$indexName] = new Index(
+                $this->filesystem,
+                $this->schemaManager,
+                $indexName,
+                $this->tableName,
+                $this->schemaId
+            );
+        }
+        return $this->indicies[$indexName];
+    }
+
+    ### AUTO-INCREMENT
+
+    /**
+     * @return File
+     */
+    protected function getAutoIncrementFile()
+    {
+    
+        $filePath = sprintf(
+            FilePathes::FILEPATH_AUTOINCREMENT,
+            $this->getDBSchemaId(),
+            $this->getTableName()
+        );
+
+        /* @var $file FileResourceProxy */
+        $file = $this->filesystem->getFile($filePath);
+    
+        return $file;
+    }
+    
+    public function incrementAutoIncrementId()
+    {
+    
+        $currentValue = (int)$this->getAutoIncrementId();
+        $currentValue++;
+    
+        $file = $this->getAutoIncrementFile();
+        $file->setData((string)$currentValue);
+    }
+    
+    public function getAutoIncrementId()
+    {
+        /* @var $file FileResourceProxy */
+        $file = $this->getAutoIncrementFile();
+    
+        if ($file->getLength() <= 0) {
+            $file->setData("1");
+        }
+    
+        return $file->getData();
+    }
+    
+    ### ITEARTOR
+
     private $iterator;
 
     private $currentRowIndex = 0;

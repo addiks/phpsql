@@ -10,7 +10,7 @@
 
 namespace Addiks\PHPSQL\BehaviourTests;
 
-use Addiks\PHPSQL\PDO;
+use Addiks\PHPSQL\PDO\PDO;
 use PHPUnit_Framework_TestCase;
 
 /**

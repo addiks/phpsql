@@ -9,13 +9,13 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL;
+namespace Addiks\PHPSQL\Iterators;
 
 use Addiks\PHPSQL\Entity\Index\QuickSort;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
-use Addiks\PHPSQL\CustomIterator;
+use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Countable;
@@ -26,7 +26,9 @@ use Iterator;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 use Addiks\PHPSQL\Entity\ExecutionContext;
-use Addiks\PHPSQL\DataProviderInterface;
+use Addiks\PHPSQL\Iterators\DataProviderInterface;
+use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
+use Addiks\PHPSQL\ValueResolver;
 
 /**
  * The purspose of this component is to iterate sorted over one data-source.

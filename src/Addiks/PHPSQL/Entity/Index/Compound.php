@@ -11,11 +11,10 @@
 
 namespace Addiks\PHPSQL\Entity\Index;
 
-use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
-class Compound extends Entity implements IndexInterface
+class Compound implements IndexInterface
 {
     
     ### INDEX

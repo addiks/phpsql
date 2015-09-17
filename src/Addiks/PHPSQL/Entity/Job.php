@@ -12,14 +12,13 @@
 namespace Addiks\PHPSQL\Entity;
 
 use Addiks\PHPSQL\SqlParser;
-use Addiks\PHPSQL\Entity;
 
 /**
  * A job entity holds all relevand data extracted from an sql-statement.
  * The job gets then converted into a PHP-script that works on the database.
  * @see SqlParser
  */
-abstract class Job extends Entity
+abstract class Job
 {
     
     public function getExclusiveTableLocks()

@@ -14,7 +14,6 @@ namespace Addiks\PHPSQL\Entity\Page;
 use ErrorException;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\BinaryConverterTrait;
-use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 /**
@@ -33,13 +32,25 @@ use Addiks\PHPSQL\Filesystem\FileResourceProxy;
  * ____________________
  *              256byte
  */
-class ColumnPage extends Entity
+class ColumnPage
 {
     
     use BinaryConverterTrait;
     
     const PAGE_SIZE = 256;
     
+    private $id;
+
+    public function setId($id)
+    {
+        $this->id = (string)$id;
+    }
+
+    public function getId()
+    {
+        return $this->id;
+    }
+
     /**
      * The name of the column.
      * (1024 bit / 128byte)

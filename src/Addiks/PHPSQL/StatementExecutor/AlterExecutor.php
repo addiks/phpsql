@@ -16,15 +16,15 @@ use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\Entity\Job\Statement\AlterStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Entity\ExecutionContext;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
-use Addiks\PHPSQL\Table;
-use Addiks\PHPSQL\Entity\Page\Schema as SchemaPage;
+use Addiks\PHPSQL\Entity\Page\SchemaPage as SchemaPage;
+use Addiks\PHPSQL\Table\TableInterface;
 
 class AlterExecutor implements StatementExecutorInterface
 {
@@ -69,7 +69,7 @@ class AlterExecutor implements StatementExecutorInterface
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTable();
         
-        /* @var $tableResource Table */
+        /* @var $tableResource TableInterface */
         $tableResource = $this->tableManager->getTable(
             $tableSpecifier->getTable(),
             $tableSpecifier->getDatabase()

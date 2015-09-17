@@ -11,14 +11,13 @@
 
 namespace Addiks\PHPSQL\Entity\Page\BTree;
 
-use Addiks\PHPSQL\Entity;
-use Addiks\PHPSQL\CustomIterator;
+use Addiks\PHPSQL\Iterators\CustomIterator;
 
 /**
  * A node in an b-tree index.
  * @see http://en.wikipedia.org/wiki/B-tree
  */
-class Node extends Entity
+class BTreeNodePage
 {
     
     /**

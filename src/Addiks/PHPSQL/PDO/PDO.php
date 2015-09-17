@@ -9,9 +9,9 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL;
+namespace Addiks\PHPSQL\PDO;
 
-use Addiks\PHPSQL\Statement;
+use Addiks\PHPSQL\PDO\Statement;
 use Addiks\PHPSQL\Value\Database\Dsn\Internal as InternalDSN;
 use Addiks\PHPSQL\Value\Database\Dsn\InmemoryDsn;
 use Addiks\PHPSQL\Database;

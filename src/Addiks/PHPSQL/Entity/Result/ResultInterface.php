@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity\Result;
 
-use Addiks\PHPSQL\TableInterface;
+use Addiks\PHPSQL\Table\TableInterface;
 
 interface ResultInterface extends TableInterface
 {

@@ -9,18 +9,17 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Entity\Page\Schema;
+namespace Addiks\PHPSQL\Entity\Page\SchemaPage;
 
+use ErrorException;
 use Addiks\PHPSQL\Value\Enum\Page\Index\ForeignKeyMethod;
 use Addiks\PHPSQL\Value\Enum\Page\Index\Engine;
 use Addiks\PHPSQL\Value\Enum\Page\Index\Type;
-use Addiks\PHPSQL\Entity;
-use ErrorException;
 
 /**
  * Holds information about an index for a table.
  */
-class IndexPage extends Entity
+class IndexPage
 {
     
     /**
@@ -38,6 +37,18 @@ class IndexPage extends Entity
      */
     const PAGE_SIZE = 256;
     
+    private $id;
+
+    public function setId($id)
+    {
+        $this->id = (string)$id;
+    }
+
+    public function getId()
+    {
+        return $this->id;
+    }
+
     /**
      * Name of this index.
      * 64 bytes reserved.

@@ -11,7 +11,7 @@
 namespace Addiks\PHPSQL\BehaviourTests;
 
 use PHPUnit_Framework_TestCase;
-use Addiks\PHPSQL\PDO;
+use Addiks\PHPSQL\PDO\PDO;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 
 class UpdateTest extends PHPUnit_Framework_TestCase

@@ -13,8 +13,8 @@ namespace Addiks\PHPSQL\SqlParser\Part\FlowControl;
 
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\TokenIterator;
-use Addiks\PHPSQL\SQLTokenIterator;
+use Addiks\PHPSQL\Iterators\TokenIterator;
+use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser;
 use Addiks\PHPSQL\Entity\Job\Part\FlowControl\CaseJob;
 

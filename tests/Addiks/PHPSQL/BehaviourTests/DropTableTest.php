@@ -11,7 +11,7 @@
 namespace Addiks\PHPSQL\BehaviorTests;
 
 use PHPUnit_Framework_TestCase;
-use Addiks\PHPSQL\PDO;
+use Addiks\PHPSQL\PDO\PDO;
 
 class DropTableTest extends PHPUnit_Framework_TestCase
 {

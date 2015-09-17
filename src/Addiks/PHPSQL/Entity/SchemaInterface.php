@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity;
 
-use Addiks\PHPSQL\Entity\Page\Schema as SchemaPage;
+use Addiks\PHPSQL\Entity\Page\SchemaPage as SchemaPage;
 
 interface SchemaInterface
 {

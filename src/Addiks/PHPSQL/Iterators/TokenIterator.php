@@ -9,7 +9,7 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL;
+namespace Addiks\PHPSQL\Iterators;
 
 use ErrorException;
 use Addiks\PHPSQL\Value;

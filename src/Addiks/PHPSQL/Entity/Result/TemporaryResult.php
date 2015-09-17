@@ -11,8 +11,7 @@
 
 namespace Addiks\PHPSQL\Entity\Result;
 
-use Addiks\PHPSQL\Entity;
-use Addiks\PHPSQL\TableInterface;
+use Addiks\PHPSQL\Table\TableInterface;
 use Addiks\PHPSQL\Entity\TableSchema;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
@@ -27,7 +26,7 @@ use Addiks\PHPSQL\Entity\ExecutionContext;
  * @author gerrit
  *
  */
-class TemporaryResult extends Entity implements ResultInterface
+class TemporaryResult implements ResultInterface
 {
 
     public function __construct(array $columnNames = array())

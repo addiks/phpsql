@@ -17,11 +17,11 @@ use Addiks\PHPSQL\SqlParser\Part;
 
 use ErrorException;
 
-use Addiks\PHPSQL\TokenIterator;
+use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 
-use Addiks\PHPSQL\SQLTokenIterator;
+use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 
 class ColumnParser extends Part
 {

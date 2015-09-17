@@ -11,8 +11,8 @@
 
 namespace Addiks\PHPSQL\Table\Meta;
 
-use Addiks\PHPSQL\CustomIterator;
-use Addiks\PHPSQL\TokenIterator;
+use Addiks\PHPSQL\Iterators\CustomIterator;
+use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use ErrorException;
 

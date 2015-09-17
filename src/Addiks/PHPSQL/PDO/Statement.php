@@ -9,12 +9,12 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL;
+namespace Addiks\PHPSQL\PDO;
 
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
 use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\PDO;
+use Addiks\PHPSQL\PDO\PDO;
 use ErrorException;
 
 /**

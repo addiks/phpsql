@@ -9,10 +9,10 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL;
+namespace Addiks\PHPSQL\Table;
 
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
-use Addiks\PHPSQL\DataProviderInterface;
+use Addiks\PHPSQL\Iterators\DataProviderInterface;
 use Addiks\PHPSQL\Entity\ExecutionContext;
 
 interface TableInterface extends DataProviderInterface

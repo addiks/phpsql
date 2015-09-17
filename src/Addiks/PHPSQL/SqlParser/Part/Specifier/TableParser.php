@@ -14,11 +14,11 @@ namespace Addiks\PHPSQL\SqlParser\Part\Specifier;
 use Addiks\PHPSQL\Value\Specifier\TableSpecifier as TableSpecifier;
 
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\SQLTokenIterator;
+use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 
 use Addiks\PHPSQL\SqlParser\Part;
 
-use Addiks\PHPSQL\TokenIterator;
+use Addiks\PHPSQL\Iterators\TokenIterator;
 
 class TableParser extends Part
 {

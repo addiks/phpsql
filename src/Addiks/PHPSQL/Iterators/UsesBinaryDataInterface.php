@@ -8,7 +8,7 @@
  * @author Gerrit Addiks <gerrit@addiks.de>
  */
 
-namespace Addiks\PHPSQL;
+namespace Addiks\PHPSQL\Iterators;
 
 interface UsesBinaryDataInterface
 {

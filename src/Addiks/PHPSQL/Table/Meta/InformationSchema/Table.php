@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Table\Meta\InformationSchema;
 
-use Addiks\PHPSQL\CustomIterator;
+use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Schema\SchemaManager;
 
 class Table extends InformationSchema

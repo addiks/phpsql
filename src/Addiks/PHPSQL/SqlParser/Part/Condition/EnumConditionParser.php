@@ -14,8 +14,8 @@ namespace Addiks\PHPSQL\SqlParser\Part\Condition;
 use Addiks\PHPSQL\SqlParser\Part;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\TokenIterator;
-use Addiks\PHPSQL\SQLTokenIterator;
+use Addiks\PHPSQL\Iterators\TokenIterator;
+use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
 
 class EnumConditionParser extends Part

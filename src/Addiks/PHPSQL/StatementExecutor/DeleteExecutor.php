@@ -16,12 +16,12 @@ use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Entity\Job\Statement\DeleteStatement;
 use Addiks\PHPSQL\Entity\ExecutionContext;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\SortedResourceIterator;
+use Addiks\PHPSQL\Iterators\SortedResourceIterator;
 
 class DeleteExecutor implements StatementExecutorInterface
 {

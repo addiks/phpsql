@@ -15,7 +15,6 @@ use ErrorException;
 use Exception;
 use Addiks\PHPSQL\Index;
 use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\Table;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
@@ -24,10 +23,11 @@ use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Entity\Job\Statement\InsertStatement;
-use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\Filesystem\FilePathes;
 use Addiks\PHPSQL\Entity\ExecutionContext;
 use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Table\TableInterface;
 
 class InsertExecutor implements StatementExecutorInterface
 {
@@ -88,7 +88,7 @@ class InsertExecutor implements StatementExecutorInterface
 
         $tableName = (string)$statement->getTable();
         
-        /* @var $table Table */
+        /* @var $table TableInterface */
         $table = $this->tableManager->getTable($tableName);
         
         /* @var $tableSchema TableSchema */

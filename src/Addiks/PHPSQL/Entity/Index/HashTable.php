@@ -14,7 +14,6 @@ namespace Addiks\PHPSQL\Entity\Index;
 use ErrorException;
 use Addiks\PHPSQL\CacheBackendInterface;
 use Addiks\PHPSQL\BinaryConverterTrait;
-use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 /**
@@ -23,7 +22,7 @@ use Addiks\PHPSQL\Filesystem\FileResourceProxy;
  *
  * @see http://en.wikipedia.org/wiki/table
  */
-class HashTable extends Entity implements IndexInterface
+class HashTable implements IndexInterface
 {
     
     /**

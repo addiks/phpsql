@@ -9,11 +9,11 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL;
+namespace Addiks\PHPSQL\Iterators;
 
 use ErrorException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\TokenIterator;
+use Addiks\PHPSQL\Iterators\TokenIterator;
 
 class SQLTokenIterator extends TokenIterator
 {

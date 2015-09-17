@@ -12,9 +12,8 @@
 namespace Addiks\PHPSQL\Entity;
 
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Type;
-use Addiks\PHPSQL\Entity\Page\Schema as SchemaPage;
-use Addiks\PHPSQL\Entity;
-use Addiks\PHPSQL\CustomIterator;
+use Addiks\PHPSQL\Entity\Page\SchemaPage as SchemaPage;
+use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 /**
@@ -26,15 +25,26 @@ use Addiks\PHPSQL\Filesystem\FileResourceProxy;
  *
  * To cheaply rename tables, the table-data is saved by the integer table-index, not by name.
  */
-class Schema extends Entity implements SchemaInterface
+class Schema implements SchemaInterface
 {
     
     public function __construct(FileResourceProxy $file)
     {
-        
         $this->schemaIndexFile = $file;
     }
     
+    private $id;
+
+    public function setId($id)
+    {
+        $this->id = (string)$id;
+    }
+
+    public function getId()
+    {
+        return $this->id;
+    }
+
     /**
      * The file containing the schema-index.
      * (Array of Schema-Pages describing views/tables/... )

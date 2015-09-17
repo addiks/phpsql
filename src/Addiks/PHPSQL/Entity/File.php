@@ -11,14 +11,13 @@
 
 namespace Addiks\PHPSQL\Entity;
 
-use Addiks\PHPSQL\Entity;
 use Addiks\PHPSQL\Value\Text\Filepath;
 
 /**
  *
  * @author gerrit
  */
-class File extends Entity
+class File
 {
     
     public function __construct(Filepath $filePath)

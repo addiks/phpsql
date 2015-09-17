@@ -8,7 +8,7 @@
  * @author Gerrit Addiks <gerrit@addiks.de>
  */
 
-namespace Addiks\PHPSQL;
+namespace Addiks\PHPSQL\Iterators;
 
 use Iterator;
 use SeekableIterator;
@@ -16,9 +16,10 @@ use Countable;
 use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Entity\Result\ResultInterface;
-use Addiks\PHPSQL\TableInterface;
+use Addiks\PHPSQL\Table\TableInterface;
 use Addiks\PHPSQL\Entity\ExecutionContext;
-use Addiks\PHPSQL\DataProviderInterface;
+use Addiks\PHPSQL\Iterators\DataProviderInterface;
+use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
 
 class FilteredResourceIterator implements DataProviderInterface, UsesBinaryDataInterface
 {

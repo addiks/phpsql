@@ -9,14 +9,21 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL;
+namespace Addiks\PHPSQL\Iterators;
 
 use ArrayAccess;
 use IteratorIterator;
-use Addiks\PHPSQL\UsesBinaryDataInterface;
+use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
 
 /**
  * Iterator object where every action can be controlled by lambda-functions.
+ *
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * !!!      DEPRECATED: Please do not use this iterator anymore for new code.       !!!
+ * !!!      I want to get rid of it, it produces more problems than it's worth      !!!
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ *
+ * @deprecated
  *
  * Example:
  *

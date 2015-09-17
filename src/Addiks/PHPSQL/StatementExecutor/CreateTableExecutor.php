@@ -12,9 +12,8 @@
 namespace Addiks\PHPSQL\StatementExecutor;
 
 use ErrorException;
-use Addiks\PHPSQL\Table;
 use Addiks\PHPSQL\Value\Enum\Page\Index\ForeignKeyMethod;
-use Addiks\PHPSQL\Entity\Page\Schema\Index;
+use Addiks\PHPSQL\Entity\Page\SchemaPage\Index;
 use Addiks\PHPSQL\Value\Text\Annotation;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
@@ -26,7 +25,7 @@ use Addiks\PHPSQL\Value\Enum\Page\Index\Engine as IndexEngine;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Type;
 use Addiks\PHPSQL\Value\Enum\Page\Index\Type as IndexType;
 use Addiks\PHPSQL\Entity\Schema;
-use Addiks\PHPSQL\Entity\Page\Schema as SchemaPage;
+use Addiks\PHPSQL\Entity\Page\SchemaPage as SchemaPage;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
@@ -35,14 +34,15 @@ use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateTableStatement;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\Entity\Page\ColumnPagePage;
-use Addiks\PHPSQL\Entity\Page\Schema\IndexPage;
+use Addiks\PHPSQL\Entity\Page\SchemaPage\IndexPage;
 use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Filesystem\FilePathes;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Table\TableInterface;
 
 class CreateTableExecutor implements StatementExecutorInterface
 {
@@ -185,7 +185,7 @@ class CreateTableExecutor implements StatementExecutorInterface
             case ($statement->getColumnDefinition() instanceof Select):
                 break;
                 
-            case ($statement->getColumnDefinition() instanceof Table):
+            case ($statement->getColumnDefinition() instanceof TableInterface):
                 break;
         }
         

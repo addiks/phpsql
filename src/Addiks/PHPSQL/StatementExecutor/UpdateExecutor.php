@@ -18,11 +18,11 @@ use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
 use Addiks\PHPSQL\Entity\Job\Statement\UpdateStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
 use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
 use Addiks\PHPSQL\Entity\ExecutionContext;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\UsesBinaryDataInterface;
+use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
 
 class UpdateExecutor implements StatementExecutorInterface
 {
@@ -96,7 +96,7 @@ class UpdateExecutor implements StatementExecutorInterface
         /* @var $condition Value */
         $condition = $statement->getCondition();
         
-        foreach ($tableResource->getIterator() as $rowId => $row) {
+        foreach ($tableResource as $rowId => $row) {
             if ($tableResource instanceof UsesBinaryDataInterface
             &&  $tableResource->usesBinaryData()) {
                 $row = $tableResource->convertDataRowToStringRow($row);

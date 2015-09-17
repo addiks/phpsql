@@ -12,14 +12,13 @@
 namespace Addiks\PHPSQL\Entity\Index;
 
 use ErrorException;
-use Addiks\PHPSQL\Entity;
-use Addiks\PHPSQL\CustomIterator;
+use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
-use Addiks\PHPSQL\Entity\Page\BTree\Node;
+use Addiks\PHPSQL\Entity\Page\BTree\BTreeNodePage;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
-class BTree extends Entity implements \IteratorAggregate, IndexInterface
+class BTree implements \IteratorAggregate, IndexInterface
 {
     
     use BinaryConverterTrait {
@@ -52,7 +51,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         if ($file->getLength()<=1) {
             $file->setData(str_pad("", $keyLength*8, "\0"));
             
-            $rootNode = new Node();
+            $rootNode = new BTreeNodePage();
             $rootNode->setKeyLength($keyLength);
             $rootNode->setForkRate($this->forkRate);
             
@@ -216,7 +215,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     protected function getRowIdByValue($needle)
     {
     
-        /* @var $node Node */
+        /* @var $node BTreeNodePage */
         $node = $this->getRootNode();
     
         do {
@@ -254,7 +253,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             end($nodePath);
             end($nodePathKeys);
             
-            /* @var $node Node */
+            /* @var $node BTreeNodePage */
             $node      = current($nodePath);
             $nodeIndex = current($nodePathKeys);
             
@@ -331,7 +330,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         
         // if we try to split the root-node, create a new root-node
         if ($parentNode===false) {
-            $parentNode = new Node();
+            $parentNode = new BTreeNodePage();
             $parentNode->setKeyLength($this->getKeyLength());
             $parentNode->setForkRate($this->forkRate);
             $parentIndex = $this->writeNode($parentNode);
@@ -348,7 +347,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         
         ### SPLIT NODE
         
-        /* @var $splitNode Node */
+        /* @var $splitNode BTreeNodePage */
         list($middleReference, $middleValue, $middleRowId, $splitNode) = $node->split();
         
         $this->writeNode($node, $nodeIndex);
@@ -395,7 +394,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         ### FIND REMOVE-NODE
         
         while (1) {
-            /* @var $node Node */
+            /* @var $node BTreeNodePage */
             $node      = end($nodePath);
             $nodeIndex = end($nodePathKeys);
             
@@ -431,7 +430,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             
             ### GET LEFT SYMMETRIC CHILD
             
-            /* @var $leftChildNode Node */
+            /* @var $leftChildNode BTreeNodePage */
             $leftChildIndex = $removeReference;
             $leftChildNode = $this->getNode($leftChildIndex);
             $leftSymmetricChildIndex = $leftChildIndex;
@@ -532,13 +531,13 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
             if (is_null(key($nodePathKeys))) {
                 $indexEntity = $this;
                 $keyString = implode(', ', array_keys($nodePath));
-                throw new ErrorException("Node-index to balance '{$this->strdec($nodeIndex)}' not in given node-path as key! ({$keyString})");
+                throw new ErrorException("BTree-Node-index to balance '{$this->strdec($nodeIndex)}' not in given node-path as key! ({$keyString})");
             }
             prev($nodePath);
             prev($nodePathKeys);
         }
         
-        /* @var $node Node */
+        /* @var $node BTreeNodePage */
         $node = $this->getNode($nodeIndex);
         
         if ($node->getLastWrittenIndex()+1 >= ($this->forkRate-1)/2) {
@@ -778,7 +777,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $keyLength = $this->getKeyLength();
         $file = $this->getFile();
         
-        $node = new Node();
+        $node = new BTreeNodePage();
         $node->setKeyLength($keyLength);
         $node->setForkRate($this->forkRate);
         
@@ -826,7 +825,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $file = $this->getFile();
         $seekBefore = $file->tell();
         
-        $node = new Node();
+        $node = new BTreeNodePage();
         $node->setKeyLength($keyLength);
         $node->setForkRate($this->forkRate);
         
@@ -847,7 +846,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         return $node;
     }
     
-    protected function writeNode(Node $node, $index = null)
+    protected function writeNode(BTreeNodePage $node, $index = null)
     {
         
         if ($node->getKeyLength() !== $this->getKeyLength()) {
@@ -883,7 +882,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     protected function deleteNode($index)
     {
         $file = $this->getFile();
-        $node = new Node();
+        $node = new BTreeNodePage();
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
         
@@ -919,7 +918,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $file = $this->getFile();
         $beforeSeek = $file->tell();
         
-        $node = new Node();
+        $node = new BTreeNodePage();
         $node->setKeyLength($keyLength);
         $node->setForkRate($this->forkRate);
         
@@ -965,13 +964,13 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     }
     
     /**
-     * @return Node
+     * @return BTreeNodePage
      */
     protected function getRootNode()
     {
         $node = $this->getNode($this->getRootReference());
         if (is_null($node)) {
-            $node = new Node();
+            $node = new BTreeNodePage();
             $node->setKeyLength($this->getKeyLength());
             $node->setForkRate($this->forkRate);
             $this->setRootReference($this->writeNode($node));
@@ -1002,7 +1001,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     
     protected function pushGarbage($nodeIndex)
     {
-        $node = new Node();
+        $node = new BTreeNodePage();
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
         
@@ -1041,7 +1040,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     
     protected function popGarbage()
     {
-        $node = new Node();
+        $node = new BTreeNodePage();
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
         
@@ -1074,7 +1073,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
     
     protected function hasGarbage()
     {
-        $node = new Node();
+        $node = new BTreeNodePage();
         $node->setKeyLength($this->getKeyLength());
         $node->setForkRate($this->forkRate);
         
@@ -1101,7 +1100,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         
         if ($reference === 0) {
             $file->seek(0, SEEK_END);
-            $node = new Node();
+            $node = new BTreeNodePage();
             $node->setKeyLength($this->getKeyLength());
             $node->setForkRate($this->forkRate);
             
@@ -1508,7 +1507,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $outHandle = fopen("php://output", "a+");
         
         foreach ($this->getNodeIterator() as $nodeIndex => $node) {
-            /* @var $node \Addiks\PHPSQL\Node */
+            /* @var $node BTreeNodePage */
         
             $nodeIndex = str_pad($nodeIndex, $countLength, " ", STR_PAD_LEFT);
             
@@ -1570,7 +1569,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         $referencePool = array($rootReference => $rootReference, $garbageReference => $garbageReference);
         
         foreach ($this->getNodeIterator() as $nodeIndex => $node) {
-            /* @var $node Node */
+            /* @var $node BTreeNodePage */
             
             if ($nodeIndex === $this->getGarbageReference()) {
                 continue;
@@ -1658,7 +1657,7 @@ class BTree extends Entity implements \IteratorAggregate, IndexInterface
         
         foreach ($checkReferences as $nodeIndex) {
             if (!isset($referencePool[$this->decstr($nodeIndex, $this->getKeyLength())])) {
-                throw new ErrorException("Failed self-test! Node {$nodeIndex} is not referenced!");
+                throw new ErrorException("Failed self-test! BTree-Node {$nodeIndex} is not referenced!");
             }
         }
     }

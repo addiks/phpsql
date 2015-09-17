@@ -14,10 +14,10 @@ namespace Addiks\PHPSQL\SqlParser;
 use Addiks\PHPSQL\Value\Enum\Sql\Show\ShowType;
 use Addiks\PHPSQL\Entity\Job\Statement\ShowStatement;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\SQLTokenIterator;
+use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser;
 
-use Addiks\PHPSQL\TokenIterator;
+use Addiks\PHPSQL\Iterators\TokenIterator;
 
 class ShowSqlParser extends SqlParser
 {

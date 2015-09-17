@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL\BehaviourTests;
 
 use PHPUnit_Framework_TestCase;
-use Addiks\PHPSQL\PDO;
+use Addiks\PHPSQL\PDO\PDO;
 
 /**
  * Tests if the USE statement works as intended.

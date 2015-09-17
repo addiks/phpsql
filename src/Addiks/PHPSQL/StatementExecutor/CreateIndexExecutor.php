@@ -16,14 +16,14 @@ use Addiks\PHPSQL\Entity\Exception\Conflict;
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
 use Addiks\PHPSQL\Value\Enum\Page\Index\Engine;
 use Addiks\PHPSQL\Entity\TableSchema;
-use Addiks\PHPSQL\Table;
-use Addiks\PHPSQL\Entity\Page\Schema\Index;
+use Addiks\PHPSQL\Table\TableInterface;
+use Addiks\PHPSQL\Entity\Page\SchemaPage\Index;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\Entity\Result\Temporary;
 use Addiks\PHPSQL\Database;
 use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateIndexStatement;
 use Addiks\PHPSQL\Entity\Job\StatementJob;
-use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Table\TableManager;
 
 class CreateIndexExecutor implements StatementExecutorInterface
 {
@@ -55,7 +55,7 @@ class CreateIndexExecutor implements StatementExecutorInterface
         
         ### WRITE INDEX PAGE
         
-        /* @var $tableResource Table */
+        /* @var $tableResource TableInterface */
         $tableResource = $this->tableManager->getTable(
             $tableSpecifier->getTable(),
             $tableSpecifier->getDatabase()
@@ -106,7 +106,7 @@ class CreateIndexExecutor implements StatementExecutorInterface
         
         ### PHSICALLY BUILD INDEX
         
-        /* @var $tableResource Table */
+        /* @var $tableResource TableInterface */
         $tableResource = $this->tableManager->getIndex(
             $indexPage->getName(),
             $tableSpecifier->getTable(),

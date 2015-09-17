@@ -16,7 +16,7 @@ use Addiks\PHPSQL\Entity\TableSchema;
 use Addiks\PHPSQL\Entity\Schema;
 use Addiks\PHPSQL\Value\Database\Dsn\Internal;
 use Addiks\PHPSQL\Executor;
-use Addiks\PHPSQL\SQLTokenIterator;
+use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 use Addiks\PHPSQL\ValueResolver;
 use Addiks\PHPSQL\SqlParser;
 use Addiks\PHPSQL\Entity\Result\TemporaryResult;
@@ -42,7 +42,7 @@ use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\Part\ColumnDefinitionParser;
 use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
-use Addiks\PHPSQL\TableManager;
+use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\StatementExecutor;
 
 class InternalDatabaseAdapter implements DatabaseAdapterInterface

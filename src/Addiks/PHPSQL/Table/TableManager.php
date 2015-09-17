@@ -9,14 +9,18 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL;
+namespace Addiks\PHPSQL\Table;
 
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Value\Specifier\DatabaseSpecifier;
-use Addiks\PHPSQL\Table;
 use Addiks\PHPSQL\Index;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\Entity\Page\Schema\IndexPage;
+use Addiks\PHPSQL\Entity\Page\SchemaPage\IndexPage;
+use Addiks\PHPSQL\Table\TableInterface;
+use Addiks\PHPSQL\Table\Table;
+use Addiks\PHPSQL\Table\Meta\InformationSchema;
+use Addiks\PHPSQL\Table\Meta\MySQLTable;
+use Addiks\PHPSQL\Table\Meta\InternalIndices;
 
 class TableManager
 {
@@ -53,12 +57,35 @@ class TableManager
         }
         $tableId = "{$schemaId}.{$tableName}";
         if (!isset($this->tables[$tableId])) {
-            $this->tables[$tableId] = new Table(
-                $this->schemaManager,
-                $this->filesystem,
-                $tableName,
-                $schemaId
-            );
+
+            /* @var $table TableInterface */
+            $table = null;
+
+            switch($schemaId) {
+                
+                case SchemaManager::DATABASE_ID_META_INDICES:
+                    $table = new InternalIndices($tableName, $schemaId);
+                    break;
+                    
+                case SchemaManager::DATABASE_ID_META_MYSQL:
+                    $table = new MySQLTable($tableName, $schemaId);
+                    break;
+                    
+                case SchemaManager::DATABASE_ID_META_INFORMATION_SCHEMA:
+                    $table = new InformationSchema($tableName, $schemaId);
+                    break;
+                
+                default:
+                    $table = new Table(
+                        $this->schemaManager,
+                        $this->filesystem,
+                        $tableName,
+                        $schemaId
+                    );
+                    break;
+            }
+
+            $this->tables[$tableId] = $table;
         }
         return $this->tables[$tableId];
     }

@@ -11,12 +11,11 @@
 
 namespace Addiks\PHPSQL\Entity\TableSchema\Meta;
 
-use Addiks\PHPSQL\Entity;
 use ErrorException;
 use Addiks\PHPSQL\Entity\Index\IndexInterface;
 use Addiks\PHPSQL\Entity\SchemaInterface;
 
-class Indicies extends Entity implements IndexInterface
+class Indicies implements IndexInterface
 {
     
     private $databaseSchema;

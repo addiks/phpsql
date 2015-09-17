@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL\Service\TestCase\BareSQL;
 
 use PHPUnit_Framework_TestCase;
-use Addiks\PHPSQL\PDO;
+use Addiks\PHPSQL\PDO\PDO;
 
 /**
  * Tests if CREATE DATABASE statement works as intended.

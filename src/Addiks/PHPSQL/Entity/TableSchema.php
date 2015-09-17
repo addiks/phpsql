@@ -12,13 +12,12 @@
 namespace Addiks\PHPSQL\Entity;
 
 use ArrayIterator;
-use Addiks\PHPSQL\Entity\Page\Schema\IndexPage;
+use Addiks\PHPSQL\Entity\Page\SchemaPage\IndexPage;
 use Addiks\PHPSQL\Entity\Page\ColumnPage;
-use Addiks\PHPSQL\Entity;
-use Addiks\PHPSQL\CustomIterator;
+use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
-class TableSchema extends Entity implements TableSchemaInterface
+class TableSchema implements TableSchemaInterface
 {
 
     private $databaseSchema;
