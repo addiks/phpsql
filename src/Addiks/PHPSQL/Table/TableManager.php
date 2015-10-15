@@ -11,16 +11,24 @@
 
 namespace Addiks\PHPSQL\Table;
 
+use ErrorException;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Value\Specifier\DatabaseSpecifier;
 use Addiks\PHPSQL\Index;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\Entity\Page\SchemaPage\IndexPage;
+use Addiks\PHPSQL\Index\IndexSchema;
 use Addiks\PHPSQL\Table\TableInterface;
 use Addiks\PHPSQL\Table\Table;
 use Addiks\PHPSQL\Table\Meta\InformationSchema;
 use Addiks\PHPSQL\Table\Meta\MySQLTable;
 use Addiks\PHPSQL\Table\Meta\InternalIndices;
+use Addiks\PHPSQL\Table\TableSchemaInterface;
+use Addiks\PHPSQL\Database\DatabaseSchemaPage;
+use Addiks\PHPSQL\Value\Enum\Page\Schema\Engine;
+use Addiks\PHPSQL\Column\ColumnDataInterface;
+use Addiks\PHPSQL\Table\TableFactoryInterface;
+use Addiks\PHPSQL\Column\ColumnDataFactoryInterface;
+use Addiks\PHPSQL\Index\IndexFactory;
 
 class TableManager
 {
@@ -48,6 +56,12 @@ class TableManager
 
     ### TABLES
 
+    protected $metaTables = array(
+        SchemaManager::DATABASE_ID_META_INDICES            => InternalIndices::class,
+        SchemaManager::DATABASE_ID_META_MYSQL              => MySQLTable::class,
+        SchemaManager::DATABASE_ID_META_INFORMATION_SCHEMA => InformationSchema::class
+    );
+
     protected $tables = array();
 
     public function getTable($tableName, $schemaId = null)
@@ -55,38 +69,107 @@ class TableManager
         if (is_null($schemaId)) {
             $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
         }
+
         $tableId = "{$schemaId}.{$tableName}";
         if (!isset($this->tables[$tableId])) {
+            if (isset($this->metaTables[$schemaId])) {
+                $table = $this->metaTables[$schemaId];
 
-            /* @var $table TableInterface */
-            $table = null;
+                if (is_string($table)) {
+                    $table = new $table($tableName, $schemaId);
 
-            switch($schemaId) {
+                    $this->metaTables[$schemaId] = $table;
+                }
+
+            } else {
+                /* @var $databaseSchema DatabaseSchemaInterface */
+                $databaseSchema = $this->schemaManager->getSchema($schemaId);
+
+                $tableSchema = $this->schemaManager->getTableSchema($tableName, $schemaId);
                 
-                case SchemaManager::DATABASE_ID_META_INDICES:
-                    $table = new InternalIndices($tableName, $schemaId);
-                    break;
-                    
-                case SchemaManager::DATABASE_ID_META_MYSQL:
-                    $table = new MySQLTable($tableName, $schemaId);
-                    break;
-                    
-                case SchemaManager::DATABASE_ID_META_INFORMATION_SCHEMA:
-                    $table = new InformationSchema($tableName, $schemaId);
-                    break;
+                $tableIndex = $databaseSchema->getTableIndex($tableName);
+
+                /* @var $databaseSchemaPage DatabaseSchemaPage */
+                $databaseSchemaPage = $databaseSchema->getTablePage($tableIndex, $schemaId);
                 
-                default:
-                    $table = new Table(
-                        $this->schemaManager,
-                        $this->filesystem,
-                        $tableName,
-                        $schemaId
-                    );
-                    break;
+                /* @var $engine Engine */
+                $engine = $databaseSchemaPage->getEngine();
+
+                # TODO: fix up this scattered schema-madness above! That should not be neccessary!
+
+                if (!isset($this->tableFactories[(string)$engine])) {
+                    throw new ErrorException("Missing table-factory for table-engine '{$engine}'!");
+                }
+
+                if (!isset($this->columnDataFactories[(string)$engine])) {
+                    throw new ErrorException("Missing column-data-factory for table-engine '{$engine}'!");
+                }
+
+                /* @var $tableFactory TableFactoryInterface */
+                $tableFactory = $this->tableFactories[(string)$engine];
+
+                /* @var $columnDataFactory  */
+                $columnDataFactory = $this->columnDataFactories[(string)$engine];
+
+                $indexFactory = $this->getIndexFactory();
+
+                /* @var $table TableInterface */
+                $table = $tableFactory->createTable(
+                    $schemaId,
+                    $tableIndex,
+                    $tableSchema,
+                    $columnDataFactory,
+                    $indexFactory
+                );
             }
 
             $this->tables[$tableId] = $table;
         }
+
         return $this->tables[$tableId];
     }
+
+    protected $columnDataFactories;
+
+    public function getColumnDataFactories()
+    {
+        return $this->columnDataFactories;
+    }
+
+    protected $tableFactories;
+
+    public function getTableFactories()
+    {
+        return $this->tableFactories;
+    }
+    
+    public function registerFactories(
+        Engine $engine,
+        TableFactoryInterface $tableFactory,
+        ColumnDataFactoryInterface $columnDataFactory
+    ) {
+        $this->tableFactories[(string)$engine] = $tableFactory;
+        $this->columnDataFactories[(string)$engine] = $columnDataFactory;
+    }
+
+    public function unregisterFactories(Engine $engine)
+    {
+        if (isset($this->tableFactories[(string)$engine])) {
+            unset($this->tableFactories[(string)$engine]);
+        }
+        if (isset($this->columnDataFactories[(string)$engine])) {
+            unset($this->columnDataFactories[(string)$engine]);
+        }
+    }
+
+    protected $indexFactory;
+
+    public function getIndexFactory()
+    {
+        if (is_null($this->indexFactory)) {
+            $this->indexFactory = new IndexFactory($this->filesystem);
+        }
+        return $this->indexFactory;
+    }
+
 }

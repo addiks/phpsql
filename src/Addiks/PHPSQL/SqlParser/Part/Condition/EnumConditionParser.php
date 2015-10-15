@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL\SqlParser\Part\Condition;
 
 use Addiks\PHPSQL\SqlParser\Part;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
@@ -59,18 +59,18 @@ class EnumConditionParser extends Part
         $enumConditionJob->setIsNegated($tokens->isTokenNum(SqlToken::T_NOT(), TokenIterator::PREVIOUS));
         
         if (!$tokens->seekTokenText('(')) {
-            throw new MalformedSql("Missing beginning parenthesis for IN condition!", $tokens);
+            throw new MalformedSqlException("Missing beginning parenthesis for IN condition!", $tokens);
         }
         
         do {
             if (!$this->valueParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing valid value in value-listing for IN condition!", $tokens);
+                throw new MalformedSqlException("Missing valid value in value-listing for IN condition!", $tokens);
             }
             $enumConditionJob->addValue($this->valueParser->convertSqlToJob($tokens));
         } while ($tokens->seekTokenText(','));
         
         if (!$tokens->seekTokenText(')')) {
-            throw new MalformedSql("Missing ending parenthesis for IN condition!", $tokens);
+            throw new MalformedSqlException("Missing ending parenthesis for IN condition!", $tokens);
         }
         
         return $enumConditionJob;

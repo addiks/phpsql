@@ -16,14 +16,14 @@ use Addiks\PHPSQL\SqlParser\SelectSqlParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
 use Addiks\PHPSQL\SqlParser\Part;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Iterators\TokenIterator;
-use Addiks\PHPSQL\Entity\Job\Part\Join\TableJoin;
+use Addiks\PHPSQL\Job\Part\Join\TableJoin;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;
-use Addiks\PHPSQL\Entity\Job\Part\ParenthesisPart;
-use Addiks\PHPSQL\Entity\Job\Part\Join;
-use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
+use Addiks\PHPSQL\Job\Part\ParenthesisPart;
+use Addiks\PHPSQL\Job\Part\Join;
+use Addiks\PHPSQL\Job\Statement\SelectStatement;
 
 class JoinDefinitionParser extends Part
 {
@@ -119,20 +119,20 @@ class JoinDefinitionParser extends Part
             
             if ($tokens->seekTokenNum(SqlToken::T_ON())) {
                 if (!$this->valueParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing valid condition after ON for JOIN!", $tokens);
+                    throw new MalformedSqlException("Missing valid condition after ON for JOIN!", $tokens);
                 }
                 $tableJoin->setCondition($this->valueParser->convertSqlToJob($tokens));
                 
             } elseif ($tokens->seekTokenNum(SqlToken::T_USING())) {
                 if ($tokens->seekTokenText('(')) {
-                    throw new MalformedSql("Missing begin parenthesis after USING for JOIN!", $tokens);
+                    throw new MalformedSqlException("Missing begin parenthesis after USING for JOIN!", $tokens);
                 }
                 if (!$this->columnParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing valid column specifier after USING for JOIN!", $tokens);
+                    throw new MalformedSqlException("Missing valid column specifier after USING for JOIN!", $tokens);
                 }
                 $tableJoin->setUsingColumnCondition($this->columnParser->convertSqlToJob($tokens));
                 if ($tokens->seekTokenText(')')) {
-                    throw new MalformedSql("Missing ending parenthesis after USING for JOIN!", $tokens);
+                    throw new MalformedSqlException("Missing ending parenthesis after USING for JOIN!", $tokens);
                 }
             }
             
@@ -192,7 +192,7 @@ class JoinDefinitionParser extends Part
                     return $joinData;
                     
                 default:
-                    throw new MalformedSql("Invalid JOIN definition!");
+                    throw new MalformedSqlException("Invalid JOIN definition!");
             }
         }
     }
@@ -228,12 +228,12 @@ class JoinDefinitionParser extends Part
                     $parenthesis = $parenthesisJob; // return original parenthesis for correct alias
                     
                 } else {
-                    throw new MalformedSql("Parenthesis in JOIN condition has to contain SELECT statement!", $tokens);
+                    throw new MalformedSqlException("Parenthesis in JOIN condition has to contain SELECT statement!", $tokens);
                 }
                 break;
             
             default:
-                throw new MalformedSql("Missing valid table-source in JOIN defintion!", $tokens);
+                throw new MalformedSqlException("Missing valid table-source in JOIN defintion!", $tokens);
         }
 
         return $parenthesis;

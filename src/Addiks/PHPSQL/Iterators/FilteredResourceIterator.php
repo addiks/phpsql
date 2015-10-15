@@ -13,11 +13,11 @@ namespace Addiks\PHPSQL\Iterators;
 use Iterator;
 use SeekableIterator;
 use Countable;
-use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
-use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\Entity\Result\ResultInterface;
+use Addiks\PHPSQL\Job\Part\ValuePart;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
+use Addiks\PHPSQL\Result\ResultInterface;
 use Addiks\PHPSQL\Table\TableInterface;
-use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Iterators\DataProviderInterface;
 use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
 

@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\SqlParser;
 
-use Addiks\PHPSQL\Entity\Job\Part\ConditionJob;
+use Addiks\PHPSQL\Job\Part\ConditionJob;
 use Addiks\PHPSQL\SqlParser\Part\FunctionParser;
 use Addiks\PHPSQL\SqlParser\Part\Condition;
 use Addiks\PHPSQL\Value\Enum\Sql\Select\SpecialFlags;
@@ -21,9 +21,9 @@ use Addiks\PHPSQL\SqlParser\Part\JoinDefinition;
 use Addiks\Analyser\Service\TokenParser\Expression\FunctionCallParser;
 use Addiks\PHPSQL\SqlParser\Part\Parenthesis;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
-use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
-use Addiks\PHPSQL\SqlParser;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Job\Statement\SelectStatement;
+use Addiks\PHPSQL\SqlParser\SqlParser;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 
@@ -31,7 +31,7 @@ use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;
 use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\JoinDefinitionParser;
-use Addiks\PHPSQL\Entity\Job\Part\GroupingDefinition;
+use Addiks\PHPSQL\Job\Part\GroupingDefinition;
 
 /**
  * This class converts a tokenized sql-select-statement into an job-entity.
@@ -192,10 +192,10 @@ class SelectSqlParser extends SqlParser
                         break;
                         
                     default:
-                        throw new MalformedSql("Non-column-sql found in column-part of select!", $tokens);
+                        throw new MalformedSqlException("Non-column-sql found in column-part of select!", $tokens);
                 }
-            } catch (MalformedSql $exception) {
-                throw new MalformedSql($exception->getMessage(), $tokens);
+            } catch (MalformedSqlException $exception) {
+                throw new MalformedSqlException($exception->getMessage(), $tokens);
             }
         } while ($tokens->seekTokenText(','));
         
@@ -203,7 +203,7 @@ class SelectSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_FROM())) {
             if (!$this->joinParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing valid join definition after FROM in SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing valid join definition after FROM in SELECT statement!", $tokens);
             }
             $entitySelect->setJoinDefinition($this->joinParser->convertSqlToJob($tokens));
         }
@@ -212,7 +212,7 @@ class SelectSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_WHERE())) {
             if (!$this->valueParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing condition for WHERE clause in SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing condition for WHERE clause in SELECT statement!", $tokens);
             }
             
             $entitySelect->setCondition($this->valueParser->convertSqlToJob($tokens));
@@ -222,13 +222,13 @@ class SelectSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_GROUP())) {
             if (!$tokens->seekTokenNum(SqlToken::T_BY())) {
-                throw new MalformedSql("Missing BY after GROUP in SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing BY after GROUP in SELECT statement!", $tokens);
             }
             do {
                 $groupingDefinition = new GroupingDefinition();
 
                 if (!$this->columnParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Invalid grouping value in SELECT statement!!", $tokens);
+                    throw new MalformedSqlException("Invalid grouping value in SELECT statement!!", $tokens);
                 }
 
                 $groupingDefinition->setValue($this->columnParser->convertSqlToJob($tokens));
@@ -249,7 +249,7 @@ class SelectSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_HAVING())) {
             if (!$this->valueParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing condition for WHERE clause in SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing condition for WHERE clause in SELECT statement!", $tokens);
             }
                 
             $condition = new ConditionJob();
@@ -262,11 +262,11 @@ class SelectSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_ORDER())) {
             if (!$tokens->seekTokenNum(SqlToken::T_BY())) {
-                throw new MalformedSql("Missing BY after ORDER on SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing BY after ORDER on SELECT statement!", $tokens);
             }
             do {
                 if (!$this->valueParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing value for ORDER BY part on SELECT statement!", $tokens);
+                    throw new MalformedSqlException("Missing value for ORDER BY part on SELECT statement!", $tokens);
                 }
                 
                 $orderValue = $this->valueParser->convertSqlToJob($tokens);
@@ -285,12 +285,12 @@ class SelectSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_LIMIT())) {
             if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                throw new MalformedSql("Missing offset number for LIMIT part in SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing offset number for LIMIT part in SELECT statement!", $tokens);
             }
             $entitySelect->setLimitOffset((int)$tokens->getCurrentTokenString());
             if ($tokens->seekTokenText(',')) {
                 if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                    throw new MalformedSql("Missing length number for LIMIT part in SELECT statement!", $tokens);
+                    throw new MalformedSqlException("Missing length number for LIMIT part in SELECT statement!", $tokens);
                 }
                 $entitySelect->setLimitRowCount((int)$tokens->getCurrentTokenString());
             }
@@ -300,7 +300,7 @@ class SelectSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_PROCEDURE())) {
             if (!$functionParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing valid procedure specifier after PROCEDURE!", $tokens);
+                throw new MalformedSqlException("Missing valid procedure specifier after PROCEDURE!", $tokens);
             }
             $entitySelect->setProcedure($functionParser->convertSqlToJob($tokens));
         }
@@ -309,10 +309,10 @@ class SelectSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_INTO())) {
             if (!$tokens->seekTokenNum(SqlToken::T_OUTFILE()) && !$tokens->seekTokenNum(SqlToken::T_DUMPFILE())) {
-                throw new MalformedSql("Missing OUTFILE or DUMPFILE after INTO!", $tokens);
+                throw new MalformedSqlException("Missing OUTFILE or DUMPFILE after INTO!", $tokens);
             }
             if (!$tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING)) {
-                throw new MalformedSql("Missing escaped string after INTO OUTFILE!");
+                throw new MalformedSqlException("Missing escaped string after INTO OUTFILE!");
             }
             $entitySelect->setIntoOutFile($tokens->seekTokenText($searchToken));
         }
@@ -321,7 +321,7 @@ class SelectSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_FOR())) {
             if (!$tokens->seekTokenNum(SqlToken::T_UPDATE())) {
-                throw new MalformedSql("Missing UPDATE after FOR on FOR UPDATE parameter in SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing UPDATE after FOR on FOR UPDATE parameter in SELECT statement!", $tokens);
             }
             $entitySelect->setIsForUpdate(true);
         }
@@ -330,13 +330,13 @@ class SelectSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_LOCK())) {
             if (!$tokens->seekTokenNum(SqlToken::T_IN())) {
-                throw new MalformedSql("Missing UPDATE after FOR on FOR UPDATE parameter in SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing UPDATE after FOR on FOR UPDATE parameter in SELECT statement!", $tokens);
             }
             if (!$tokens->seekTokenNum(SqlToken::T_SHARE())) {
-                throw new MalformedSql("Missing UPDATE after FOR on FOR UPDATE parameter in SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing UPDATE after FOR on FOR UPDATE parameter in SELECT statement!", $tokens);
             }
             if (!$tokens->seekTokenNum(SqlToken::T_MODE())) {
-                throw new MalformedSql("Missing UPDATE after FOR on FOR UPDATE parameter in SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing UPDATE after FOR on FOR UPDATE parameter in SELECT statement!", $tokens);
             }
             $entitySelect->setIsLockInShareMode(true);
         }
@@ -349,18 +349,18 @@ class SelectSqlParser extends SqlParser
             $isUnionAll      = $isUnionAll || $tokens->seekTokenNum(SqlToken::T_ALL());
             
             if ($isUnionAll && $isUnionDistinct) {
-                throw new MalformedSql("UNION cannot be ALL and DISTINCT at the same time!", $tokens);
+                throw new MalformedSqlException("UNION cannot be ALL and DISTINCT at the same time!", $tokens);
             }
             
             $isUnionInParenthesis = $tokens->seekTokenText('(');
             
             if (!$this->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing following SELECT statement after UNION in SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing following SELECT statement after UNION in SELECT statement!", $tokens);
             }
             $entitySelect->setUnionSelect($this->convertSqlToJob($tokens), $isUnionDistinct);
             
             if ($isUnionInParenthesis && !$tokens->seekTokenText(')')) {
-                throw new MalformedSql("Missing ending parenthesis after UNION in SELECT statement!", $tokens);
+                throw new MalformedSqlException("Missing ending parenthesis after UNION in SELECT statement!", $tokens);
             }
         }
         

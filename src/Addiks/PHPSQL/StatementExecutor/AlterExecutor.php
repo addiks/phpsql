@@ -12,17 +12,17 @@
 namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Value\Enum\Sql\Alter\DataChange\AlterAttributeType;
-use Addiks\PHPSQL\Entity\Result\Temporary;
-use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Result\Temporary;
+use Addiks\PHPSQL\Database\Database;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
-use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
 use Addiks\PHPSQL\Table\TableManager;
-use Addiks\PHPSQL\Entity\Result\TemporaryResult;
-use Addiks\PHPSQL\Entity\Job\Statement\AlterStatement;
-use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Result\TemporaryResult;
+use Addiks\PHPSQL\Job\Statement\AlterStatement;
+use Addiks\PHPSQL\Job\StatementJob;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\Entity\ExecutionContext;
-use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
+use Addiks\PHPSQL\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Entity\Page\SchemaPage as SchemaPage;
 use Addiks\PHPSQL\Table\TableInterface;
 
@@ -69,14 +69,14 @@ class AlterExecutor implements StatementExecutorInterface
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTable();
         
-        /* @var $tableResource TableInterface */
-        $tableResource = $this->tableManager->getTable(
+        /* @var $table TableInterface */
+        $table = $this->tableManager->getTable(
             $tableSpecifier->getTable(),
             $tableSpecifier->getDatabase()
         );
 
         /* @var $tableSchema TableSchema */
-        $tableSchema = $tableResource->getTableSchema();
+        $tableSchema = $table->getTableSchema();
         
         foreach ($statement->getDataChanges() as $dataChange) {
             /* @var $dataChange DataChange */
@@ -87,7 +87,7 @@ class AlterExecutor implements StatementExecutorInterface
                     /* @var $columnDefinition ColumnDefinition */
                     $columnDefinition = $dataChange->getSubject();
                     
-                    $tableResource->addColumnDefinition($columnDefinition, $executionContext);
+                    $table->addColumnDefinition($columnDefinition, $executionContext);
                     break;
                     
                 case AlterAttributeType::DROP():
@@ -105,53 +105,53 @@ class AlterExecutor implements StatementExecutorInterface
                     /* @var $columnDefinition ColumnDefinition */
                     $columnDefinition = $dataChange->getSubject();
                     
-                    $tableResource->modifyColumnDefinition($columnDefinition, $executionContext);
+                    $table->modifyColumnDefinition($columnDefinition, $executionContext);
 
                     if ($dataChange->getAttribute() === AlterAttributeType::SET_FIRST()) {
                         $subjectColumnIndex = $tableSchema->getColumnIndex($columnDefinition->getName());
-                        $subjectColumnPage = $tableSchema->getColumn($subjectColumnIndex);
-                        $oldIndex = $subjectColumnPage->getIndex();
+                        $subjectColumnSchema = $tableSchema->getColumn($subjectColumnIndex);
+                        $oldIndex = $subjectColumnSchema->getIndex();
                         foreach ($tableSchema->getColumnIterator() as $columnIndex => $columnPage) {
                             if ($columnPage->getIndex() < $oldIndex) {
                                 $columnPage->setIndex($columnPage->getIndex()+1);
                                 $tableSchema->writeColumn($columnIndex, $columnPage);
                             }
                         }
-                        $subjectColumnPage->setIndex(0);
-                        $tableSchema->writeColumn($subjectColumnIndex, $subjectColumnPage);
+                        $subjectColumnSchema->setIndex(0);
+                        $tableSchema->writeColumn($subjectColumnIndex, $subjectColumnSchema);
 
                     } elseif($dataChange->getAttribute() === AlterAttributeType::SET_AFTER()) {
                         /* @var $afterColumn ColumnSpecifier */
                         $afterColumn = $dataChange->getValue();
 
                         $afterColumnIndex = $tableSchema->getColumnIndex($afterColumn->getColumn());
-                        $afterColumnPage = $tableSchema->getColumn($afterColumnIndex);
+                        $afterColumnSchema = $tableSchema->getColumn($afterColumnIndex);
                         $subjectColumnIndex = $tableSchema->getColumnIndex($columnDefinition->getName());
-                        $subjectColumnPage = $tableSchema->getColumn($subjectColumnIndex);
+                        $subjectColumnSchema = $tableSchema->getColumn($subjectColumnIndex);
 
-                        if ($afterColumnPage->getIndex() < $subjectColumnPage->getIndex()) {
+                        if ($afterColumnSchema->getIndex() < $subjectColumnSchema->getIndex()) {
                             foreach ($tableSchema->getColumnIterator() as $columnIndex => $columnPage) {
-                                if ($columnPage->getIndex() > $afterColumnPage->getIndex()
-                                &&  $columnPage->getIndex() < $subjectColumnPage->getIndex()) {
+                                if ($columnPage->getIndex() > $afterColumnSchema->getIndex()
+                                &&  $columnPage->getIndex() < $subjectColumnSchema->getIndex()) {
                                     $columnPage->setIndex($columnPage->getIndex()+1);
                                     $tableSchema->writeColumn($columnIndex, $columnPage);
                                 }
                             }
-                            $subjectColumnPage->getIndex($afterColumnPage->getIndex() + 1);
-                            $tableSchema->writeColumn($subjectColumnIndex, $subjectColumnPage);
+                            $subjectColumnSchema->getIndex($afterColumnSchema->getIndex() + 1);
+                            $tableSchema->writeColumn($subjectColumnIndex, $subjectColumnSchema);
 
                         } else {
                             foreach ($tableSchema->getColumnIterator() as $columnIndex => $columnPage) {
-                                if ($columnPage->getIndex() > $afterColumnPage->getIndex()
-                                &&  $columnPage->getIndex() < $subjectColumnPage->getIndex()) {
+                                if ($columnPage->getIndex() > $afterColumnSchema->getIndex()
+                                &&  $columnPage->getIndex() < $subjectColumnSchema->getIndex()) {
                                     $columnPage->setIndex($columnPage->getIndex()-1);
                                     $tableSchema->writeColumn($columnIndex, $columnPage);
                                 }
                             }
-                            $subjectColumnPage->setIndex($afterColumnPage->getIndex());
-                            $tableSchema->writeColumn($subjectColumnIndex, $subjectColumnPage);
-                            $afterColumnPage->setIndex($afterColumnPage->getIndex() - 1);
-                            $tableSchema->writeColumn($afterColumnPage, $afterColumnPage);
+                            $subjectColumnSchema->setIndex($afterColumnSchema->getIndex());
+                            $tableSchema->writeColumn($subjectColumnIndex, $subjectColumnSchema);
+                            $afterColumnSchema->setIndex($afterColumnSchema->getIndex() - 1);
+                            $tableSchema->writeColumn($afterColumnSchema, $afterColumnSchema);
                         }
                     }
                     break;
@@ -159,7 +159,7 @@ class AlterExecutor implements StatementExecutorInterface
                 case AlterAttributeType::RENAME():
                     $databaseSchema = $this->schemaManager->getSchema($tableSpecifier->getDatabase());
                     /* @var $tablePage SchemaPage */
-                    $tableIndex = $databaseSchema->getTableIndex($tableResource->getTableName());
+                    $tableIndex = $databaseSchema->getTableIndex($tableSpecifier->getTable());
                     $tablePage = $databaseSchema->getTablePage($tableIndex);
                     $tablePage->setName($dataChange->getValue());
                     $databaseSchema->registerTableSchema($tablePage, $tableIndex);

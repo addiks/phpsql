@@ -12,7 +12,7 @@ namespace Addiks\PHPSQL\BehaviourTests;
 
 use PHPUnit_Framework_TestCase;
 use Addiks\PHPSQL\PDO\PDO;
-use Addiks\PHPSQL\ResultWriter;
+use Addiks\PHPSQL\Result\ResultWriter;
 
 class DescribeTest extends PHPUnit_Framework_TestCase
 {
@@ -34,7 +34,6 @@ class DescribeTest extends PHPUnit_Framework_TestCase
 
     /**
      * @group behaviour.describe
-     * @group DEV2
      */
     public function testDescribe()
     {

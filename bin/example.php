@@ -9,12 +9,9 @@
  * @package Addiks
  */
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
-use Addiks\PHPSQL\PDO;
+use Addiks\PHPSQL\PDO\PDO;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
-use Addiks\PHPSQL\ResultWriter;
+use Addiks\PHPSQL\Result\ResultWriter;
 
 require_once(dirname(__FILE__)."/bootstrap.php");
 

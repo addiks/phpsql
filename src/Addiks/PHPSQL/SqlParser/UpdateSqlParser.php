@@ -13,15 +13,15 @@ namespace Addiks\PHPSQL\SqlParser;
 
 use Addiks\PHPSQL\SqlParser\Part\FunctionParser;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
-use Addiks\PHPSQL\Entity\Job\Statement\UpdateStatement;
+use Addiks\PHPSQL\Job\Statement\UpdateStatement;
 use Addiks\PHPSQL\Iterators\TokenIterator;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\SqlParser\SqlParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
-use Addiks\PHPSQL\Entity\Job\DataChange\UpdateDataChange;
+use Addiks\PHPSQL\Job\DataChange\UpdateDataChange;
 
 class UpdateSqlParser extends SqlParser
 {
@@ -90,27 +90,27 @@ class UpdateSqlParser extends SqlParser
         
         do {
             if (!$this->tableParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing table specifier in UPDATE statement!", $tokens);
+                throw new MalformedSqlException("Missing table specifier in UPDATE statement!", $tokens);
             }
             $updateJob->addTable($this->tableParser->convertSqlToJob($tokens));
         } while ($tokens->seekTokenText(','));
         
         if (!$tokens->seekTokenNum(SqlToken::T_SET())) {
-            throw new MalformedSql("Missing SET after table specifier in UPDATE statement!", $tokens);
+            throw new MalformedSqlException("Missing SET after table specifier in UPDATE statement!", $tokens);
         }
         
         do {
             if (!$this->columnParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing column specifier for SET part in UPDATE statement!", $tokens);
+                throw new MalformedSqlException("Missing column specifier for SET part in UPDATE statement!", $tokens);
             }
             $dataChange->setColumn($this->columnParser->convertSqlToJob($tokens));
             
             if (!$tokens->seekTokenText('=')) {
-                throw new MalformedSql("Missing '=' on SET part in UPDATE statement!", $tokens);
+                throw new MalformedSqlException("Missing '=' on SET part in UPDATE statement!", $tokens);
             }
             
             if (!$this->valueParser->canParseTokens($tokens)) {
-                throw new MalformedSql("MIssing valid value on SET part in UPDATE statement!", $tokens);
+                throw new MalformedSqlException("MIssing valid value on SET part in UPDATE statement!", $tokens);
             }
             
             $dataChange->setValue($this->valueParser->convertSqlToJob($tokens));
@@ -120,7 +120,7 @@ class UpdateSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_WHERE())) {
             if (!$this->valueParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing condition for WHERE clause in UPDATE statement!", $tokens);
+                throw new MalformedSqlException("Missing condition for WHERE clause in UPDATE statement!", $tokens);
             }
                 
             $updateJob->setCondition($this->valueParser->convertSqlToJob($tokens));
@@ -129,10 +129,10 @@ class UpdateSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_ORDER())) {
             if (!$tokens->seekTokenNum(SqlToken::T_BY())) {
-                throw new MalformedSql("Missing BY after ORDER on UPDATE statement!", $tokens);
+                throw new MalformedSqlException("Missing BY after ORDER on UPDATE statement!", $tokens);
             }
             if (!$this->columnParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing column specifier for ORDER BY part on UPDATE statement!", $tokens);
+                throw new MalformedSqlException("Missing column specifier for ORDER BY part on UPDATE statement!", $tokens);
             }
             $updateJob->setOrderColumn($this->columnParser->convertSqlToJob($tokens));
             
@@ -146,12 +146,12 @@ class UpdateSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_LIMIT())) {
             if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                throw new MalformedSql("Missing offset number for LIMIT part in UPDATE statement!", $tokens);
+                throw new MalformedSqlException("Missing offset number for LIMIT part in UPDATE statement!", $tokens);
             }
             $updateJob->setLimitOffset((int)$tokens->getCurrentTokenString());
             if ($tokens->seekTokenText(',')) {
                 if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                    throw new MalformedSql("Missing length number for LIMIT part in UPDATE statement!", $tokens);
+                    throw new MalformedSqlException("Missing length number for LIMIT part in UPDATE statement!", $tokens);
                 }
                 $updateJob->setLimitRowCount((int)$tokens->getCurrentTokenString());
             }

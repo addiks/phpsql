@@ -15,13 +15,13 @@ use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
 use Addiks\PHPSQL\SqlParser\Part\FunctionParser;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
-use Addiks\PHPSQL\Entity\Job\Statement\InsertStatement;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Job\Statement\InsertStatement;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
-use Addiks\PHPSQL\Entity\Job\DataChange\InsertDataChange;
+use Addiks\PHPSQL\SqlParser\SqlParser;
+use Addiks\PHPSQL\Job\DataChange\InsertDataChange;
 
 class InsertSqlParser extends SqlParser
 {
@@ -111,30 +111,30 @@ class InsertSqlParser extends SqlParser
         }
         
         if (!$tokens->seekTokenNum(SqlToken::T_INTO())) {
-            throw new MalformedSql("Missing INTO after INSERT for INSERT INTO statement!", $tokens);
+            throw new MalformedSqlException("Missing INTO after INSERT for INSERT INTO statement!", $tokens);
         }
         
         if (!$this->tableParser->canParseTokens($tokens)) {
-            throw new MalformedSql("Missing table-specifier for INSERT INTO statement!", $tokens);
+            throw new MalformedSqlException("Missing table-specifier for INSERT INTO statement!", $tokens);
         }
         $insertJob->setTable($this->tableParser->convertSqlToJob($tokens));
         
         if ($tokens->seekTokenText('(')) {
             do {
                 if (!$this->columnParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing valid column name in column selection for INSERT INTO statement!", $tokens);
+                    throw new MalformedSqlException("Missing valid column name in column selection for INSERT INTO statement!", $tokens);
                 }
                 $insertJob->addColumnSelection($this->columnParser->convertSqlToJob($tokens));
             } while ($tokens->seekTokenText(','));
             
             if (!$tokens->seekTokenText(')')) {
-                throw new MalformedSql("Missing closing parenthesis after column-selection for INSERT INTO statement!");
+                throw new MalformedSqlException("Missing closing parenthesis after column-selection for INSERT INTO statement!");
             }
             
             if ($tokens->seekTokenNum(SqlToken::T_VALUES())) {
                 do {
                     if (!$tokens->seekTokenText('(')) {
-                        throw new MalformedSql("Missing begin parenthesis in value definiton for INSERT INTO statement!", $tokens);
+                        throw new MalformedSqlException("Missing begin parenthesis in value definiton for INSERT INTO statement!", $tokens);
                     }
                     $dataRow = array();
                     do {
@@ -145,11 +145,11 @@ class InsertSqlParser extends SqlParser
                                 break;
                             
                             default:
-                                throw new MalformedSql("Invalid value in value-defintion for INSERT INTO statement!", $tokens);
+                                throw new MalformedSqlException("Invalid value in value-defintion for INSERT INTO statement!", $tokens);
                         }
                     } while ($tokens->seekTokenText(','));
                     if (!$tokens->seekTokenText(')')) {
-                        throw new MalformedSql("Missing ending parenthesis in value definiton for INSERT INTO statement!", $tokens);
+                        throw new MalformedSqlException("Missing ending parenthesis in value definiton for INSERT INTO statement!", $tokens);
                     }
                     $insertJob->addDataSourceValuesRow($dataRow);
                 } while ($tokens->seekTokenText(','));
@@ -158,24 +158,24 @@ class InsertSqlParser extends SqlParser
                 $insertJob->setDataSourceSelect($this->selectParser->convertSqlToJob($tokens));
                 
             } else {
-                throw new MalformedSql("Invalid data-source-definiton (VALUES or SELECT) in INSERT INTO statement!", $tokens);
+                throw new MalformedSqlException("Invalid data-source-definiton (VALUES or SELECT) in INSERT INTO statement!", $tokens);
             }
             
         } elseif ($tokens->seekTokenNum(SqlToken::T_SET())) {
             do {
                 if (!$this->columnParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing column specifier for INSERT INTO SET statement!", $tokens);
+                    throw new MalformedSqlException("Missing column specifier for INSERT INTO SET statement!", $tokens);
                 }
                 $dataChange->setColumn($this->columnParser->convertSqlToJob($tokens));
                 if (!$tokens->seekTokenText('=')) {
-                    throw new MalformedSql("Missing '=' in INSERT INTO SET statement!", $tokens);
+                    throw new MalformedSqlException("Missing '=' in INSERT INTO SET statement!", $tokens);
                 }
                 switch(true){
                     case $this->valueParser->canParseTokens($tokens):
                         $dataChange->setValue($this->valueParser->convertSqlToJob($tokens));
                         break;
                     default:
-                        throw new MalformedSql("Invalid value for INSERT INTO SET statement!", $tokens);
+                        throw new MalformedSqlException("Invalid value for INSERT INTO SET statement!", $tokens);
                 }
                 $insertJob->addColumnSetValue(clone $dataChange);
             } while ($tokens->seekTokenText(','));
@@ -184,34 +184,34 @@ class InsertSqlParser extends SqlParser
             $insertJob->setDataSourceSelect($this->selectParser->convertSqlToJob($tokens));
             
         } else {
-            throw new MalformedSql("Invalid column-selection for INSERT INTO statement!", $tokens);
+            throw new MalformedSqlException("Invalid column-selection for INSERT INTO statement!", $tokens);
         }
         
         if ($tokens->seekTokenNum(SqlToken::T_ON())) {
             if (!$tokens->seekTokenNum(SqlToken::T_DUPLICATE())) {
-                throw new MalformedSql("Missing DUPLICATE in INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
+                throw new MalformedSqlException("Missing DUPLICATE in INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
             }
             if (!$tokens->seekTokenNum(SqlToken::T_KEY())) {
-                throw new MalformedSql("Missing KEY in INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
+                throw new MalformedSqlException("Missing KEY in INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
             }
             if (!$tokens->seekTokenNum(SqlToken::T_UPDATE())) {
-                throw new MalformedSql("Missing UPDATE in INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
+                throw new MalformedSqlException("Missing UPDATE in INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
             }
             
             do {
                 if (!$this->columnParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing column specifier for INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
+                    throw new MalformedSqlException("Missing column specifier for INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
                 }
                 $dataChange->setColumn($this->columnParser->convertSqlToJob($tokens));
                 if (!$tokens->seekTokenText('=')) {
-                    throw new MalformedSql("Missing '=' in INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
+                    throw new MalformedSqlException("Missing '=' in INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
                 }
                 switch(true){
                     case $valueParser->canParseTokens($tokens):
                         $dataChange->setValue($valueParser->convertSqlToJob($tokens));
                         break;
                     default:
-                        throw new MalformedSql("Invalid value for INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
+                        throw new MalformedSqlException("Invalid value for INSERT INTO ON DUPLICATE KEY UPDATE statement!", $tokens);
                 }
                 $insertJob->addOnDuplicateDataChange(clone $dataChange);
             } while ($tokens->seekTokenText(','));

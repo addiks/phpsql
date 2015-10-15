@@ -15,34 +15,34 @@ use ErrorException;
 use Addiks\PHPSQL\Value\Enum\Page\Index\ForeignKeyMethod;
 use Addiks\PHPSQL\Entity\Page\SchemaPage\Index;
 use Addiks\PHPSQL\Value\Text\Annotation;
-use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
-use Addiks\PHPSQL\Entity\TableSchema;
+use Addiks\PHPSQL\Table\TableSchema;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\InsertMethod;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\RowFormat;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Engine;
-use Addiks\PHPSQL\Value\Enum\Page\Index\Engine as IndexEngine;
+use Addiks\PHPSQL\Value\Enum\Page\Index\IndexEngine;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Type;
 use Addiks\PHPSQL\Value\Enum\Page\Index\Type as IndexType;
 use Addiks\PHPSQL\Entity\Schema;
-use Addiks\PHPSQL\Entity\Page\SchemaPage as SchemaPage;
 use Addiks\PHPSQL\Executor;
-use Addiks\PHPSQL\Entity\Result\Temporary;
-use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Result\Temporary;
+use Addiks\PHPSQL\Database\Database;
 use Addiks\PHPSQL\Index as IndexResource;
-use Addiks\PHPSQL\Entity\Result\TemporaryResult;
-use Addiks\PHPSQL\Entity\Job\StatementJob;
-use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateTableStatement;
+use Addiks\PHPSQL\Result\TemporaryResult;
+use Addiks\PHPSQL\Job\StatementJob;
+use Addiks\PHPSQL\Job\Statement\Create\CreateTableStatement;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Table\TableManager;
-use Addiks\PHPSQL\Entity\Page\ColumnPagePage;
-use Addiks\PHPSQL\Entity\Page\SchemaPage\IndexPage;
-use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
+use Addiks\PHPSQL\Entity\Page\ColumnSchemaPage;
+use Addiks\PHPSQL\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Filesystem\FilePathes;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
-use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Table\TableInterface;
+use Addiks\PHPSQL\Database\DatabaseSchemaPage;
+use Addiks\PHPSQL\Index\IndexSchema;
+use Addiks\PHPSQL\Column\ColumnSchema;
 
 class CreateTableExecutor implements StatementExecutorInterface
 {
@@ -95,7 +95,7 @@ class CreateTableExecutor implements StatementExecutorInterface
         
         $tableName = $this->valueResolver->resolveValue($statement->getName(), $context);
 
-        $schemaPage = new SchemaPage();
+        $schemaPage = new DatabaseSchemaPage();
         $schemaPage->setName($tableName);
         $schemaPage->setType(Type::TABLE());
         $schemaPage->setEngine(Engine::factory($statement->getEngine()->getName()));
@@ -121,7 +121,7 @@ class CreateTableExecutor implements StatementExecutorInterface
                 foreach ($statement->getColumnDefinition() as $name => $column) {
                     /* @var $column ColumnDefinition */
                     
-                    $columnPage = new ColumnPage();
+                    $columnPage = new ColumnSchema();
                     $columnPage->setName($name);
                     $columnPage->setDataType(DataType::factory($column->getDataType()->getName()));
                     
@@ -131,16 +131,16 @@ class CreateTableExecutor implements StatementExecutorInterface
                     $flags = 0;
                     
                     if ($column->getIsPrimaryKey()) {
-                        $flags = $flags ^ ColumnPage::EXTRA_PRIMARY_KEY;
+                        $flags = $flags ^ ColumnSchema::EXTRA_PRIMARY_KEY;
                     }
                     if ($column->getIsUnique()) {
-                        $flags = $flags ^ ColumnPage::EXTRA_UNIQUE_KEY;
+                        $flags = $flags ^ ColumnSchema::EXTRA_UNIQUE_KEY;
                     }
                     if (!$column->getIsNullable()) {
-                        $flags = $flags ^ ColumnPage::EXTRA_NOT_NULL;
+                        $flags = $flags ^ ColumnSchema::EXTRA_NOT_NULL;
                     }
                     if ($column->getIsAutoIncrement()) {
-                        $flags = $flags ^ ColumnPage::EXTRA_AUTO_INCREMENT;
+                        $flags = $flags ^ ColumnSchema::EXTRA_AUTO_INCREMENT;
                     }
                     
                     $columnPage->setExtraFlags($flags);
@@ -162,8 +162,8 @@ class CreateTableExecutor implements StatementExecutorInterface
                     && !$columnPage->isDefaultValueInFile()) {
                         $columnPage->setDefaultValue($column->getDefaultValue());
                     }
-                    
-                    $columnIndex = $tableSchema->addColumnPage($columnPage);
+
+                    $columnIndex = $tableSchema->addColumnSchema($columnPage);
 
                     if (!is_null($column->getDefaultValue())
                     && $columnPage->isDefaultValueInFile()) {
@@ -192,7 +192,7 @@ class CreateTableExecutor implements StatementExecutorInterface
         foreach ($statement->getIndexes() as $indexName => $index) {
             /* @var $index Index */
             
-            $indexSchemaPage = new IndexPage();
+            $indexSchemaPage = new IndexSchema();
             $indexSchemaPage->setName($indexName);
             $indexSchemaPage->setEngine(IndexEngine::BTREE());
             
@@ -230,7 +230,7 @@ class CreateTableExecutor implements StatementExecutorInterface
             $indexSchemaPage->setColumns($columns);
             $indexSchemaPage->setKeyLength($keyLength);
 
-            $tableSchema->addIndexPage($indexSchemaPage);
+            $tableSchema->addIndexSchema($indexSchemaPage);
             
         }
     

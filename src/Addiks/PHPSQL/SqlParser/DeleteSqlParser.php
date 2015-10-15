@@ -11,12 +11,12 @@
 
 namespace Addiks\PHPSQL\SqlParser;
 
-use Addiks\PHPSQL\Entity\Job\Statement\DeleteStatement;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Job\Statement\DeleteStatement;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\SqlParser\SqlParser;
 use Addiks\PHPSQL\SqlParser\Part\JoinDefinitionParser;
 use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
@@ -105,19 +105,19 @@ class DeleteSqlParser extends SqlParser
         if ($tokens->seekTokenNum(SqlToken::T_FROM())) {
             do {
                 if (!$this->tableParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing valid table specifier in DELETE statement!", $tokens);
+                    throw new MalformedSqlException("Missing valid table specifier in DELETE statement!", $tokens);
                 }
                 $deleteJob->addDeleteTable($this->tableParser->convertSqlToJob($tokens));
                 if ($tokens->seekTokenText('.')) {
                     if (!$tokens->seekTokenText('*')) {
-                        throw new MalformedSql("Only '*' allowed for column specification in DELETE statement!", $tokens);
+                        throw new MalformedSqlException("Only '*' allowed for column specification in DELETE statement!", $tokens);
                     }
                 }
             } while ($tokens->seekTokenText(','));
             
             if ($tokens->seekTokenNum(SqlToken::T_USING())) {
                 if (!$this->joinParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing valid JOIN definition after USING in DELETE statement!", $tokens);
+                    throw new MalformedSqlException("Missing valid JOIN definition after USING in DELETE statement!", $tokens);
                 }
                 $deleteJob->setJoinDefinition($this->joinParser->convertSqlToJob($tokens));
             }
@@ -125,19 +125,19 @@ class DeleteSqlParser extends SqlParser
         } else {
             do {
                 if (!$this->tableParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing valid table specifier in DELETE statement!", $tokens);
+                    throw new MalformedSqlException("Missing valid table specifier in DELETE statement!", $tokens);
                 }
                 $deleteJob->addDeleteTable($this->tableParser->convertSqlToJob($tokens));
                 if ($tokens->seekTokenText('.')) {
                     if (!$tokens->seekTokenText('*')) {
-                        throw new MalformedSql("Only '*' allowed for column specification in DELETE statement!", $tokens);
+                        throw new MalformedSqlException("Only '*' allowed for column specification in DELETE statement!", $tokens);
                     }
                 }
             } while ($tokens->seekTokenText(','));
 
             if ($tokens->seekTokenNum(SqlToken::T_FROM())) {
                 if (!$this->joinParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing valid JOIN definition after FROM in DELETE statement!", $tokens);
+                    throw new MalformedSqlException("Missing valid JOIN definition after FROM in DELETE statement!", $tokens);
                 }
                 $deleteJob->setJoinDefinition($this->joinParser->convertSqlToJob($tokens));
             }
@@ -145,7 +145,7 @@ class DeleteSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_WHERE())) {
             if (!$this->valueParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing condition for WHERE clause in UPDATE statement!", $tokens);
+                throw new MalformedSqlException("Missing condition for WHERE clause in UPDATE statement!", $tokens);
             }
         
             $deleteJob->setCondition($this->valueParser->convertSqlToJob($tokens));
@@ -153,10 +153,10 @@ class DeleteSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_ORDER())) {
             if (!$tokens->seekTokenNum(SqlToken::T_BY())) {
-                throw new MalformedSql("Missing BY after ORDER on DELETE statement!", $tokens);
+                throw new MalformedSqlException("Missing BY after ORDER on DELETE statement!", $tokens);
             }
             if (!$columnParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing column specifier for ORDER BY part on DELETE statement!", $tokens);
+                throw new MalformedSqlException("Missing column specifier for ORDER BY part on DELETE statement!", $tokens);
             }
             $deleteJob->setOrderColumn($columnParser->convertSqlToJob($tokens));
                 
@@ -170,12 +170,12 @@ class DeleteSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_LIMIT())) {
             if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                throw new MalformedSql("Missing offset number for LIMIT part in DELETE statement!", $tokens);
+                throw new MalformedSqlException("Missing offset number for LIMIT part in DELETE statement!", $tokens);
             }
             $deleteJob->setLimitOffset((int)$tokens->getCurrentTokenString());
             if ($tokens->seekTokenText(',')) {
                 if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                    throw new MalformedSql("Missing length number for LIMIT part in DELETE statement!", $tokens);
+                    throw new MalformedSqlException("Missing length number for LIMIT part in DELETE statement!", $tokens);
                 }
                 $deleteJob->setLimitRowCount((int)$tokens->getCurrentTokenString());
             }

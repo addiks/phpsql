@@ -11,10 +11,12 @@
 
 namespace Addiks\PHPSQL\ValueResolver;
 
-use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
-use Addiks\PHPSQL\Entity\ExecutionContext;
-use Addiks\PHPSQL\Entity\Exception\Conflict;
+use InvalidArgumentException;
+use ErrorException;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
+use Addiks\PHPSQL\Job\Part\FunctionJob;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
+use Addiks\PHPSQL\ValueResolver\FunctionResolver\FunctionInterface;
 
 class FunctionResolver
 {
@@ -49,11 +51,18 @@ class FunctionResolver
             $functionResolver = $this->functionOverrides[$functionName];
 
         } else {
+            $functionName = preg_replace("/[^a-zA-Z0-9_]/is", "", $functionName);
             $functionResolverClassName = ucfirst(strtolower($functionName))."Function";
             $functionResolverClass = "Addiks\PHPSQL\ValueResolver\FunctionResolver\\{$functionResolverClassName}";
+            # TODO: This few lines above are bad design, change it!
 
             if (!class_exists($functionResolverClass)) {
-                throw new Conflict("Function '{$functionName}' does not exist!");
+                throw new InvalidArgumentException(
+                    "Function '{$functionName}' does not exist! ({$functionResolverClass})"
+                );
+            }
+            if (!is_subclass_of($functionResolverClass, FunctionInterface::class)) {
+                throw new ErrorException("Function '{$functionName}' does not implement FunctionInterface!");
             }
 
             $functionResolver = new $functionResolverClass($this->valueResolver);

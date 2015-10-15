@@ -12,17 +12,17 @@
 namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Value\Enum\Page\Index\Type;
-use Addiks\PHPSQL\Entity\Exception\Conflict;
+use InvalidArgumentException;
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
-use Addiks\PHPSQL\Value\Enum\Page\Index\Engine;
-use Addiks\PHPSQL\Entity\TableSchema;
+use Addiks\PHPSQL\Value\Enum\Page\Index\IndexEngine;
+use Addiks\PHPSQL\Table\TableSchema;
 use Addiks\PHPSQL\Table\TableInterface;
 use Addiks\PHPSQL\Entity\Page\SchemaPage\Index;
 use Addiks\PHPSQL\Executor;
-use Addiks\PHPSQL\Entity\Result\Temporary;
-use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateIndexStatement;
-use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Result\Temporary;
+use Addiks\PHPSQL\Database\Database;
+use Addiks\PHPSQL\Job\Statement\Create\CreateIndexStatement;
+use Addiks\PHPSQL\Job\StatementJob;
 use Addiks\PHPSQL\Table\TableManager;
 
 class CreateIndexExecutor implements StatementExecutorInterface
@@ -66,7 +66,7 @@ class CreateIndexExecutor implements StatementExecutorInterface
         
         $indexPage = new Index();
         $indexPage->setName($statement->getName());
-        $indexPage->setEngine(Engine::factory($statement->getIndexType()->getName()));
+        $indexPage->setEngine(IndexEngine::factory($statement->getIndexType()->getName()));
         
         $columnIds = array();
         $keyLength = 0;
@@ -77,7 +77,7 @@ class CreateIndexExecutor implements StatementExecutorInterface
             $columnId = $tableSchema->getColumnIndex($columnSpecifier->getColumn());
             
             if (is_null($columnId)) {
-                throw new Conflict("Cannot create index for unknown column '{$columnSpecifier->getColumn()}'!");
+                throw new InvalidArgumentException("Cannot create index for unknown column '{$columnSpecifier->getColumn()}'!");
             }
             
             if (!is_null($columnDataset['length'])) {
@@ -102,7 +102,7 @@ class CreateIndexExecutor implements StatementExecutorInterface
             $indexPage->setType(Type::INDEX());
         }
         
-        $tableSchema->addIndexPage($indexPage);
+        $tableSchema->addIndexSchema($indexPage);
         
         ### PHSICALLY BUILD INDEX
         

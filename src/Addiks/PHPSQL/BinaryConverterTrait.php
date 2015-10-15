@@ -17,7 +17,13 @@ trait BinaryConverterTrait
     public function decstr($dec, $targetLength = null)
     {
         $str = "";
+
+        if (!is_numeric($dec)) {
+            return $dec;
+        }
         
+        assert($dec >= 0);
+
         if ($dec === 0) {
             $str = "\0";
             
@@ -71,9 +77,10 @@ trait BinaryConverterTrait
     
             $newDecimal = $decimal % 256;
     
+            $suffix  = substr($string, $position+1);
             $string  = substr($string, 0, $position);
             $string .= chr($newDecimal);
-            $string .= substr($string, $position+1);
+            $string .= $suffix;
     
             $position--;
     

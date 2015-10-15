@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL\Iterators;
 
 use ErrorException;
-use Addiks\PHPSQL\Value;
+use Addiks\PHPSQL\Value\Value;
 use Addiks\PHPSQL\Value\Enum;
 
 /**

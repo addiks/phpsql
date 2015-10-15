@@ -11,13 +11,13 @@
 
 namespace Addiks\PHPSQL\SqlParser\Part;
 
-use Addiks\PHPSQL\Entity\Job\Part\ConditionJob;
+use Addiks\PHPSQL\Job\Part\ConditionJob;
 use Addiks\PHPSQL\Value\Enum\Sql\Operator;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\Part;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 
 class ConditionParser extends Part
@@ -51,7 +51,7 @@ class ConditionParser extends Part
         
         $condition = $this->parseCondition($tokens);
         if (is_null($condition)) {
-            throw new MalformedSql("Missing valid operator in condition!", $tokens);
+            throw new MalformedSqlException("Missing valid operator in condition!", $tokens);
         }
 
         $conditionJob = new ConditionJob();

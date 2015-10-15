@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\StatementExecutor;
 
-use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Job\StatementJob;
 
 interface StatementExecutorInterface
 {

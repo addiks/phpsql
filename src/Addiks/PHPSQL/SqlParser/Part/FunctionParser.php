@@ -11,11 +11,11 @@
 
 namespace Addiks\PHPSQL\SqlParser\Part;
 
-use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
+use Addiks\PHPSQL\Job\Part\FunctionJob;
 use Addiks\PHPSQL\SqlParser\Part;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser\SelectSqlParser;
 use Addiks\PHPSQL\SqlParser\Part\Condition\ParameterConditionParser;
@@ -90,7 +90,7 @@ class FunctionParser extends Part
         $functionJob->setName($tokens->getCurrentTokenString());
         
         if (!$tokens->seekTokenText('(')) {
-            throw new MalformedSql("Missing beginning parenthesis for argument-list in function call!", $tokens);
+            throw new MalformedSqlException("Missing beginning parenthesis for argument-list in function call!", $tokens);
         }
         if (!$tokens->seekTokenText(')')) {
             do {
@@ -113,17 +113,17 @@ class FunctionParser extends Part
                             break;
                             
                         default:
-                            throw new MalformedSql("Invalid argument defintion in function call!", $tokens);
+                            throw new MalformedSqlException("Invalid argument defintion in function call!", $tokens);
                     }
                     while ($this->parameterConditionParser->canParseTokens($tokens)) {
                         $functionJob->addParameter($this->parameterConditionParser->convertSqlToJob($tokens));
                     }
                 } catch (\ErrorException $exception) {
-                    throw new MalformedSql($exception->getMessage(), $tokens);
+                    throw new MalformedSqlException($exception->getMessage(), $tokens);
                 }
             } while ($tokens->seekTokenText(','));
             if (!$tokens->seekTokenText(')')) {
-                throw new MalformedSql("Missing ending parenthesis for argument-list in function call!", $tokens);
+                throw new MalformedSqlException("Missing ending parenthesis for argument-list in function call!", $tokens);
             }
         }
         

@@ -12,21 +12,21 @@
 namespace Addiks\PHPSQL\SqlParser;
 
 use Exception;
-use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateDatabaseStatement;
-use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateIndexStatement;
-use Addiks\PHPSQL\Entity\Job\Statement\Create\CreateTableStatement;
+use Addiks\PHPSQL\Job\Statement\Create\CreateDatabaseStatement;
+use Addiks\PHPSQL\Job\Statement\Create\CreateIndexStatement;
+use Addiks\PHPSQL\Job\Statement\Create\CreateTableStatement;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
 use Addiks\PHPSQL\Value\Enum\Sql\IndexType;
-use Addiks\PHPSQL\Entity\Job\Part\Index as IndexPart;
+use Addiks\PHPSQL\Job\Part\Index as IndexPart;
 use Addiks\PHPSQL\SqlParser\Part\Condition;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\Part\ColumnDefinition;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
 use Addiks\PHPSQL\SqlParser\Select;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\SqlParser\SqlParser;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\SqlParser\SelectSqlParser;
 use Addiks\PHPSQL\SqlParser\Part\ColumnDefinitionParser;
@@ -144,7 +144,7 @@ class CreateSqlParser extends SqlParser
                 break;
                 
             default:
-                throw new MalformedSql("Invalid type of create-statement!", $tokens);
+                throw new MalformedSqlException("Invalid type of create-statement!", $tokens);
         }
     }
     
@@ -154,7 +154,7 @@ class CreateSqlParser extends SqlParser
         if ($tokens->seekTokenNum(SqlToken::T_IF())) {
             if (!$tokens->seekTokenNum(SqlToken::T_NOT())
             || !$tokens->seekTokenNum(SqlToken::T_EXISTS())) {
-                throw new MalformedSql("Invalid create-database statement (invalid 'IF NOT EXISTS')!", $tokens);
+                throw new MalformedSqlException("Invalid create-database statement (invalid 'IF NOT EXISTS')!", $tokens);
             }
             $ifNotExist = true;
         } else {
@@ -162,7 +162,7 @@ class CreateSqlParser extends SqlParser
         }
         
         if (!$this->valueParser->canParseTokens($tokens)) {
-            throw new MalformedSql("Missing name of database to create!", $tokens);
+            throw new MalformedSqlException("Missing name of database to create!", $tokens);
         }
         
         $databaseName = $this->valueParser->convertSqlToJob($tokens);
@@ -190,7 +190,7 @@ class CreateSqlParser extends SqlParser
         if ($tokens->seekTokenNum(SqlToken::T_IF())) {
             if (!$tokens->seekTokenNum(SqlToken::T_NOT())
             || !$tokens->seekTokenNum(SqlToken::T_EXISTS())) {
-                throw new MalformedSql("Invalid create-database statement (invalid 'IF NOT EXISTS')!", $tokens);
+                throw new MalformedSqlException("Invalid create-database statement (invalid 'IF NOT EXISTS')!", $tokens);
             }
             $createTableJob->setIfNotExists(true);
         } else {
@@ -206,7 +206,7 @@ class CreateSqlParser extends SqlParser
             $createTableJob->setName($this->valueParser->convertSqlToJob($tokens));
 
         } else {
-            throw new MalformedSql("Missing name of table to create!", $tokens);
+            throw new MalformedSqlException("Missing name of table to create!", $tokens);
         }
 
         
@@ -217,7 +217,7 @@ class CreateSqlParser extends SqlParser
         # LIKE other table?
         if ($tokens->seekTokenNum(SqlToken::T_LIKE())) {
             if (!$this->tableParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing valid table-specifier for 'CREATE TABLE LIKE' statement!", $tokens);
+                throw new MalformedSqlException("Missing valid table-specifier for 'CREATE TABLE LIKE' statement!", $tokens);
             }
             $createTableJob->setLikeTable($this->tableParser->convertSqlToJob($tokens));
             
@@ -249,7 +249,7 @@ class CreateSqlParser extends SqlParser
                         $indexJob->setName("PRIMARY");
                         
                         if (!$tokens->seekTokenNum(SqlToken::T_KEY())) {
-                            throw new MalformedSql("Missing T_KEY for PRIMARY KEY constraint in create-table statement!", $tokens);
+                            throw new MalformedSqlException("Missing T_KEY for PRIMARY KEY constraint in create-table statement!", $tokens);
                         }
                         
                         # define index type (BTREE, HASH, ...)
@@ -263,13 +263,13 @@ class CreateSqlParser extends SqlParser
                         if ($tokens->seekTokenText('(')) {
                             do {
                                 if (!$this->columnParser->canParseTokens($tokens)) {
-                                    throw new MalformedSql("Invalid column in column-list for defining index!", $tokens);
+                                    throw new MalformedSqlException("Invalid column in column-list for defining index!", $tokens);
                                 }
                                 $indexJob->addColumn($this->columnParser->convertSqlToJob($tokens));
                             } while ($tokens->seekTokenText(','));
                             
                             if (!$tokens->seekTokenText(')')) {
-                                throw new MalformedSql("Missing closing parenthesis at column-list for index!", $tokens);
+                                throw new MalformedSqlException("Missing closing parenthesis at column-list for index!", $tokens);
                             }
                         }
                         
@@ -299,13 +299,13 @@ class CreateSqlParser extends SqlParser
                         if ($tokens->seekTokenText('(')) {
                             do {
                                 if (!$this->columnParser->canParseTokens($tokens)) {
-                                    throw new MalformedSql("Invalid column in column-list for defining index!", $tokens);
+                                    throw new MalformedSqlException("Invalid column in column-list for defining index!", $tokens);
                                 }
                                 $indexJob->addColumn($this->columnParser->convertSqlToJob($tokens));
                             } while ($tokens->seekTokenText(','));
                         
                             if (!$tokens->seekTokenText(')')) {
-                                throw new MalformedSql("Missing closing parenthesis at column-list for index!", $tokens);
+                                throw new MalformedSqlException("Missing closing parenthesis at column-list for index!", $tokens);
                             }
                         }
                         
@@ -360,13 +360,13 @@ class CreateSqlParser extends SqlParser
                         if ($tokens->seekTokenText('(')) {
                             do {
                                 if (!$this->columnParser->canParseTokens($tokens)) {
-                                    throw new MalformedSql("Invalid column in column-list for defining index!", $tokens);
+                                    throw new MalformedSqlException("Invalid column in column-list for defining index!", $tokens);
                                 }
                                 $indexJob->addColumn($this->columnParser->convertSqlToJob($tokens));
                             } while ($tokens->seekTokenText(','));
                         
                             if (!$tokens->seekTokenText(')')) {
-                                throw new MalformedSql("Missing closing parenthesis at column-list for index!", $tokens);
+                                throw new MalformedSqlException("Missing closing parenthesis at column-list for index!", $tokens);
                             }
                         }
                         
@@ -385,7 +385,7 @@ class CreateSqlParser extends SqlParser
                         }
                         
                         if (!$tokens->seekTokenNum(SqlToken::T_KEY())) {
-                            throw new MalformedSql("Missing T_KEY after T_FOREIGN in constraint-definition!", $tokens);
+                            throw new MalformedSqlException("Missing T_KEY after T_FOREIGN in constraint-definition!", $tokens);
                         }
                         
                         if ($tokens->seekTokenNum(T_STRING)) {
@@ -398,22 +398,22 @@ class CreateSqlParser extends SqlParser
                         if ($tokens->seekTokenText('(')) {
                             do {
                                 if (!$this->columnParser->canParseTokens($tokens)) {
-                                    throw new MalformedSql("Invalid column in column-list for defining index!", $tokens);
+                                    throw new MalformedSqlException("Invalid column in column-list for defining index!", $tokens);
                                 }
                                 $indexJob->addColumn($this->columnParser->convertSqlToJob($tokens));
                             } while ($tokens->seekTokenText(','));
                                 
                             if (!$tokens->seekTokenText(')')) {
-                                throw new MalformedSql("Missing closing parenthesis at column-list for index!", $tokens);
+                                throw new MalformedSqlException("Missing closing parenthesis at column-list for index!", $tokens);
                             }
                         }
                         
                         if (!$tokens->seekTokenNum(SqlToken::T_REFERENCES())) {
-                            throw new MalformedSql("Missing reference-definition in foreign-constraint-definition!", $tokens);
+                            throw new MalformedSqlException("Missing reference-definition in foreign-constraint-definition!", $tokens);
                         }
                         
                         if (!$this->tableParser->canParseTokens($tokens)) {
-                            throw new MalformedSql("Missing table-definition in foreign-constraint-definition!", $tokens);
+                            throw new MalformedSqlException("Missing table-definition in foreign-constraint-definition!", $tokens);
                         }
                         $fkTable = $this->tableParser->convertSqlToJob($tokens);
                         
@@ -421,7 +421,7 @@ class CreateSqlParser extends SqlParser
                         if ($tokens->seekTokenText('(')) {
                             do {
                                 if (!$this->columnParser->canParseTokens($tokens)) {
-                                    throw new MalformedSql("Invalid column in column-list for defining index!", $tokens);
+                                    throw new MalformedSqlException("Invalid column in column-list for defining index!", $tokens);
                                 }
                                 $fkColumn = $this->columnParser->convertSqlToJob($tokens);
                                 $fkColumn = ColumnSpecifier::factory($fkTable.'.'.$fkColumn->getColumn());
@@ -429,7 +429,7 @@ class CreateSqlParser extends SqlParser
                             } while ($tokens->seekTokenText(','));
                                 
                             if (!$tokens->seekTokenText(')')) {
-                                throw new MalformedSql("Missing closing parenthesis at column-list for index!", $tokens);
+                                throw new MalformedSqlException("Missing closing parenthesis at column-list for index!", $tokens);
                             }
                         }
                             
@@ -445,7 +445,7 @@ class CreateSqlParser extends SqlParser
                                     $indexJob->setForeignKeyMatchType(MatchType::SIMPLE());
                                     break;
                                 default:
-                                    throw new MalformedSql("Invalid match parameter for foreign key!", $tokens);
+                                    throw new MalformedSqlException("Invalid match parameter for foreign key!", $tokens);
                             }
                         }
                         
@@ -474,7 +474,7 @@ class CreateSqlParser extends SqlParser
                                             break;
 
                                         default:
-                                            throw new MalformedSql(
+                                            throw new MalformedSqlException(
                                                 "Invalid reference-option for foreign key ON DELETE option!",
                                                 $tokens
                                             );
@@ -504,7 +504,7 @@ class CreateSqlParser extends SqlParser
                                             break;
 
                                         default:
-                                            throw new MalformedSql(
+                                            throw new MalformedSqlException(
                                                 "Invalid reference-option for foreign key ON UPDATE option!",
                                                 $tokens
                                             );
@@ -513,7 +513,7 @@ class CreateSqlParser extends SqlParser
                                     break;
 
                                 default:
-                                    throw new MalformedSql("Invalid ON event for foreign key (allowed are UPDATE and DELETE)!", $tokens);
+                                    throw new MalformedSqlException("Invalid ON event for foreign key (allowed are UPDATE and DELETE)!", $tokens);
                             }
                         }
                         
@@ -523,19 +523,19 @@ class CreateSqlParser extends SqlParser
                     # CHECK (expression)
                     case $tokens->seekTokenNum(SqlToken::T_CHECK()):
                         if (!$this->conditionParser->canParseTokens($tokens)) {
-                            throw new MalformedSql("Invalid CHECK condition statement!", $tokens);
+                            throw new MalformedSqlException("Invalid CHECK condition statement!", $tokens);
                         }
                         $createTableJob->addCheck($this->conditionParser->convertSqlToJob($tokens));
                         break;
                     
                     default:
-                        throw new MalformedSql("Invalid definition in CREATE TABLE statement!", $tokens);
+                        throw new MalformedSqlException("Invalid definition in CREATE TABLE statement!", $tokens);
                 }
             } while ($tokens->seekTokenText(','));
         }
             
         if ($checkEndParenthesis && !$tokens->seekTokenText(')')) {
-            throw new MalformedSql("Missing closing parenthesis at end of table-definition!", $tokens);
+            throw new MalformedSqlException("Missing closing parenthesis at end of table-definition!", $tokens);
         }
             
         ### TABLE OPTIONS
@@ -547,7 +547,7 @@ class CreateSqlParser extends SqlParser
                 case $tokens->seekTokenNum(SqlToken::T_TYPE()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_STRING)) {
-                        throw new MalformedSql("Missing T_STRING after T_ENGINE!", $tokens);
+                        throw new MalformedSqlException("Missing T_STRING after T_ENGINE!", $tokens);
                     }
                     $createTableJob->setEngine(Engine::factory($tokens->getCurrentTokenString()));
                     break;
@@ -555,7 +555,7 @@ class CreateSqlParser extends SqlParser
                 case $tokens->seekTokenNum(SqlToken::T_AUTO_INCREMENT()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                        throw new MalformedSql("Missing number-string for T_AUTO_INCREMENT!", $tokens);
+                        throw new MalformedSqlException("Missing number-string for T_AUTO_INCREMENT!", $tokens);
                     }
                     $createTableJob->setAutoIncrement((int)$tokens->getCurrentTokenString());
                     break;
@@ -563,19 +563,19 @@ class CreateSqlParser extends SqlParser
                 case $tokens->seekTokenNum(SqlToken::T_AVG_ROW_LENGTH()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                        throw new MalformedSql("Missing number-string for T_AVG_ROW_LENGTH!", $tokens);
+                        throw new MalformedSqlException("Missing number-string for T_AVG_ROW_LENGTH!", $tokens);
                     }
                     $createTableJob->setAverageRowLength((int)$tokens->getCurrentTokenString());
                     break;
                     
                 case $tokens->seekTokenNum(SqlToken::T_CHARACTER(), TokenIterator::NEXT, [SqlToken::T_DEFAULT()]):
                     if (!$tokens->seekTokenNum(SqlToken::T_SET())) {
-                        throw new MalformedSql("Missing SET after CHARACTER keyword!", $tokens);
+                        throw new MalformedSqlException("Missing SET after CHARACTER keyword!", $tokens);
                     }
                 case $tokens->seekTokenNum(SqlToken::T_CHARSET(), TokenIterator::NEXT, [SqlToken::T_DEFAULT()]):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING) && !$tokens->seekTokenNum(T_STRING)) {
-                        throw new MalformedSql("Missing string for CHARACTER SET!", $tokens);
+                        throw new MalformedSqlException("Missing string for CHARACTER SET!", $tokens);
                     }
                     $createTableJob->setCharacterSet($tokens->getCurrentTokenString());
                     break;
@@ -583,7 +583,7 @@ class CreateSqlParser extends SqlParser
                 case $tokens->seekTokenNum(SqlToken::T_COLLATE()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING) && !$tokens->seekTokenNum(T_STRING)) {
-                        throw new MalformedSql("Missing string for COLLATE!", $tokens);
+                        throw new MalformedSqlException("Missing string for COLLATE!", $tokens);
                     }
                     $createTableJob->setCollate($tokens->getCurrentTokenString());
                     break;
@@ -598,14 +598,14 @@ class CreateSqlParser extends SqlParser
                             $createTableJob->setUseChecksum(true);
                             break;
                         default:
-                            throw new MalformedSql("Invalid value for CHECKSUM! (only 0 or 1 allowed!)", $tokens);
+                            throw new MalformedSqlException("Invalid value for CHECKSUM! (only 0 or 1 allowed!)", $tokens);
                     }
                     break;
                     
                 case $tokens->seekTokenNum(SqlToken::T_COMMENT()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING)) {
-                        throw new MalformedSql("Missing encapsed string for comment!", $tokens);
+                        throw new MalformedSqlException("Missing encapsed string for comment!", $tokens);
                     }
                     $createTableJob->setComment($tokens->getCurrentTokenString());
                     break;
@@ -613,7 +613,7 @@ class CreateSqlParser extends SqlParser
                 case $tokens->seekTokenNum(SqlToken::T_CONNECTION()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING)) {
-                        throw new MalformedSql("Missing encapsed string for connection-string!", $tokens);
+                        throw new MalformedSqlException("Missing encapsed string for connection-string!", $tokens);
                     }
                     $createTableJob->setConnectString($tokens->getCurrentTokenString());
                     break;
@@ -621,7 +621,7 @@ class CreateSqlParser extends SqlParser
                 case $tokens->seekTokenNum(SqlToken::T_MAX_ROWS()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                        throw new MalformedSql("Missing number-string for MAX_ROWS!", $tokens);
+                        throw new MalformedSqlException("Missing number-string for MAX_ROWS!", $tokens);
                     }
                     $createTableJob->setMaximumRows((int)$tokens->getCurrentTokenString());
                     break;
@@ -629,7 +629,7 @@ class CreateSqlParser extends SqlParser
                 case $tokens->seekTokenNum(SqlToken::T_MIN_ROWS()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                        throw new MalformedSql("Missing number-string for MIN_ROWS!", $tokens);
+                        throw new MalformedSqlException("Missing number-string for MIN_ROWS!", $tokens);
                     }
                     $createTableJob->setMinimumRows((int)$tokens->getCurrentTokenString());
                     break;
@@ -645,14 +645,14 @@ class CreateSqlParser extends SqlParser
                             $createTableJob->setDelayKeyWrite(true);
                             break;
                         default:
-                            throw new MalformedSql("Invalid value for PACK_KEYS! (only DEFAULT, 0 or 1 allowed!)", $tokens);
+                            throw new MalformedSqlException("Invalid value for PACK_KEYS! (only DEFAULT, 0 or 1 allowed!)", $tokens);
                     }
                     break;
                 
                 case $tokens->seekTokenNum(SqlToken::T_PASSWORD()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING)) {
-                        throw new MalformedSql("Missing encapsed string for password!", $tokens);
+                        throw new MalformedSqlException("Missing encapsed string for password!", $tokens);
                     }
                     $createTableJob->setPassword($tokens->getCurrentTokenString());
                     break;
@@ -667,7 +667,7 @@ class CreateSqlParser extends SqlParser
                             $createTableJob->setDelayKeyWrite(true);
                             break;
                         default:
-                            throw new MalformedSql("Invalid value for DELAY_KEY_WRITE! (only 0 or 1 allowed!)", $tokens);
+                            throw new MalformedSqlException("Invalid value for DELAY_KEY_WRITE! (only 0 or 1 allowed!)", $tokens);
                     }
                     break;
                     
@@ -682,17 +682,17 @@ class CreateSqlParser extends SqlParser
                 case $tokens->seekTokenNum(SqlToken::T_UNION()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenText('(')) {
-                        throw new MalformedSql("Missing opening parenthesis for union-table-definition!", $tokens);
+                        throw new MalformedSqlException("Missing opening parenthesis for union-table-definition!", $tokens);
                     }
                     do {
                         if (!$this->tableParser->canParseTokens($tokens)) {
-                            throw new MalformedSql("Invalid table in table-list for defining union tables!", $tokens);
+                            throw new MalformedSqlException("Invalid table in table-list for defining union tables!", $tokens);
                         }
                         $createTableJob->addUnionTable($this->tableParser->convertSqlToJob($tokens));
                     } while ($tokens->seekTokenText(','));
                         
                     if (!$tokens->seekTokenText(')')) {
-                        throw new MalformedSql("Missing closing parenthesis at union-table-list!", $tokens);
+                        throw new MalformedSqlException("Missing closing parenthesis at union-table-list!", $tokens);
                     }
                     break;
                 
@@ -709,17 +709,17 @@ class CreateSqlParser extends SqlParser
                             $createTableJob->setInsertMethod(InsertMethod::LAST());
                             break;
                         default:
-                            throw new MalformedSql("Invalid value given for insert-method (allowed are NO, FIRST and LAST)!");
+                            throw new MalformedSqlException("Invalid value given for insert-method (allowed are NO, FIRST and LAST)!");
                     }
                     break;
                     
                 case $tokens->seekTokenNum(SqlToken::T_DATA()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(SqlToken::T_DIRECTORY())) {
-                        throw new MalformedSql("Missing T_DIRECTORY after T_DATA for data-directory!", $tokens);
+                        throw new MalformedSqlException("Missing T_DIRECTORY after T_DATA for data-directory!", $tokens);
                     }
                     if (!$tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING)) {
-                        throw new MalformedSql("Missing encapsed string for comment!", $tokens);
+                        throw new MalformedSqlException("Missing encapsed string for comment!", $tokens);
                     }
                     $createTableJob->setDataDirectory($tokens->getCurrentTokenString());
                     break;
@@ -727,10 +727,10 @@ class CreateSqlParser extends SqlParser
                 case $tokens->seekTokenNum(SqlToken::T_INDEX()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(SqlToken::T_DIRECTORY())) {
-                        throw new MalformedSql("Missing T_DIRECTORY after T_INDEX for index-directory!", $tokens);
+                        throw new MalformedSqlException("Missing T_DIRECTORY after T_INDEX for index-directory!", $tokens);
                     }
                     if (!$tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING)) {
-                        throw new MalformedSql("Missing encapsed string for comment!", $tokens);
+                        throw new MalformedSqlException("Missing encapsed string for comment!", $tokens);
                     }
                     $createTableJob->setIndexDirectory($tokens->getCurrentTokenString());
                     break;
@@ -766,7 +766,7 @@ class CreateSqlParser extends SqlParser
         ### NAME
         
         if (!$tokens->seekTokenNum(T_STRING)) {
-            throw new MalformedSql("Missing valid index-name!", $tokens);
+            throw new MalformedSqlException("Missing valid index-name!", $tokens);
         }
         
         $entity->setName($tokens->getCurrentTokenString());
@@ -787,18 +787,18 @@ class CreateSqlParser extends SqlParser
                     break;
                         
                 default:
-                    throw new MalformedSql("Invalid index-type specified!", $tokens);
+                    throw new MalformedSqlException("Invalid index-type specified!", $tokens);
             }
         }
         
         ### TABLE
         
         if (!$tokens->seekTokenNum(SqlToken::T_ON())) {
-            throw new MalformedSql("Missing T_ON for CREATE INDEX statement!", $tokens);
+            throw new MalformedSqlException("Missing T_ON for CREATE INDEX statement!", $tokens);
         }
         
         if (!$this->tableParser->canParseTokens($tokens)) {
-            throw new MalformedSql("Missing valid table-specifier for CREATE INDEX statement!", $tokens);
+            throw new MalformedSqlException("Missing valid table-specifier for CREATE INDEX statement!", $tokens);
         }
         
         $entity->setTable($this->tableParser->convertSqlToJob($tokens));
@@ -806,12 +806,12 @@ class CreateSqlParser extends SqlParser
         ### COLUMNS
         
         if (!$tokens->seekTokenText('(')) {
-            throw new MalformedSql("Missing beginning parenthesis holding columns in CREATE INDEX statement!", $tokens);
+            throw new MalformedSqlException("Missing beginning parenthesis holding columns in CREATE INDEX statement!", $tokens);
         }
         
         do {
             if (!$this->columnParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing valid column-specifier in CREATE INDEX statement!", $tokens);
+                throw new MalformedSqlException("Missing valid column-specifier in CREATE INDEX statement!", $tokens);
             }
             
             $column = $this->columnParser->convertSqlToJob($tokens);
@@ -819,13 +819,13 @@ class CreateSqlParser extends SqlParser
             $length = null;
             if ($tokens->seekTokenText('(')) {
                 if (!$this->valueParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing valid column-length in CREATE INDEX statement!", $tokens);
+                    throw new MalformedSqlException("Missing valid column-length in CREATE INDEX statement!", $tokens);
                 }
                 
                 $length = $this->valueParser->convertSqlToJob($tokens);
                 
                 if (!$tokens->seekTokenText(')')) {
-                    throw new MalformedSql("Missing closing parenthesis holding column-length in CREATE INDEX statement!", $tokens);
+                    throw new MalformedSqlException("Missing closing parenthesis holding column-length in CREATE INDEX statement!", $tokens);
                 }
             }
             
@@ -841,18 +841,18 @@ class CreateSqlParser extends SqlParser
         } while ($tokens->seekTokenText(','));
         
         if (!$tokens->seekTokenText(')')) {
-            throw new MalformedSql("Missing closing parenthesis holding columns in CREATE INDEX statement!", $tokens);
+            throw new MalformedSqlException("Missing closing parenthesis holding columns in CREATE INDEX statement!", $tokens);
         }
         
         ### WITH PARSER
         
         if ($tokens->seekTokenNum(SqlToken::T_WITH())) {
             if (!$tokens->seekTokenNum(SqlToken::T_PARSER())) {
-                throw new MalformedSql("Missing T_PARSER after T_WITH in CREATE INDEX statement!", $tokens);
+                throw new MalformedSqlException("Missing T_PARSER after T_WITH in CREATE INDEX statement!", $tokens);
             }
             
             if (!$tokens->seekTokenNum(T_STRING)) {
-                throw new MalformedSql("Missing valid parser name after WITH PARSER in CREATE INDEX statement!", $tokens);
+                throw new MalformedSqlException("Missing valid parser name after WITH PARSER in CREATE INDEX statement!", $tokens);
             }
             
             $entity->setParser($tokens->getCurrentTokenString());

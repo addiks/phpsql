@@ -13,6 +13,7 @@ namespace Addiks\PHPSQL\Tests\BehaviourTests;
 use PHPUnit_Framework_TestCase;
 use Addiks\PHPSQL\PDO\PDO;
 use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Result\ResultWriter;
 
 class DeleteTest extends PHPUnit_Framework_TestCase
 {
@@ -30,21 +31,21 @@ class DeleteTest extends PHPUnit_Framework_TestCase
         ### PREPARE
 
         try {
-        $this->pdo->query("
-            CREATE TABLE deleteTest (
-                id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                nick VARCHAR(32),
-                `comment` TINYTEXT,
-                date_added DATETIME
-            );
-            INSERT INTO deleteTest
-                (nick, `comment`, date_added)
-            VALUES
-                ('MrFoo',       'Lorem ipsum dolor sit amet',     NOW()),
-                ('MsBar',       '123456789012345678901234567890', NOW()),
-                ('Evil Hacker', '; DROP TABLE customers; --',     NOW()),
-                ('Baz Jr.',     'three point one four one five',  NOW())
-        ");
+            $this->pdo->query("
+                CREATE TABLE deleteTest (
+                    id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                    nick VARCHAR(32),
+                    `comment` TINYTEXT,
+                    date_added DATETIME
+                );
+                INSERT INTO deleteTest
+                    (nick, `comment`, date_added)
+                VALUES
+                    ('MrFoo',       'Lorem ipsum dolor sit amet',     NOW()),
+                    ('MsBar',       '123456789012345678901234567890', NOW()),
+                    ('Evil Hacker', '; DROP TABLE customers; --',     NOW()),
+                    ('Baz Jr.',     'three point one four one five',  NOW())
+            ");
         } catch(MalformedSql $exception) {
             echo $exception;
             throw $exception;
@@ -63,6 +64,9 @@ class DeleteTest extends PHPUnit_Framework_TestCase
         }
 
         $result = $this->pdo->query("SELECT nick, `comment` FROM deleteTest ORDER BY id ASC");
+
+#        echo "\n" . new ResultWriter($result->getResult());
+
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
             ["MrFoo",   "Lorem ipsum dolor sit amet"],

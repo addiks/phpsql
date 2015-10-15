@@ -11,11 +11,11 @@
 
 namespace Addiks\PHPSQL\SqlParser\Part\Condition;
 
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\SqlParser\SqlParser;
 use Addiks\PHPSQL\Value\Enum\Sql\Condition\Parameter as ParameterValue;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
 
@@ -51,12 +51,12 @@ class ParameterConditionParser extends SqlParser
         try {
             $parameter = Parameter::getByValue(strtolower($tokens->getExclusiveTokenString()));
             if (is_null($parameter)) {
-                throw new MalformedSql("Invalid parameter value given for parameter condition!");
+                throw new MalformedSqlException("Invalid parameter value given for parameter condition!");
             }
             $parameterCondition->setParameter($parameter);
             $tokens->seekIndex($tokens->getExclusiveTokenIndex());
-        } catch (MalformedSql $exception) {
-            throw new MalformedSql($exception->getMessage(), $tokens);
+        } catch (MalformedSqlException $exception) {
+            throw new MalformedSqlException($exception->getMessage(), $tokens);
             
         } catch (\Exception $exception) {
             throw new ErrorException("Tried to parse parameter-condition when token-iterator does not point to valid parameter!");
@@ -65,7 +65,7 @@ class ParameterConditionParser extends SqlParser
         switch($parameter){
             case Parameter::SEPARATOR:
                 if (!$this->valueParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing valid value after parameter-condition {$parameterCondition->getParameter()->getValue()}!", $tokens);
+                    throw new MalformedSqlException("Missing valid value after parameter-condition {$parameterCondition->getParameter()->getValue()}!", $tokens);
                 }
                 $parameterCondition->setValue($this->valueParser->convertSqlToJob($tokens));
                 break;

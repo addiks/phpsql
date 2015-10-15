@@ -12,12 +12,12 @@
 namespace Addiks\PHPSQL\SqlParser;
 
 use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
-use Addiks\PHPSQL\Entity\Job\Statement\DescribeStatement;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Job\Statement\DescribeStatement;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\SqlParser\SqlParser;
 
 class DescribeSqlParser extends SqlParser
 {
@@ -53,7 +53,7 @@ class DescribeSqlParser extends SqlParser
         }
         
         if (!$this->tableParser->canParseTokens($tokens)) {
-            throw new MalformedSql("Missing table-specifier for DESCRIBE statement!", $tokens);
+            throw new MalformedSqlException("Missing table-specifier for DESCRIBE statement!", $tokens);
         }
         
         $describeJob = new DescribeStatement();

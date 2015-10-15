@@ -13,15 +13,15 @@ namespace Addiks\PHPSQL\Table;
 
 use Iterator;
 use ErrorException;
+use InvalidArgumentException;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
-use Addiks\PHPSQL\Entity\TableSchema;
+use Addiks\PHPSQL\Table\TableSchema;
 use Addiks\PHPSQL\Entity\ColumnData;
-use Addiks\PHPSQL\Entity\Job\Part\Value;
+use Addiks\PHPSQL\Job\Part\Value;
 use Addiks\PHPSQL\DataConverter;
-use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\Entity\Page\ColumnPage;
-use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
-use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
+use Addiks\PHPSQL\Job\Part\ColumnDefinition;
+use Addiks\PHPSQL\Database\Database;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
@@ -29,8 +29,13 @@ use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Filesystem\FilePathes;
 use Addiks\PHPSQL\Table\TableInterface;
 use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
-use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Index;
+use Addiks\PHPSQL\Value\Enum\Page\Index\IndexEngine;
+use Addiks\PHPSQL\Index\BTree;
+use Addiks\PHPSQL\Index\HashTable;
+use Addiks\PHPSQL\Filesystem\FileInterface;
+use Addiks\PHPSQL\Column\ColumnSchema;
 
 class Table implements Iterator, TableInterface, UsesBinaryDataInterface
 {
@@ -38,10 +43,11 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
     use BinaryConverterTrait;
 
     public function __construct(
-        SchemaManager $schemaManager,
-        FilesystemInterface $filesystem,
-        $tableName,
-        $schemaId = null,
+        TableSchema $tableSchema,
+        array $columnDatas,
+        array $indicies,
+        FileInterface $autoIncrementFile,
+        FileInterface $deletedRowsFile,
         $valueResolver = null,
         $dataConverter = null
     ) {
@@ -54,21 +60,13 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
             $dataConverter = new DataConverter();
         }
 
-        if (is_null($schemaId)) {
-            $schemaId = $schemaManager->getCurrentlyUsedDatabaseId();
-        }
-
-        $schema = $schemaManager->getSchema($schemaId);
-
-        $this->schemaManager = $schemaManager;
-        $this->filesystem = $filesystem;
+        $this->columnDatas = $columnDatas;
+        $this->indicies = $indicies;
         $this->valueResolver = $valueResolver;
         $this->dataConverter = $dataConverter;
-        $this->schemaId = $schemaId;
-        $this->dbSchema = $schema;
-        $this->tableSchema = $schemaManager->getTableSchema($tableName, $schemaId);
-        $this->tableId = $schema->getTableIndex($tableName);
-        $this->tableName = $tableName;
+        $this->autoIncrementFile = $autoIncrementFile;
+        $this->deletedRowsFile = $deletedRowsFile;
+        $this->tableSchema = $tableSchema;
     }
 
     private $valueResolver;
@@ -85,47 +83,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         return $this->dataConverter;
     }
 
-    private $schemaManager;
-
-    public function getSchemaManager()
-    {
-        return $this->schemaManager;
-    }
-
-    private $filesystem;
-
-    public function getFilesystem()
-    {
-        return $this->filesystem;
-    }
-
-    private $schemaId;
-
-    public function getDBSchemaId()
-    {
-        return $this->schemaId;
-    }
-
-    private $dbSchema;
-
-    public function getDBSchema()
-    {
-        return $this->dbSchema;
-    }
-
-    private $tableName;
-
-    public function getTableName()
-    {
-        return $this->tableName;
-    }
-
-    private $tableId;
-
-    public function getTableId()
-    {
-        return $this->tableId;
-    }
+    private $columnDatas;
 
     private $tableSchema;
 
@@ -145,18 +103,18 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         $tableSchema = $this->getTableSchema();
         
         if (!is_null($tableSchema->getColumnIndex($columnDefinition->getName()))) {
-            throw new Conflict("Column '{$columnDefinition->getName()}' already exist!");
+            throw new InvalidArgumentException("Column '{$columnDefinition->getName()}' already exist!");
         }
         
-        $columnPage = $this->convertColumnDefinitionToColumnPage($columnDefinition, $executionContext);
+        $columnPage = $this->convertColumnDefinitionToColumnSchema($columnDefinition, $executionContext);
 
-        $columnIndex = $this->getTableSchema()->addColumnPage($columnPage);
+        $columnIndex = $tableSchema->addColumnSchema($columnPage);
         
         $rowCount = $this->count();
     
         for ($rowId=0; $rowId<$rowCount; $rowId++) {
             /* @var $columnData ColumnData */
-            $columnData = $this->getColumnDataByRowIndex($rowId, $columnIndex);
+            $columnData = $this->getColumnData($rowId, $columnIndex);
             
             $columnDataRowId = $rowId % $this->getRowsPerColumnData($columnIndex);
             
@@ -176,20 +134,20 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         $originalColumn = $tableSchema->getColumn($columnIndex);
         
         if (is_null($columnIndex)) {
-            throw new Conflict("Column '{$columnDefinition->getName()}' does not exist!");
+            throw new InvalidArgumentException("Column '{$columnDefinition->getName()}' does not exist!");
         }
 
-        $columnPage = $this->convertColumnDefinitionToColumnPage($columnDefinition, $executionContext);
+        $columnPage = $this->convertColumnDefinitionToColumnSchema($columnDefinition, $executionContext);
         $columnPage->setIndex($originalColumn->getIndex());
         $tableSchema->writeColumn($columnIndex, $columnPage);
     }
 
-    protected function convertColumnDefinitionToColumnPage(
+    protected function convertColumnDefinitionToColumnSchema(
         ColumnDefinition $columnDefinition,
         ExecutionContext $executionContext
     ) {
         
-        $columnPage = new ColumnPage();
+        $columnPage = new ColumnSchema();
         $columnPage->setName($columnDefinition->getName());
         
         /* @var $dataType DataType */
@@ -208,27 +166,27 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         $flags = 0;
     
         if ($columnDefinition->getIsAutoIncrement()) {
-            $flags = $flags ^ ColumnPage::EXTRA_AUTO_INCREMENT;
+            $flags = $flags ^ ColumnSchema::EXTRA_AUTO_INCREMENT;
         }
     
         if (!$columnDefinition->getIsNullable()) {
-            $flags = $flags ^ ColumnPage::EXTRA_NOT_NULL;
+            $flags = $flags ^ ColumnSchema::EXTRA_NOT_NULL;
         }
     
         if ($columnDefinition->getIsPrimaryKey()) {
-            $flags = $flags ^ ColumnPage::EXTRA_PRIMARY_KEY;
+            $flags = $flags ^ ColumnSchema::EXTRA_PRIMARY_KEY;
         }
             
         if ($columnDefinition->getIsUnique()) {
-            $flags = $flags ^ ColumnPage::EXTRA_UNIQUE_KEY;
+            $flags = $flags ^ ColumnSchema::EXTRA_UNIQUE_KEY;
         }
     
         if ($columnDefinition->getIsUnsigned()) {
-            $flags = $flags ^ ColumnPage::EXTRA_UNSIGNED;
+            $flags = $flags ^ ColumnSchema::EXTRA_UNSIGNED;
         }
     
         if (false) {
-            $flags = $flags ^ ColumnPage::EXTRA_ZEROFILL;
+            $flags = $flags ^ ColumnSchema::EXTRA_ZEROFILL;
         }
         
         $columnPage->setExtraFlags($flags);
@@ -268,62 +226,25 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
     protected function getRowsPerColumnData($columnId)
     {
 
-        /* @var $columnSchemaPage ColumnPage */
+        /* @var $columnSchemaPage ColumnSchema */
         $columnSchemaPage = $this->getTableSchema()->getColumn($columnId);
 
         return ceil(self::BYTES_PER_DATAFILE / $columnSchemaPage->getCellSize());
     }
 
-    private $columnDataCache = array();
-
-    /**
-     *
-     * @param int $rowIndex
-     * @param int $columnId
-     * @return ColumnData
-     */
-    public function getColumnDataByRowIndex($rowIndex, $columnId, &$columnDataIndex = 0)
+    public function getColumnData($columnId)
     {
-
         if (is_string($columnId)) {
             $columnId = $this->getTableSchema()->getColumnIndex($columnId);
         }
 
         assert("is_int(\$columnId)");
 
-        if (!isset($this->columnDataCache[$columnId])) {
-            $this->columnDataCache[$columnId] = array();
+        if (!isset($this->columnDatas[$columnId])) {
+            throw new ErrorException("Requested column '{$columnId}' does not exist!");
         }
 
-        $rowsPerColumnData = $this->getRowsPerColumnData($columnId);
-
-        $columnDataIndex = floor($rowIndex / $rowsPerColumnData);
-
-        if (!isset($this->columnDataCache[$columnId][$columnDataIndex])) {
-            $columnDataFilePath = sprintf(
-                FilePathes::FILEPATH_COLUMN_DATA_FILE,
-                $this->schemaId,
-                $this->getTableName(),
-                $columnId,
-                $columnDataIndex
-            );
-
-            $columnDataFile = $this->filesystem->getFile($columnDataFilePath);
-
-            /* @var $columnSchemaPage ColumnPage */
-            $columnSchemaPage = $this->getTableSchema()->getColumn($columnId);
-
-            /* @var $columnData ColumnData */
-            $columnData = new ColumnData($columnDataFile, $columnSchemaPage);
-
-            if ($columnDataFile->getLength() <= 0) {
-                $columnData->preserveSpace($this->getRowsPerColumnData($columnId));
-            }
-
-            $this->columnDataCache[$columnId][$columnDataIndex] = $columnData;
-        }
-
-        return $this->columnDataCache[$columnId][$columnDataIndex];
+        return $this->columnDatas[$columnId];
     }
 
     ### WORK WITH DATA
@@ -332,7 +253,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
     {
 
         /* @var $columnData ColumnData */
-        $columnData = $this->getColumnDataByRowIndex($rowId, $columnId);
+        $columnData = $this->getColumnData($columnId);
 
         $columnData->getCellData($rowId);
     }
@@ -341,7 +262,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
     {
 
         /* @var $columnData ColumnData */
-        $columnData = $this->getColumnDataByRowIndex($rowId, $columnId);
+        $columnData = $this->getColumnData($columnId);
 
         $columnData->setCellData($rowId, $data);
     }
@@ -361,20 +282,14 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         $tableSchema = $this->getTableSchema();
         
         foreach ($tableSchema->getPrimaryKeyColumns() as $columnId => $columnPage) {
-            /* @var $columnPage ColumnPage */
+            /* @var $columnPage ColumnSchema */
             
             $columnName = $columnPage->getName();
             
             /* @var $columnData ColumnData */
-            $columnData = $this->getColumnDataByRowIndex($rowId, $columnId, $columnDataIndex);
+            $columnData = $this->getColumnData($columnId);
                 
-            $columnDataRowId = $rowId % $this->getRowsPerColumnData($columnId);
-            
-            if ($columnData->count() < $columnDataRowId) {
-                return false;
-            }
-            
-            if (!is_null($columnData->getCellData($columnDataRowId))) {
+            if (!is_null($columnData->getCellData($rowId))) {
                 return true;
             }
         }
@@ -384,79 +299,24 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
 
     public function getRowCount()
     {
+        $rowCount = 0;
         
         /* @var $tableSchema TableSchema */
         $tableSchema = $this->getTableSchema();
+
+        $deletedCount = $this->getDeletedRowsCount();
         
         foreach ($tableSchema->getPrimaryKeyColumns() as $columnId => $columnPage) {
-            /* @var $columnPage ColumnPage */
+            /* @var $columnPage ColumnSchema */
             
-            $lastDataIndex = $this->getTableColumnDataLastDataIndex(
-                $columnId,
-                $this->getTableName(),
-                $this->getDBSchemaId()
-            );
-            
-            if (is_null($lastDataIndex)) {
-                return 0;
-            }
-            
-            $columnDataFilePath = sprintf(
-                FilePathes::FILEPATH_COLUMN_DATA_FILE,
-                $this->schemaId,
-                $this->getTableName(),
-                $columnId,
-                $lastDataIndex
-            );
+            $columnData = $this->getColumnData($columnId);
+        
+            $cellCount = $columnData->count();
 
-            $columnDataFile = $this->filesystem->getFile($columnDataFilePath);
-
-            $columnSchemaPage = $tableSchema->getColumn(0);
-            
-            /* @var $columnData ColumnData */
-            $columnData = new ColumnData($columnDataFile, $columnSchemaPage);
-            
-            $lastColumnDataIndex = $columnData->count();
-            
-            $beforeLastColumnDataRowCount = $this->getRowsPerColumnData(0) * $lastDataIndex;
-            
-            $lastIndex = $lastColumnDataIndex + $beforeLastColumnDataRowCount;
-            
-            return (int)($lastIndex +1 -$this->getDeletedRowsCount());
-            
+            $rowCount = $cellCount - $deletedCount;
         }
         
-        return 0;
-    }
-    
-    protected function getTableColumnDataLastDataIndex($columnId, $tableName, $schemaId = null)
-    {
-        assert("is_int(\$columnId);");
-
-        if (is_null($schemaId)) {
-            $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
-        }
-
-        $folderPath = sprintf(
-            FilePathes::FILEPATH_COLUMN_DATA_FOLDER,
-            $schemaId,
-            (string)$tableName,
-            (string)$columnId
-        );
-        
-        $lastDataIndex = null;
-        foreach ($this->filesystem->getDirectoryIterator($folderPath) as $item) {
-            /* @var $item DirectoryIterator */
-
-            $fileName = $item->getFilename();
-            $dataIndex = substr($fileName, 0, strrpos($fileName, "."));
-
-            if ($lastDataIndex < $dataIndex) {
-                $lastDataIndex = $dataIndex;
-            }
-        }
-        
-        return $lastDataIndex;
+        return $rowCount;
     }
     
     public function getNamedRowData($rowId = null)
@@ -500,10 +360,10 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         $rowData = array();
 
         foreach ($tableSchema->getCachedColumnIds() as $columnId) {
-            /* @var $columnPage ColumnPage */
+            /* @var $columnPage ColumnSchema */
 
             /* @var $columnData ColumnData */
-            $columnData = $this->getColumnDataByRowIndex($rowId, $columnId);
+            $columnData = $this->getColumnData($columnId);
             
             $columnDataRowId = $rowId % $this->getRowsPerColumnData($columnId);
                 
@@ -525,7 +385,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
 
         foreach ($rowData as $columnId => $data) {
             /* @var $columnData ColumnData */
-            $columnData = $this->getColumnDataByRowIndex($rowId, $columnId);
+            $columnData = $this->getColumnData($columnId);
 
             $columnData->setCellData($rowId, $data);
         }
@@ -544,7 +404,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         
         foreach ($rowData as $columnId => $data) {
             /* @var $columnData ColumnData */
-            $columnData = $this->getColumnDataByRowIndex($rowId, $columnId);
+            $columnData = $this->getColumnData($columnId);
 
             $columnData->setCellData($rowId, $data);
         }
@@ -559,10 +419,10 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         $tableSchema = $this->getTableSchema();
         
         foreach ($tableSchema->getCachedColumnIds() as $columnId) {
-            /* @var $columnPage ColumnPage */
+            /* @var $columnPage ColumnSchema */
             
             /* @var $columnData ColumnData */
-            $columnData = $this->getColumnDataByRowIndex($rowId, $columnId);
+            $columnData = $this->getColumnData($columnId);
             
             $columnDataRowId = $rowId % $this->getRowsPerColumnData($columnId);
             
@@ -570,21 +430,21 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         }
         
         $this->pushDeletedRowStack($rowId);
+
+        if (isset($this->rowCache[$rowId])) {
+            unset($this->rowCache[$rowId]);
+        }
     }
     
+    ### DELETED ROWS STACK
+
     const DELETEDROWS_PAGE_SIZE = 16;
     
     protected function popDeletedRowStack()
     {
         $rowId = null;
 
-        $deletedRowsFilepath = sprintf(
-            FilePathes::FILEPATH_DELETED_ROWS,
-            $this->getDBSchemaId(),
-            $this->getTableName()
-        );
-
-        $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
+        $deletedRowsFile = $this->deletedRowsFile;
         $deletedRowsFile->lock(LOCK_EX);
         $deletedRowsFile->seek(0, SEEK_END);
 
@@ -603,13 +463,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
     
     protected function pushDeletedRowStack($rowId)
     {
-        $deletedRowsFilepath = sprintf(
-            FilePathes::FILEPATH_DELETED_ROWS,
-            $this->getDBSchemaId(),
-            $this->getTableName()
-        );
-
-        $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
+        $deletedRowsFile = $this->deletedRowsFile;
 
         $rowId = $this->decstr($rowId);
         $rowId = str_pad($rowId, self::DELETEDROWS_PAGE_SIZE, "\0", STR_PAD_LEFT);
@@ -622,13 +476,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
     
     protected function getDeletedRowsCount()
     {
-        $deletedRowsFilepath = sprintf(
-            FilePathes::FILEPATH_DELETED_ROWS,
-            $this->getDBSchemaId(),
-            $this->getTableName()
-        );
-
-        $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
+        $deletedRowsFile = $this->deletedRowsFile;
         $deletedRowsFile->lock(LOCK_SH);
         $deletedRowsFile->seek(0, SEEK_END);
         $count = $deletedRowsFile->tell() / self::DELETEDROWS_PAGE_SIZE;
@@ -641,54 +489,34 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
 
     protected $indicies = array();
 
-    public function getIndex($indexName)
+    public function getIndex($indexId)
     {
-        if (!isset($this->indicies[$indexName])) {
-            $this->indicies[$indexName] = new Index(
-                $this->filesystem,
-                $this->schemaManager,
-                $indexName,
-                $this->tableName,
-                $this->schemaId
-            );
+        if (!is_numeric($indexId)) {
+            $indexId = $this->tableSchema->getIndexIdByName($indexId);
         }
-        return $this->indicies[$indexName];
+
+        if (!isset($this->indicies[$indexId])) {
+            throw new ErrorException("Requested index {$indexId} which does not exist!");
+        }
+        return $this->indicies[$indexId];
     }
 
     ### AUTO-INCREMENT
 
-    /**
-     * @return File
-     */
-    protected function getAutoIncrementFile()
-    {
-    
-        $filePath = sprintf(
-            FilePathes::FILEPATH_AUTOINCREMENT,
-            $this->getDBSchemaId(),
-            $this->getTableName()
-        );
-
-        /* @var $file FileResourceProxy */
-        $file = $this->filesystem->getFile($filePath);
-    
-        return $file;
-    }
-    
     public function incrementAutoIncrementId()
     {
     
         $currentValue = (int)$this->getAutoIncrementId();
         $currentValue++;
     
-        $file = $this->getAutoIncrementFile();
+        $file = $this->autoIncrementFile;
         $file->setData((string)$currentValue);
     }
     
     public function getAutoIncrementId()
     {
-        /* @var $file FileResourceProxy */
-        $file = $this->getAutoIncrementFile();
+        /* @var $file FileInterface */
+        $file = $this->autoIncrementFile;
     
         if ($file->getLength() <= 0) {
             $file->setData("1");
@@ -755,7 +583,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
                 continue;
             }
 
-            /* @var $columnPage ColumnPage */
+            /* @var $columnPage ColumnSchema */
             $columnPage = $tableSchema->getColumn($columnId);
 
             /* @var $dataType DataType */
@@ -777,7 +605,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
                 continue;
             }
 
-            /* @var $columnPage ColumnPage */
+            /* @var $columnPage ColumnSchema */
             $columnPage = $tableSchema->getColumn($columnId);
 
             /* @var $dataType DataType */
@@ -795,10 +623,23 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
 
     public function rewind()
     {
-        if ($this->count()>0) {
-            $this->seek(0);
-            $this->isValid = true;
+        /* @var $lastColumnData ColumnData */
+        $lastColumnData = null;
+
+        $tableSchema = $this->getTableSchema();
+
+        foreach ($tableSchema->getPrimaryKeyColumns() as $columnId => $columnPage) {
+            /* @var $columnPage ColumnSchema */
+            
+            /* @var $columnData ColumnData */
+            $columnData = $this->getColumnData($columnId);
+            
+            $columnData->rewind();
+            $lastColumnData = $columnData;
         }
+
+        $this->seek($lastColumnData->key());
+        $this->isValid = $lastColumnData->valid();
     }
 
     public function valid()
@@ -822,15 +663,21 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
 
     public function next()
     {
-        $newRowId = $this->tell()+1;
-        $rowCount = $this->getRowCount();
-        while (!$this->doesRowExists($newRowId) && $newRowId < $rowCount) {
-            $newRowId++;
+        $tableSchema = $this->getTableSchema();
+
+        foreach ($tableSchema->getPrimaryKeyColumns() as $columnId => $columnPage) {
+            /* @var $columnPage ColumnSchema */
+            
+            /* @var $columnData ColumnData */
+            $columnData = $this->getColumnData($columnId);
+            
+            $columnData->next();
+            $lastColumnData = $columnData;
         }
-        if ($this->doesRowExists($newRowId)) {
-            $this->seek($newRowId);
-        } else {
-            $this->isValid = false;
+
+        $this->isValid = $lastColumnData->valid();
+        if ($this->isValid) {
+            $this->seek($lastColumnData->key());
         }
     }
 }

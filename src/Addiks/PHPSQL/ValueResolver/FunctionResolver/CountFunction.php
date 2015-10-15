@@ -3,11 +3,11 @@
 namespace Addiks\PHPSQL\ValueResolver\FunctionResolver;
 
 use Addiks\PHPSQL\ValueResolver\FunctionResolver;
-use Addiks\PHPSQL\Entity\Result\ResultInterface;
-use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
-use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Result\ResultInterface;
+use Addiks\PHPSQL\Job\Part\FunctionJob;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 
-class CountFunction implements FunctionResolverInterface
+class CountFunction implements FunctionInterface
 {
     public function __construct(ValueResolver $valueResolver)
     {

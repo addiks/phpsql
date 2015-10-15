@@ -12,10 +12,10 @@
 namespace Addiks\PHPSQL\SqlParser;
 
 use Addiks\PHPSQL\Value\Enum\Sql\Show\ShowType;
-use Addiks\PHPSQL\Entity\Job\Statement\ShowStatement;
+use Addiks\PHPSQL\Job\Statement\ShowStatement;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\SqlParser\SqlParser;
 
 use Addiks\PHPSQL\Iterators\TokenIterator;
 
@@ -54,12 +54,12 @@ class ShowSqlParser extends SqlParser
                 break;
             
             default:
-                throw new MalformedSql("Invalid parameter for show-statement!", $tokens);
+                throw new MalformedSqlException("Invalid parameter for show-statement!", $tokens);
         }
         
         if ($tokens->seekTokenNum(SqlToken::T_FROM())) {
             if (!$tokens->seekTokenNum(T_STRING)) {
-                throw new MalformedSql("Missing database name after FROM in SHOW statement!");
+                throw new MalformedSqlException("Missing database name after FROM in SHOW statement!");
             }
             
             $showJob->setDatabase($tokens->getCurrentTokenString());

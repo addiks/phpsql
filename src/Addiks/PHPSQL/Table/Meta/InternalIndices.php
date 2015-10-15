@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Table\Meta;
 
 use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Iterators\TokenIterator;
-use Addiks\PHPSQL\Entity\Index\IndexInterface;
+use Addiks\PHPSQL\Index\IndexInterface;
 use ErrorException;
 
 class InternalIndices implements IndexInterface

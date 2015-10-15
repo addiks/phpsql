@@ -61,4 +61,41 @@ class InsertIntoTest extends PHPUnit_Framework_TestCase
         ], $actualRows);
     }
 
+    /**
+     * @group behaviour.insert_into.one_column
+     */
+    public function testInsertIntoOneColumn()
+    {
+
+        ### PREPARE
+
+        $this->pdo->query("
+            CREATE TABLE `phpunit_insertintotest` (
+                id INT PRIMARY KEY NOT NULL AUTO_INCREMENT
+            )
+        ");
+
+        ### EXECUTE
+
+        $this->pdo->query("
+            INSERT INTO `phpunit_insertintotest`
+                (id)
+            VALUES
+                (12),
+                (34),
+                (56)
+        ");
+
+        ### CHECK RESULTS
+
+        $result = $this->pdo->query("SELECT id FROM `phpunit_insertintotest` ORDER BY id ASC");
+
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $this->assertEquals([
+            ['12'],
+            ['34'],
+            ['56'],
+        ], $actualRows);
+    }
+
 }

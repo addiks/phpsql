@@ -19,7 +19,7 @@ use ErrorException;
 
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 

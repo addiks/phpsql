@@ -11,9 +11,9 @@
 
 namespace Addiks\PHPSQL\Table;
 
-use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition;
+use Addiks\PHPSQL\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Iterators\DataProviderInterface;
-use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 
 interface TableInterface extends DataProviderInterface
 {

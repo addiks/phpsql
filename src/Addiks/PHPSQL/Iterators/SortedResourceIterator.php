@@ -11,13 +11,12 @@
 
 namespace Addiks\PHPSQL\Iterators;
 
-use Addiks\PHPSQL\Entity\Index\QuickSort;
+use Addiks\PHPSQL\Index\QuickSort;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\Entity\Page\ColumnPage;
 use Addiks\PHPSQL\Iterators\CustomIterator;
-use Addiks\PHPSQL\Entity\Index\IndexInterface;
-use Addiks\PHPSQL\Entity\Result\ResultInterface;
+use Addiks\PHPSQL\Index\IndexInterface;
+use Addiks\PHPSQL\Result\ResultInterface;
 use Countable;
 use SeekableIterator;
 use ErrorException;
@@ -25,10 +24,11 @@ use IteratorAggregate;
 use Iterator;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
-use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Iterators\DataProviderInterface;
 use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
-use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
+use Addiks\PHPSQL\Column\ColumnSchema;
 
 /**
  * The purspose of this component is to iterate sorted over one data-source.
@@ -73,7 +73,7 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
     {
         $insertionSortFile = new FileResourceProxy(fopen("php://memory", "w"));
         
-        $columnPage = new ColumnPage();
+        $columnPage = new ColumnSchema();
             
         $columnPages = array();
         foreach ($orderColumns as $columnIndex => $columnDataset) {
@@ -237,6 +237,7 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
 
     public function key()
     {
+        return $this->resource->key();
         return $this->getCurrentRowId();
     }
 
@@ -315,24 +316,24 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
     public function usesBinaryData()
     {
         $isBinary = false;
-        if ($this->tableResource instanceof UsesBinaryDataInterface) {
-            $isBinary = $this->tableResource->usesBinaryData();
+        if ($this->resource instanceof UsesBinaryDataInterface) {
+            $isBinary = $this->resource->usesBinaryData();
         }
         return $isBinary;
     }
 
     public function convertDataRowToStringRow(array $row)
     {
-        if ($this->tableResource instanceof UsesBinaryDataInterface) {
-            $row = $this->tableResource->convertDataRowToStringRow($row);
+        if ($this->resource instanceof UsesBinaryDataInterface) {
+            $row = $this->resource->convertDataRowToStringRow($row);
         }
         return $row;
     }
 
     public function convertStringRowToDataRow(array $row)
     {
-        if ($this->tableResource instanceof UsesBinaryDataInterface) {
-            $row = $this->tableResource->convertStringRowToDataRow($row);
+        if ($this->resource instanceof UsesBinaryDataInterface) {
+            $row = $this->resource->convertStringRowToDataRow($row);
         }
         return $row;
     }

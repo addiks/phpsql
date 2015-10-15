@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\SqlParser;
 
-use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\SqlParser\SqlParser;
 
 abstract class Part extends SqlParser
 {

@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Table\Meta;
 
-use Addiks\PHPSQL\Entity\Index\IndexInterface;
+use Addiks\PHPSQL\Index\IndexInterface;
 
 class PerformanceSchema implements IndexInterface
 {

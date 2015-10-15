@@ -12,15 +12,15 @@
 namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Executor;
-use Addiks\PHPSQL\Entity\Result\Temporary;
-use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Result\Temporary;
+use Addiks\PHPSQL\Database\Database;
 use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
-use Addiks\PHPSQL\Entity\Job\Statement\UpdateStatement;
-use Addiks\PHPSQL\Entity\Job\StatementJob;
-use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\Job\Statement\UpdateStatement;
+use Addiks\PHPSQL\Job\StatementJob;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
 use Addiks\PHPSQL\Table\TableManager;
-use Addiks\PHPSQL\Entity\Result\TemporaryResult;
-use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Result\TemporaryResult;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
 
@@ -125,7 +125,7 @@ class UpdateExecutor implements StatementExecutorInterface
                 foreach ($indicies as $index) {
                     /* @var $index Index */
                     
-                    $index->update($rowId, $row, $newRow);
+                    $index->updateRow($row, $newRow, $rowId);
                 }
                 
                 $tableResource->setRowData($rowId, $newRow);

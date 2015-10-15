@@ -11,13 +11,13 @@
 
 namespace Addiks\PHPSQL\SqlParser\Part;
 
-use Addiks\PHPSQL\Entity\Job\Part\ColumnDefinition as ColumnDefinitionJob;
+use Addiks\PHPSQL\Job\Part\ColumnDefinition as ColumnDefinitionJob;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\SqlParser\SqlParser;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
 
 class ColumnDefinitionParser extends SqlParser
@@ -70,7 +70,7 @@ class ColumnDefinitionParser extends SqlParser
         $tokens->seekTokens([T_STRING, T_CONSTANT_ENCAPSED_STRING]);
         
         if (!$tokens->isTokens([T_STRING, T_CONSTANT_ENCAPSED_STRING], TokenIterator::CURRENT)) {
-            throw new MalformedSql("Missing name for column!", $tokens);
+            throw new MalformedSqlException("Missing name for column!", $tokens);
         }
         
         $name = $tokens->getCurrentTokenString();
@@ -98,27 +98,27 @@ class ColumnDefinitionParser extends SqlParser
             if ($dataType === DataType::ENUM() || $dataType === DataType::SET()) {
                 do {
                     if (!$this->valueParser->canParseTokens($tokens)) {
-                        throw new MalformedSql("Invalid value in ENUM!", $tokens);
+                        throw new MalformedSqlException("Invalid value in ENUM!", $tokens);
                     }
                     $columnDefinition->addEnumValue($this->valueParser->convertSqlToJob($tokens));
                 } while ($tokens->seekTokenText(','));
                 
             } else {
                 if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                    throw new MalformedSql("Missing number for length of data-type!", $tokens);
+                    throw new MalformedSqlException("Missing number for length of data-type!", $tokens);
                 }
                 $columnDefinition->setDataTypeLength((int)$tokens->getCurrentTokenString());
                     
                 if ($tokens->seekTokenText(',')) {
                     if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                        throw new MalformedSql("Missing second number for length of data-type!", $tokens);
+                        throw new MalformedSqlException("Missing second number for length of data-type!", $tokens);
                     }
                     $columnDefinition->setDataTypeSecondLength((int)$tokens->getCurrentTokenString());
                 }
             }
                     
             if (!$tokens->seekTokenText(')')) {
-                throw new MalformedSql("Missing end-parenthesis for length of data-type!", $tokens);
+                throw new MalformedSqlException("Missing end-parenthesis for length of data-type!", $tokens);
             }
         }
         
@@ -126,7 +126,7 @@ class ColumnDefinitionParser extends SqlParser
             switch(true){
                 case $tokens->seekTokenNum(SqlToken::T_NOT()):
                     if (!$tokens->seekTokenNum(SqlToken::T_NULL())) {
-                        throw new MalformedSql("Missing T_NULL after T_NOT in column-definition!", $tokens);
+                        throw new MalformedSqlException("Missing T_NULL after T_NOT in column-definition!", $tokens);
                     }
                     $columnDefinition->setIsNullable(false);
                     break;
@@ -137,7 +137,7 @@ class ColumnDefinitionParser extends SqlParser
                         
                 case $tokens->seekTokenNum(SqlToken::T_DEFAULT()):
                     if (!$this->valueParser->canParseTokens($tokens)) {
-                        throw new MalformedSql("Missing valid default value for column definition!", $tokens);
+                        throw new MalformedSqlException("Missing valid default value for column definition!", $tokens);
                     }
                     $beforeIndex = $tokens->getIndex();
                     $defaultValue = $this->valueParser->convertSqlToJob($tokens);
@@ -165,7 +165,7 @@ class ColumnDefinitionParser extends SqlParser
                     
                 case $tokens->seekTokenNum(SqlToken::T_COMMENT()):
                     if (!$tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING)) {
-                        throw new MalformedSql("Missing encapsed string for comment-declaration column-definition!", $tokens);
+                        throw new MalformedSqlException("Missing encapsed string for comment-declaration column-definition!", $tokens);
                     }
                     $columnDefinition->setComment($tokens->getCurrentTokenString());
                     break;
@@ -176,12 +176,12 @@ class ColumnDefinitionParser extends SqlParser
                     
                 case $tokens->seekTokenNum(SqlToken::T_CHARACTER(), TokenIterator::NEXT, [SqlToken::T_DEFAULT()]):
                     if (!$tokens->seekTokenNum(SqlToken::T_SET())) {
-                        throw new MalformedSql("MIssing SET after CHARACTER keyword!", $tokens);
+                        throw new MalformedSqlException("MIssing SET after CHARACTER keyword!", $tokens);
                     }
                 case $tokens->seekTokenNum(SqlToken::T_CHARSET(), TokenIterator::NEXT, [SqlToken::T_DEFAULT()]):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING) && !$tokens->seekTokenNum(T_STRING)) {
-                        throw new MalformedSql("Missing string for CHARACTER SET!", $tokens);
+                        throw new MalformedSqlException("Missing string for CHARACTER SET!", $tokens);
                     }
                     $columnDefinition->setCharacterSet($tokens->getCurrentTokenString());
                     break;
@@ -189,7 +189,7 @@ class ColumnDefinitionParser extends SqlParser
                 case $tokens->seekTokenNum(SqlToken::T_COLLATE()):
                     $tokens->seekTokenText('=');
                     if (!$tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING) && !$tokens->seekTokenNum(T_STRING)) {
-                        throw new MalformedSql("Missing string for COLLATE!", $tokens);
+                        throw new MalformedSqlException("Missing string for COLLATE!", $tokens);
                     }
                     $columnDefinition->setCollate($tokens->getCurrentTokenString());
                     break;
@@ -203,7 +203,7 @@ class ColumnDefinitionParser extends SqlParser
                                     break;
                                 
                                 default:
-                                    throw new MalformedSql("Invalid value for ON UPDATE!", $tokens);
+                                    throw new MalformedSqlException("Invalid value for ON UPDATE!", $tokens);
                             }
                             break;
                         
@@ -214,12 +214,12 @@ class ColumnDefinitionParser extends SqlParser
                                     break;
                                 
                                 default:
-                                    throw new MalformedSql("Invalid value for ON UPDATE!", $tokens);
+                                    throw new MalformedSqlException("Invalid value for ON UPDATE!", $tokens);
                             }
                             break;
                             
                         default:
-                            throw new MalformedSql("Only UPDATE and DELETE allowed for ON trigger!", $tokens);
+                            throw new MalformedSqlException("Only UPDATE and DELETE allowed for ON trigger!", $tokens);
                     }
                     break;
                     

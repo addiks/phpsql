@@ -12,8 +12,15 @@ namespace Addiks\PHPSQL\UnitTests\Entity;
 
 use Exception;
 use PHPUnit_Framework_TestCase;
-use Addiks\PHPSQL\Entity\Index\BTree;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Value\Enum\Sql\IndexType;
+use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
+use Addiks\PHPSQL\Table\TableSchema;
+use Addiks\PHPSQL\Value\Enum\Page\Index\Type;
+use Addiks\PHPSQL\Column\ColumnSchema;
+use Addiks\PHPSQL\Index\IndexSchema;
+use Addiks\PHPSQL\Index\BTree;
+use Addiks\PHPSQL\Value\Enum\Page\Index\IndexEngine;
 
 class BTreeTest extends PHPUnit_Framework_TestCase
 {
@@ -21,16 +28,43 @@ class BTreeTest extends PHPUnit_Framework_TestCase
     public function setUp()
     {
 
-        $keyLength   = 8;
-        $forkRate    = 16;
-        $file        = new FileResourceProxy(fopen("php://memory", "w"));
-        $doublesFile = new FileResourceProxy(fopen("php://memory", "w"));
+        $forkRate        = 16;
+        $file            = new FileResourceProxy(fopen("php://memory", "w"));
+        $doublesFile     = new FileResourceProxy(fopen("php://memory", "w"));
+        $tableSchemaFile = new FileResourceProxy(fopen("php://memory", "w"));
+        $indexSchemaFile = new FileResourceProxy(fopen("php://memory", "w"));
 
-        $this->btree = new BTree($file, $keyLength, $forkRate);
+        $tableSchema = new TableSchema($tableSchemaFile, $indexSchemaFile);
+
+        $columnPageA = new ColumnSchema();
+        $columnPageA->setName("columnB");
+        $columnPageA->setIndex(0);
+        $columnPageA->setDataType(DataType::INT());
+        $columnPageA->setLength(4);
+        $tableSchema->addColumnSchema($columnPageA);
+
+        $columnPageB = new ColumnSchema();
+        $columnPageB->setName("columnC");
+        $columnPageB->setIndex(1);
+        $columnPageB->setDataType(DataType::VARCHAR());
+        $columnPageB->setLength(4);
+        $tableSchema->addColumnSchema($columnPageB);
+
+        $indexPage = new IndexSchema();
+        $indexPage->setName("test-index");
+        $indexPage->setColumns([1, 2]);
+        $indexPage->setType(Type::INDEX());
+        $indexPage->setEngine(IndexEngine::BTREE());
+
+        $this->btree = new BTree($file, $tableSchema, $indexPage, $forkRate);
         $this->btree->setDoublesFile($doublesFile);
         $this->btree->setIsDevelopmentMode(true);
     }
 
+    /**
+     * @group unittests.btree
+     * @group unittests.btree.insert
+     */
     public function testInsert()
     {
 
@@ -52,6 +86,8 @@ class BTreeTest extends PHPUnit_Framework_TestCase
 
     /**
      * @depends testInsert
+     * @group unittests.btree
+     * @group unittests.btree.insert
      */
     public function testMultipleInserts()
     {
@@ -71,6 +107,8 @@ class BTreeTest extends PHPUnit_Framework_TestCase
  
     /**
      * @depends testMultipleInserts
+     * @group unittests.btree
+     * @group unittests.btree.search
      */
     public function testSearch()
     {
@@ -99,6 +137,10 @@ class BTreeTest extends PHPUnit_Framework_TestCase
         $this->assertContains(str_pad("ghi", 8, "\0", STR_PAD_LEFT), $results, "Could not search value in b-tree!");
     }
 
+    /**
+     * @group unittests.btree
+     * @group unittests.btree.remove
+     */
     public function testRemove()
     {
 

@@ -13,15 +13,15 @@ namespace Addiks\PHPSQL\StatementExecutor;
 
 use InvalidArgumentException;
 use Addiks\PHPSQL\Executor;
-use Addiks\PHPSQL\Entity\Result\Temporary;
-use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\Entity\Result\TemporaryResult;
+use Addiks\PHPSQL\Result\Temporary;
+use Addiks\PHPSQL\Database\Database;
+use Addiks\PHPSQL\Result\TemporaryResult;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\Entity\Job\Statement\DescribeStatement;
-use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Job\Statement\DescribeStatement;
+use Addiks\PHPSQL\Job\StatementJob;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
-use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\Entity\Page\ColumnPage;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
+use Addiks\PHPSQL\Entity\Page\ColumnSchema;
 use Addiks\PHPSQL\Filesystem\FilePathes;
 use Addiks\PHPSQL\DataConverter;
 
@@ -71,7 +71,7 @@ class DescribeExecutor implements StatementExecutorInterface
         }
         
         foreach ($tableSchema->getColumnIterator() as $columnId => $columnPage) {
-            /* @var $columnPage ColumnPage */
+            /* @var $columnPage ColumnSchema */
             
             $fieldName = $columnPage->getName();
             

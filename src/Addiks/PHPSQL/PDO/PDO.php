@@ -14,9 +14,9 @@ namespace Addiks\PHPSQL\PDO;
 use Addiks\PHPSQL\PDO\Statement;
 use Addiks\PHPSQL\Value\Database\Dsn\Internal as InternalDSN;
 use Addiks\PHPSQL\Value\Database\Dsn\InmemoryDsn;
-use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\DatabaseAdapter\InmemoryDatabaseAdapter;
-use Addiks\PHPSQL\DatabaseAdapter\InternalDatabaseAdapter;
+use Addiks\PHPSQL\Database\Database;
+use Addiks\PHPSQL\Database\DatabaseAdapter\InmemoryDatabaseAdapter;
+use Addiks\PHPSQL\Database\DatabaseAdapter\InternalDatabaseAdapter;
 use PDO as BasePDO;
 use Addiks\PHPSQL\Value\Database\Dsn;
 

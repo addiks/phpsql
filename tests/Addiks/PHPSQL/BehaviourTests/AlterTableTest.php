@@ -12,7 +12,7 @@ namespace Addiks\PHPSQL\BehaviourTests;
 
 use PHPUnit_Framework_TestCase;
 use Addiks\PHPSQL\PDO\PDO;
-use Addiks\PHPSQL\ResultWriter;
+use Addiks\PHPSQL\Result\ResultWriter;
 
 class AlterTableTest extends PHPUnit_Framework_TestCase
 {
@@ -156,7 +156,6 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
     /**
      * @group behaviour.alter
      * @group behaviour.alter.set_first
-     * @group DEV
      */
     public function testSetFirst()
     {

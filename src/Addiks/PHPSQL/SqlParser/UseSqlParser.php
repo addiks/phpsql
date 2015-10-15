@@ -13,10 +13,10 @@ namespace Addiks\PHPSQL\SqlParser;
 
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
-use Addiks\PHPSQL\Entity\Job\Statement\UseStatement;
+use Addiks\PHPSQL\SqlParser\SqlParser;
+use Addiks\PHPSQL\Job\Statement\UseStatement;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
 
 class UseSqlParser extends SqlParser
@@ -46,12 +46,12 @@ class UseSqlParser extends SqlParser
         $tokens->seekTokenNum(SqlToken::T_USE());
         
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_USE()) {
-            throw new MalformedSql("Tried to parse USE statement when token-iterator does not point to T_USE!", $tokens);
+            throw new MalformedSqlException("Tried to parse USE statement when token-iterator does not point to T_USE!", $tokens);
         }
         
 
         if (!$this->valueParser->canParseTokens($tokens)) {
-            throw new MalformedSql("Missing database-specifier for USE statement!", $tokens);
+            throw new MalformedSqlException("Missing database-specifier for USE statement!", $tokens);
         }
         
         $useJob = new UseStatement();

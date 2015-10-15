@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Value;
 
-use Addiks\PHPSQL\Value;
+use Addiks\PHPSQL\Value\Value;
 
 /**
  * Class representing a numeric value.

@@ -11,31 +11,32 @@
 
 namespace Addiks\PHPSQL\StatementExecutor;
 
-use Addiks\PHPSQL\Database;
+use InvalidArgumentException;
+use Addiks\PHPSQL\Database\Database;
 use Addiks\PHPSQL\SelectResult;
 use Addiks\PHPSQL\Executor;
 use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
-use Addiks\PHPSQL\Entity\Job\StatementJob;
-use Addiks\PHPSQL\Entity\Job\Statement\SelectStatement;
+use Addiks\PHPSQL\Job\StatementJob;
+use Addiks\PHPSQL\Job\Statement\SelectStatement;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\Entity\Result\TemporaryResult;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
+use Addiks\PHPSQL\Result\TemporaryResult;
 use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\Table\TableContainer;
-use Addiks\PHPSQL\Entity\Job\Part\ParenthesisPart;
+use Addiks\PHPSQL\Job\Part\ParenthesisPart;
 use Addiks\PHPSQL\Value\Specifier\TableSpecifier;
 use Addiks\PHPSQL\Table\TableInterface;
-use Addiks\PHPSQL\Entity\TableSchema;
-use Addiks\PHPSQL\Entity\Page\ColumnPage;
-use Addiks\PHPSQL\Entity\Job\Part\ValuePart;
+use Addiks\PHPSQL\Table\TableSchema;
+use Addiks\PHPSQL\Entity\Page\ColumnSchema;
+use Addiks\PHPSQL\Job\Part\ValuePart;
 use Addiks\PHPSQL\Iterators\JoinIterator;
-use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Iterators\SortedResourceIterator;
 use Addiks\PHPSQL\Iterators\FilteredResourceIterator;
-use Addiks\PHPSQL\Entity\Job\Part\Join;
-use Addiks\PHPSQL\Entity\Job\Part\Join\TableJoin;
-use Addiks\PHPSQL\Entity\Job\Part\GroupingDefinition;
+use Addiks\PHPSQL\Job\Part\Join;
+use Addiks\PHPSQL\Job\Part\Join\TableJoin;
+use Addiks\PHPSQL\Job\Part\GroupingDefinition;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 
 class SelectExecutor implements StatementExecutorInterface
@@ -108,7 +109,7 @@ class SelectExecutor implements StatementExecutorInterface
                 if ($dataSource instanceof TableSpecifier) {
                     if (!is_null($dataSource->getDatabase())) {
                         if (!$this->schemaManager->schemaExists($dataSource->getDatabase())) {
-                            throw new Conflict("Database '{$dataSource->getDatabase()}' does not exist!");
+                            throw new InvalidArgumentException("Database '{$dataSource->getDatabase()}' does not exist!");
                         }
                         
                         $schema = $this->schemaManager->getSchema($dataSource->getDatabase());
@@ -118,7 +119,7 @@ class SelectExecutor implements StatementExecutorInterface
                     }
                     
                     if (!$schema->tableExists($dataSource->getTable())) {
-                        throw new Conflict("Table '{$dataSource}' does not exist!");
+                        throw new InvalidArgumentException("Table '{$dataSource}' does not exist!");
                     }
 
                     if (is_null($alias)) {
@@ -144,7 +145,7 @@ class SelectExecutor implements StatementExecutorInterface
                     $tableSchema = $table->getTableSchema();
 
                     foreach ($tableSchema->getColumnIterator() as $columnPage) {
-                        /* @var $columnPage ColumnPage */
+                        /* @var $columnPage ColumnSchema */
 
                         $columnName = $columnPage->getName();
 

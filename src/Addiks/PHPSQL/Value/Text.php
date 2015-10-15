@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL\Value;
 
 use ErrorException;
-use Addiks\PHPSQL\Value;
+use Addiks\PHPSQL\Value\Value;
 
 /**
  * Value Object representing a text.

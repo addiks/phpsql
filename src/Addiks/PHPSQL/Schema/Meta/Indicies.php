@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\Schema\Meta;
 
-use Addiks\PHPSQL\Entity\Index\IndexInterface;
+use Addiks\PHPSQL\Index\IndexInterface;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Index;
 

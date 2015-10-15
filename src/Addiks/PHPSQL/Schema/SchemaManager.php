@@ -12,11 +12,12 @@
 namespace Addiks\PHPSQL\Schema;
 
 use ErrorException;
+use InvalidArgumentException;
 use Addiks\PHPSQL\Schema\Meta\InformationSchema;
-use Addiks\PHPSQL\Entity\Schema;
+use Addiks\PHPSQL\Database\DatabaseSchema;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Value\Database\Dsn\InternalDsn;
-use Addiks\PHPSQL\Entity\TableSchema;
+use Addiks\PHPSQL\Table\TableSchema;
 use Addiks\PHPSQL\Filesystem\FilePathes;
 
 class SchemaManager
@@ -56,7 +57,7 @@ class SchemaManager
         }
         
         if (!$this->schemaExists($schemaId)) {
-            throw new Conflict("Database '{$schemaId}' does not exist!");
+            throw new InvalidArgumentException("Database '{$schemaId}' does not exist!");
         }
         
         $this->currentDatabaseId = $schemaId;
@@ -72,7 +73,7 @@ class SchemaManager
      *
      * @param string $schemaId
      * @throws ErrorException
-     * @return Schema
+     * @return DatabaseSchema
      */
     public function getSchema($schemaId = null)
     {
@@ -103,7 +104,7 @@ class SchemaManager
                 default:
                     $schemaFilePath = sprintf(FilePathes::FILEPATH_SCHEMA, $schemaId);
                     $schemaFile = $this->filesystem->getFile($schemaFilePath);
-                    $this->schemas[$schemaId] = new Schema($schemaFile);
+                    $this->schemas[$schemaId] = new DatabaseSchema($schemaFile);
                     break;
                     
             }
@@ -151,8 +152,8 @@ class SchemaManager
         $schemaFilePath = sprintf(FilePathes::FILEPATH_SCHEMA, $schemaId);
         $schemaFile = $this->filesystem->getFile($schemaFilePath);
 
-        /* @var $schema Schema */
-        $schema = new Schema($schemaFile);
+        /* @var $schema DatabaseSchema */
+        $schema = new DatabaseSchema($schemaFile);
         $schema->setId($schemaId);
 
         return $schema;
@@ -267,7 +268,7 @@ class SchemaManager
             $schemaId = $this->getCurrentlyUsedDatabaseId();
         }
         
-        /* @var $schema Schema */
+        /* @var $schema DatabaseSchema */
         $schema = $this->getSchema($schemaId);
         
         if (!$schema->tableExists($tableName)) {
@@ -280,7 +281,7 @@ class SchemaManager
     
     ### VIEW
     
-    public function getViewQuery($viewName, Schema $schema = null)
+    public function getViewQuery($viewName, DatabaseSchema $schema = null)
     {
         
         if (is_null($schema)) {
@@ -297,7 +298,7 @@ class SchemaManager
         return $this->filesystem->getFileContents($viewFilePath);
     }
     
-    public function setViewQuery($query, $viewName, Schema $schema = null)
+    public function setViewQuery($query, $viewName, DatabaseSchema $schema = null)
     {
         
         if (is_null($schema)) {

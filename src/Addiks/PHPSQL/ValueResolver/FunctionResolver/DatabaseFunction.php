@@ -10,12 +10,12 @@
 
 namespace Addiks\PHPSQL\ValueResolver\FunctionResolver;
 
-use Addiks\PHPSQL\ValueResolver;
-use Addiks\PHPSQL\Entity\Job\Part\FunctionJob;
-use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Job\Part\FunctionJob;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
 
-class DatabaseFunction
+class DatabaseFunction implements FunctionInterface
 {
     public function __construct(ValueResolver $valueResolver)
     {

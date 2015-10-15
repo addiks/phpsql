@@ -11,9 +11,9 @@
 
 namespace Addiks\PHPSQL\PDO;
 
-use Addiks\PHPSQL\Entity\Result\TemporaryResult;
-use Addiks\PHPSQL\Entity\Result\ResultInterface;
-use Addiks\PHPSQL\Database;
+use Addiks\PHPSQL\Result\TemporaryResult;
+use Addiks\PHPSQL\Result\ResultInterface;
+use Addiks\PHPSQL\Database\Database;
 use Addiks\PHPSQL\PDO\PDO;
 use ErrorException;
 

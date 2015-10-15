@@ -10,10 +10,10 @@
 
 namespace Addiks\PHPSQL\UnitTests\Entity;
 
-use Addiks\PHPSQL\Entity\Index\QuickSort;
 use PHPUnit_Framework_TestCase;
+use Addiks\PHPSQL\Index\QuickSort;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
-use Addiks\PHPSQL\Entity\Page\ColumnPage;
+use Addiks\PHPSQL\Column\ColumnSchema;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 
 class QuickSortTest extends PHPUnit_Framework_TestCase
@@ -23,12 +23,12 @@ class QuickSortTest extends PHPUnit_Framework_TestCase
     {
         $file = new FileResourceProxy(fopen("php://memory", "w"));
 
-        $column1 = new ColumnPage();
+        $column1 = new ColumnSchema();
         $column1->setName("foo");
         $column1->setDataType(DataType::INTEGER());
         $column1->setLength(4);
 
-        $column2 = new ColumnPage();
+        $column2 = new ColumnSchema();
         $column2->setName("bar");
         $column2->setDataType(DataType::VARCHAR());
         $column2->setLength(12);

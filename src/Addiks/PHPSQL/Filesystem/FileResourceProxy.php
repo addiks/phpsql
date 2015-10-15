@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Filesystem;
 
 use ErrorException;
 
-class FileResourceProxy
+class FileResourceProxy implements FileInterface
 {
 
     protected $resource;
@@ -93,7 +93,7 @@ class FileResourceProxy
         if ($targetOffset > $size) {
             // with php://memory streams, fseek does not work when offset > size.
             fseek($this->resource, 0, SEEK_END);
-            fwrite($this->resource, str_pad('', ($offset - $size), "\0"));
+            fwrite($this->resource, str_pad('', ($targetOffset - $size), "\0"));
 
         } else {
             fseek($this->resource, $offset, $seekMode);

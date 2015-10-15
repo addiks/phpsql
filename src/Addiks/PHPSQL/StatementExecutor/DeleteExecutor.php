@@ -12,16 +12,17 @@
 namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Executor;
-use Addiks\PHPSQL\Entity\Result\TemporaryResult;
-use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\Entity\Job\StatementJob;
-use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\Result\TemporaryResult;
+use Addiks\PHPSQL\Database\Database;
+use Addiks\PHPSQL\Job\StatementJob;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
 use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\BinaryConverterTrait;
-use Addiks\PHPSQL\Entity\Job\Statement\DeleteStatement;
-use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\Job\Statement\DeleteStatement;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Iterators\SortedResourceIterator;
+use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
 
 class DeleteExecutor implements StatementExecutorInterface
 {
@@ -133,7 +134,7 @@ class DeleteExecutor implements StatementExecutorInterface
             
             foreach ($sortedIterator as $rowId => $row) {
                 $executionContext->setCurrentSourceRow($row);
-                
+
                 $isConditionMatch = true;
                 if (!is_null($conditionValue)) {
                     $isConditionMatch = $this->valueResolver->resolveValue($conditionValue, $executionContext);
@@ -158,7 +159,11 @@ class DeleteExecutor implements StatementExecutorInterface
                             $indexId
                         );
                         
-                        $indexResource->remove($tableResource->getRowData($rowId), $this->decstr($rowId));
+                        $originalRow = $tableResource->getRowData($rowId);
+
+                        $rowIdStr = $this->decstr($rowId);
+
+                        $indexResource->removeRow($originalRow, $rowIdStr);
                     }
                     
                     $tableResource->removeRow($rowId);

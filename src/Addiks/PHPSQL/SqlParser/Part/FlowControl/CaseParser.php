@@ -11,12 +11,12 @@
 
 namespace Addiks\PHPSQL\SqlParser\Part\FlowControl;
 
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
-use Addiks\PHPSQL\Entity\Job\Part\FlowControl\CaseJob;
+use Addiks\PHPSQL\SqlParser\SqlParser;
+use Addiks\PHPSQL\Job\Part\FlowControl\CaseJob;
 
 class CaseParser extends SqlParser
 {
@@ -56,15 +56,15 @@ class CaseParser extends SqlParser
         
         do {
             if (!$tokens->seekTokenNum(SqlToken::T_WHEN())) {
-                throw new MalformedSql("Missing WHEN in CASE statement!", $tokens);
+                throw new MalformedSqlException("Missing WHEN in CASE statement!", $tokens);
             }
             if (!$this->valueParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing valid when-value in CASE statement!", $tokens);
+                throw new MalformedSqlException("Missing valid when-value in CASE statement!", $tokens);
             }
             $whenValue = $this->valueParser->convertSqlToJob($tokens);
             
             if (!$tokens->seekTokenNum(SqlToken::T_THEN())) {
-                throw new MalformedSql("Missing THEN in CASE statement!", $tokens);
+                throw new MalformedSqlException("Missing THEN in CASE statement!", $tokens);
             }
             switch(true){
                 case $this->valueParser->canParseTokens($tokens):
@@ -72,7 +72,7 @@ class CaseParser extends SqlParser
                     break;
                 
                 default:
-                    throw new MalformedSql("Missing valid THEN statement for CASE statement!", $tokens);
+                    throw new MalformedSqlException("Missing valid THEN statement for CASE statement!", $tokens);
             }
             $caseJob->addWhenThenStatement($whenValue, $thenExpression);
             
@@ -85,12 +85,12 @@ class CaseParser extends SqlParser
                     break;
                 
                 default:
-                    throw new MalformedSql("Missing valid THEN statement for CASE statement!", $tokens);
+                    throw new MalformedSqlException("Missing valid THEN statement for CASE statement!", $tokens);
             }
         }
         
         if (!$tokens->seekTokenNum(SqlToken::T_END())) {
-            throw new MalformedSql("Missing END at the end of for CASE statement!", $tokens);
+            throw new MalformedSqlException("Missing END at the end of for CASE statement!", $tokens);
         }
         
         $tokens->seekTokenNum(SqlToken::T_CASE());

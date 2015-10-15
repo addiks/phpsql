@@ -13,12 +13,12 @@ namespace Addiks\PHPSQL\SqlParser\Part;
 
 use Addiks\PHPSQL\SqlParser\Part;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\SqlParser\SqlParser;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\SqlParser\SelectSqlParser;
-use Addiks\PHPSQL\Entity\Job\Part\ParenthesisPart;
+use Addiks\PHPSQL\Job\Part\ParenthesisPart;
 
 class ParenthesisParser extends Part
 {
@@ -74,7 +74,7 @@ class ParenthesisParser extends Part
         }
         
         if (!$tokens->seekTokenText(')')) {
-            throw new MalformedSql("Missing ')' at the end of a parenthesis!", $tokens);
+            throw new MalformedSqlException("Missing ')' at the end of a parenthesis!", $tokens);
         }
         
         if ($tokens->seekTokenNum(T_STRING, TokenIterator::NEXT, [SqlToken::T_AS()])) {
@@ -96,18 +96,18 @@ class ParenthesisParser extends Part
                 $isUnionAll      = $isUnionAll || $tokens->seekTokenNum(SqlToken::T_ALL());
                 
                 if ($isUnionAll && $isUnionDistinct) {
-                    throw new MalformedSql("UNION cannot be ALL and DISTINCT at the same time!", $tokens);
+                    throw new MalformedSqlException("UNION cannot be ALL and DISTINCT at the same time!", $tokens);
                 }
                     
                 $isUnionInParenthesis = $tokens->seekTokenText('(');
                     
                 if (!$this->selectParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing following SELECT statement after UNION in SELECT statement!", $tokens);
+                    throw new MalformedSqlException("Missing following SELECT statement after UNION in SELECT statement!", $tokens);
                 }
                 $lastUnionedSelect->setUnionSelect($this->selectParser->convertSqlToJob($tokens), $isUnionDistinct);
                     
                 if ($isUnionInParenthesis && !$tokens->seekTokenText(')')) {
-                    throw new MalformedSql("Missing ending parenthesis after UNION in SELECT statement!", $tokens);
+                    throw new MalformedSqlException("Missing ending parenthesis after UNION in SELECT statement!", $tokens);
                 }
             }
             
@@ -117,7 +117,7 @@ class ParenthesisParser extends Part
             
             if ($tokens->seekTokenNum(SqlToken::T_HAVING())) {
                 if (!$this->valueParser->canParseTokens($tokens)) {
-                    throw new MalformedSql("Missing condition for WHERE clause in SELECT statement!", $tokens);
+                    throw new MalformedSqlException("Missing condition for WHERE clause in SELECT statement!", $tokens);
                 }
             
                 $condition = new Condition();
@@ -130,11 +130,11 @@ class ParenthesisParser extends Part
             
             if ($tokens->seekTokenNum(SqlToken::T_ORDER())) {
                 if (!$tokens->seekTokenNum(SqlToken::T_BY())) {
-                    throw new MalformedSql("Missing BY after ORDER on SELECT statement!", $tokens);
+                    throw new MalformedSqlException("Missing BY after ORDER on SELECT statement!", $tokens);
                 }
                 do {
                     if (!$this->valueParser->canParseTokens($tokens)) {
-                        throw new MalformedSql("Missing value for ORDER BY part on SELECT statement!", $tokens);
+                        throw new MalformedSqlException("Missing value for ORDER BY part on SELECT statement!", $tokens);
                     }
                 
                     $orderValue = $this->valueParser->convertSqlToJob($tokens);
@@ -153,12 +153,12 @@ class ParenthesisParser extends Part
             
             if ($tokens->seekTokenNum(SqlToken::T_LIMIT())) {
                 if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                    throw new MalformedSql("Missing offset number for LIMIT part in SELECT statement!", $tokens);
+                    throw new MalformedSqlException("Missing offset number for LIMIT part in SELECT statement!", $tokens);
                 }
                 $unionSelect->setLimitOffset((int)$tokens->getCurrentTokenString());
                 if ($tokens->seekTokenText(',')) {
                     if (!$tokens->seekTokenNum(T_NUM_STRING)) {
-                        throw new MalformedSql("Missing length number for LIMIT part in SELECT statement!", $tokens);
+                        throw new MalformedSqlException("Missing length number for LIMIT part in SELECT statement!", $tokens);
                     }
                     $unionSelect->setLimitRowCount((int)$tokens->getCurrentTokenString());
                 }

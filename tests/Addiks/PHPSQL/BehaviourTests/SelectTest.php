@@ -12,7 +12,7 @@ namespace Addiks\PHPSQL\BehaviorTests;
 
 use PHPUnit_Framework_TestCase;
 use Addiks\PHPSQL\PDO\PDO;
-use Addiks\PHPSQL\ResultWriter;
+use Addiks\PHPSQL\Result\ResultWriter;
 
 class SelectTest extends PHPUnit_Framework_TestCase
 {

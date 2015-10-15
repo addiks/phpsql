@@ -11,12 +11,12 @@
 
 namespace Addiks\PHPSQL\SqlParser;
 
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
-use Addiks\PHPSQL\Entity\Job\Statement\DropStatement;
+use Addiks\PHPSQL\SqlParser\SqlParser;
+use Addiks\PHPSQL\Job\Statement\DropStatement;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
 
 class DropSqlParser extends SqlParser
@@ -72,7 +72,7 @@ class DropSqlParser extends SqlParser
         
         if ($tokens->seekTokenNum(SqlToken::T_IF())) {
             if (!$tokens->seekTokenNum(SqlToken::T_EXISTS())) {
-                throw new MalformedSql("Malformed drop-statement (missing T_EXISTS after T_IF)!");
+                throw new MalformedSqlException("Malformed drop-statement (missing T_EXISTS after T_IF)!");
             }
             $dropJob->setOnlyIfExist(true);
         } else {
@@ -81,7 +81,7 @@ class DropSqlParser extends SqlParser
         
         do {
             if (!$this->valueParser->canParseTokens($tokens)) {
-                throw new MalformedSql("Missing a subject to drop for T_DROP statement!", $tokens);
+                throw new MalformedSqlException("Missing a subject to drop for T_DROP statement!", $tokens);
             }
             
             $subject = $this->valueParser->convertSqlToJob($tokens);
@@ -91,12 +91,12 @@ class DropSqlParser extends SqlParser
         if ($tokens->seekTokenNum(SqlToken::T_RESTRICT())) {
             $dropJob->setReferenceOption(ReferenceOption::RESTRICT());
             if ($tokens->seekTokenNum(SqlToken::T_CASCADE())) {
-                throw new MalformedSql("Conflicting T_RESTRICT with T_CASCADE!", $tokens);
+                throw new MalformedSqlException("Conflicting T_RESTRICT with T_CASCADE!", $tokens);
             }
         }if ($tokens->seekTokenNum(SqlToken::T_CASCADE())) {
             $dropJob->setReferenceOption(ReferenceOption::CASCADE());
             if ($tokens->seekTokenNum(SqlToken::T_RESTRICT())) {
-                throw new MalformedSql("Conflicting T_RESTRICT with T_CASCADE!", $tokens);
+                throw new MalformedSqlException("Conflicting T_RESTRICT with T_CASCADE!", $tokens);
             }
         }
         

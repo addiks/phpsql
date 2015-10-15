@@ -14,18 +14,18 @@ namespace Addiks\PHPSQL\StatementExecutor;
 use ErrorException;
 use Exception;
 use Addiks\PHPSQL\Index;
-use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
 use Addiks\PHPSQL\BinaryConverterTrait;
 use Addiks\PHPSQL\Executor;
-use Addiks\PHPSQL\Entity\Result\Temporary;
-use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\Entity\Result\TemporaryResult;
+use Addiks\PHPSQL\Result\Temporary;
+use Addiks\PHPSQL\Database\Database;
+use Addiks\PHPSQL\Result\TemporaryResult;
 use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
-use Addiks\PHPSQL\Entity\Job\StatementJob;
-use Addiks\PHPSQL\Entity\Job\Statement\InsertStatement;
+use Addiks\PHPSQL\Job\StatementJob;
+use Addiks\PHPSQL\Job\Statement\InsertStatement;
 use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\Filesystem\FilePathes;
-use Addiks\PHPSQL\Entity\ExecutionContext;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Table\TableInterface;
 
@@ -233,12 +233,12 @@ class InsertExecutor implements StatementExecutorInterface
                     foreach ($indices as $indexId => $index) {
                         /* @var $index Index */
                         
-                        if (!$index->getIndexPage()->isUnique()) {
+                        if (!$index->getIndexSchema()->isUnique()) {
                             continue;
                         }
-                        if (count($index->search($rowData))>0) {
+                        if (count($index->searchRow($rowData))>0) {
                             $rowDataString = implode(", ", $rowData);
-                            throw new ErrorException("Cannot insert because row '{$rowDataString}' collides with unique key '{$index->getIndexPage()->getName()}'!");
+                            throw new ErrorException("Cannot insert because row '{$rowDataString}' collides with unique key '{$index->getIndexSchema()->getName()}'!");
                         }
                     }
                     $rowDatas[] = $rowData;
@@ -257,11 +257,11 @@ class InsertExecutor implements StatementExecutorInterface
             foreach ($rowDatas as $rowData) {
                 // check unique keys
                 foreach ($indices as $indexId => $index) {
-                    if (!$index->getIndexPage()->isUnique()) {
+                    if (!$index->getIndexSchema()->isUnique()) {
                         continue;
                     }
-                    if (count($index->search($rowData))>0) {
-                        throw new ErrorException("Cannot insert because of unique key '{$index->getIndexPage()->getName()}'!");
+                    if (count($index->searchRow($rowData))>0) {
+                        throw new ErrorException("Cannot insert because of unique key '{$index->getIndexSchema()->getName()}'!");
                     }
                 }
                 
@@ -270,7 +270,7 @@ class InsertExecutor implements StatementExecutorInterface
                 
                 // insert into indicies
                 foreach ($indices as $indexId => $index) {
-                    $index->insert($rowData, $this->decstr($rowId));
+                    $index->insertRow($rowData, $this->decstr($rowId));
                 }
             }
             
@@ -284,7 +284,7 @@ class InsertExecutor implements StatementExecutorInterface
                 
                 // remove from indicies
                 foreach ($indices as $indexId => $index) {
-                    $index->remove($row, $this->decstr($rowId));
+                    $index->removeRow($row, $this->decstr($rowId));
                 }
             }
             

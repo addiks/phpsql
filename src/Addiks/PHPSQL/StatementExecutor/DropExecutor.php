@@ -12,15 +12,15 @@
 namespace Addiks\PHPSQL\StatementExecutor;
 
 use Addiks\PHPSQL\Executor;
-use Addiks\PHPSQL\Entity\Result\Temporary;
-use Addiks\PHPSQL\Database;
-use Addiks\PHPSQL\Entity\Job\StatementJob;
+use Addiks\PHPSQL\Result\Temporary;
+use Addiks\PHPSQL\Database\Database;
+use Addiks\PHPSQL\Job\StatementJob;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
-use Addiks\PHPSQL\ValueResolver;
+use Addiks\PHPSQL\ValueResolver\ValueResolver;
 use Addiks\PHPSQL\Schema\SchemaManager;
-use Addiks\PHPSQL\Entity\Job\Statement\DropStatement;
-use Addiks\PHPSQL\Entity\ExecutionContext;
-use Addiks\PHPSQL\Entity\Result\TemporaryResult;
+use Addiks\PHPSQL\Job\Statement\DropStatement;
+use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
+use Addiks\PHPSQL\Result\TemporaryResult;
 
 class DropExecutor implements StatementExecutorInterface
 {

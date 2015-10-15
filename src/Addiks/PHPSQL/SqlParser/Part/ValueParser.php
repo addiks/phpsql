@@ -11,7 +11,7 @@
 
 namespace Addiks\PHPSQL\SqlParser\Part;
 
-use Addiks\PHPSQL\Entity\Job\Part\ValuePart as ValueJob;
+use Addiks\PHPSQL\Job\Part\ValuePart as ValueJob;
 use Addiks\PHPSQL\SqlParser\Part\FlowControl\CaseParser;
 use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\Condition\LikeConditionParser;
@@ -19,11 +19,11 @@ use Addiks\PHPSQL\SqlParser\Part\Condition\EnumConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\Part\FunctionParser;
 use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;
-use Addiks\PHPSQL\Entity\Exception\MalformedSql;
+use Addiks\PHPSQL\Exception\MalformedSqlException;
 use Addiks\PHPSQL\Value\Enum\Sql\SqlToken;
 use Addiks\PHPSQL\Iterators\TokenIterator;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
-use Addiks\PHPSQL\SqlParser;
+use Addiks\PHPSQL\SqlParser\SqlParser;
 use Addiks\PHPSQL\Value\Sql\Variable;
 
 class ValueParser extends SqlParser
@@ -147,7 +147,7 @@ class ValueParser extends SqlParser
         $valueJob = new ValueJob();
         
         if (!$this->parsePlainValue($tokens, $valueJob)) {
-            throw new MalformedSql("Missing valid value!", $tokens);
+            throw new MalformedSqlException("Missing valid value!", $tokens);
         }
         
         do {

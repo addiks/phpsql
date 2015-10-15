@@ -12,7 +12,7 @@
 namespace Addiks\PHPSQL\Value;
 
 use ErrorException;
-use Addiks\PHPSQL\Value;
+use Addiks\PHPSQL\Value\Value;
 use ReflectionClass;
 
 /**
@@ -176,8 +176,8 @@ abstract class Enum extends Value
      */
     public static function getByValue($needle)
     {
-        
-        $reflection = new ReflectionClass(get_called_class());
+        $classname = get_called_class();
+        $reflection = new ReflectionClass($classname);
         
         foreach ($reflection->getConstants() as $name => $value) {
             if ($value === $needle) {
@@ -185,6 +185,6 @@ abstract class Enum extends Value
             }
         }
         
-        return null;
+        throw new ErrorException("Value '{$needle}' does not match enumeration '{$classname}'");
     }
 }
