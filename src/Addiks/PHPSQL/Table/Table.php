@@ -36,6 +36,7 @@ use Addiks\PHPSQL\Index\BTree;
 use Addiks\PHPSQL\Index\HashTable;
 use Addiks\PHPSQL\Filesystem\FileInterface;
 use Addiks\PHPSQL\Column\ColumnSchema;
+use Addiks\PHPSQL\Column\ColumnDataInterface;
 
 class Table implements Iterator, TableInterface, UsesBinaryDataInterface
 {
@@ -48,32 +49,18 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         array $indicies,
         FileInterface $autoIncrementFile,
         FileInterface $deletedRowsFile,
-        $valueResolver = null,
-        $dataConverter = null
+        DataConverter $dataConverter = null
     ) {
-
-        if (is_null($valueResolver)) {
-            $valueResolver = new ValueResolver();
-        }
-
         if (is_null($dataConverter)) {
             $dataConverter = new DataConverter();
         }
 
         $this->columnDatas = $columnDatas;
         $this->indicies = $indicies;
-        $this->valueResolver = $valueResolver;
         $this->dataConverter = $dataConverter;
         $this->autoIncrementFile = $autoIncrementFile;
         $this->deletedRowsFile = $deletedRowsFile;
         $this->tableSchema = $tableSchema;
-    }
-
-    private $valueResolver;
-
-    public function getValueResolver()
-    {
-        return $this->valueResolver;
     }
 
     private $dataConverter;
@@ -96,140 +83,63 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         return $this->tableSchema;
     }
     
-    public function addColumnDefinition(ColumnDefinition $columnDefinition, ExecutionContext $executionContext)
+    public function addColumn(ColumnSchema $columnSchema, ColumnDataInterface $addedColumnData)
     {
-    
         /* @var $tableSchema TableSchema */
         $tableSchema = $this->getTableSchema();
         
-        if (!is_null($tableSchema->getColumnIndex($columnDefinition->getName()))) {
-            throw new InvalidArgumentException("Column '{$columnDefinition->getName()}' already exist!");
+        if ($tableSchema->hasColumn($columnSchema)) {
+            $addedColumnId = $tableSchema->getColumnIndex($columnSchema->getName());
+
+        } else {
+            $addedColumnId = $tableSchema->addColumnSchema($columnSchema);
         }
         
-        $columnPage = $this->convertColumnDefinitionToColumnSchema($columnDefinition, $executionContext);
+        $this->columnDatas[$addedColumnId] = $addedColumnData;
 
-        $columnIndex = $tableSchema->addColumnSchema($columnPage);
-        
-        $rowCount = $this->count();
+        /* @var $pkColumnData ColumnData */
+        $pkColumnData = null;
+
+        foreach ($tableSchema->getPrimaryKeyColumns() as $pkColumnId => $pkColumnSchema) {
+            /* @var $pkColumnSchema ColumnSchema */
+            
+            $pkColumnData = $this->getColumnData($pkColumnId);
+            break;
+        }
+
+        if (!is_null($pkColumnData)) {
+            $beforeSeek = null;
+            if ($pkColumnData->valid()) {
+                $beforeSeek = $pkColumnData->key();
+            }
+
+            $defaultValue = $columnSchema->getDefaultValue();
+
+            foreach ($pkColumnData as $rowId => $pkValue) {
+                $addedColumnData->setCellData($rowId, $defaultValue);
+            }
     
-        for ($rowId=0; $rowId<$rowCount; $rowId++) {
-            /* @var $columnData ColumnData */
-            $columnData = $this->getColumnData($rowId, $columnIndex);
-            
-            $columnDataRowId = $rowId % $this->getRowsPerColumnData($columnIndex);
-            
-            $columnData->setCellData($columnDataRowId, $defaultValueData);
+            if (!is_null($beforeSeek)) {
+                $pkColumnData->seek($beforeSeek);
+            }
         }
     }
 
-    public function modifyColumnDefinition(
-        ColumnDefinition $columnDefinition,
-        ExecutionContext $executionContext
-    ) {
+    public function modifyColumn(ColumnSchema $columnSchema)
+    {
         
         /* @var $tableSchema TableSchema */
         $tableSchema = $this->getTableSchema();
         
-        $columnIndex = $tableSchema->getColumnIndex($columnDefinition->getName());
+        $columnIndex = $tableSchema->getColumnIndex($columnSchema->getName());
         $originalColumn = $tableSchema->getColumn($columnIndex);
         
         if (is_null($columnIndex)) {
-            throw new InvalidArgumentException("Column '{$columnDefinition->getName()}' does not exist!");
+            throw new InvalidArgumentException("Column '{$columnSchema->getName()}' does not exist!");
         }
 
-        $columnPage = $this->convertColumnDefinitionToColumnSchema($columnDefinition, $executionContext);
-        $columnPage->setIndex($originalColumn->getIndex());
-        $tableSchema->writeColumn($columnIndex, $columnPage);
-    }
-
-    protected function convertColumnDefinitionToColumnSchema(
-        ColumnDefinition $columnDefinition,
-        ExecutionContext $executionContext
-    ) {
-        
-        $columnPage = new ColumnSchema();
-        $columnPage->setName($columnDefinition->getName());
-        
-        /* @var $dataType DataType */
-        $dataType = $columnDefinition->getDataType();
-
-        $columnPage->setDataType($dataType);
-    
-        if (!is_null($columnDefinition->getDataTypeLength())) {
-            $columnPage->setLength($columnDefinition->getDataTypeLength());
-        }
-        
-        if (!is_null($columnDefinition->getDataTypeSecondLength())) {
-            $columnPage->setSecondLength($columnDefinition->getDataTypeSecondLength());
-        }
-        
-        $flags = 0;
-    
-        if ($columnDefinition->getIsAutoIncrement()) {
-            $flags = $flags ^ ColumnSchema::EXTRA_AUTO_INCREMENT;
-        }
-    
-        if (!$columnDefinition->getIsNullable()) {
-            $flags = $flags ^ ColumnSchema::EXTRA_NOT_NULL;
-        }
-    
-        if ($columnDefinition->getIsPrimaryKey()) {
-            $flags = $flags ^ ColumnSchema::EXTRA_PRIMARY_KEY;
-        }
-            
-        if ($columnDefinition->getIsUnique()) {
-            $flags = $flags ^ ColumnSchema::EXTRA_UNIQUE_KEY;
-        }
-    
-        if ($columnDefinition->getIsUnsigned()) {
-            $flags = $flags ^ ColumnSchema::EXTRA_UNSIGNED;
-        }
-    
-        if (false) {
-            $flags = $flags ^ ColumnSchema::EXTRA_ZEROFILL;
-        }
-        
-        $columnPage->setExtraFlags($flags);
-    
-        #$columnPage->setFKColumnIndex($index);
-        #$columnPage->setFKTableIndex($index);
-        
-        /* @var $defaultValue Value */
-        $defaultValue = $columnDefinition->getDefaultValue();
-        
-        if (!is_null($defaultValue)) {
-            if (!$dataType->mustResolveDefaultValue()) {
-                # default value must be resolved at insertion-time => save unresolved
-                $defaultValueData = $this->valueResolver->resolveValue($defaultValue, $executionContext);
-                $defaultValueData = $this->dataConverter->convertStringToBinary(
-                    $defaultValueData,
-                    $columnPage->getDataType()
-                );
-            } else {
-                $defaultValueData = (string)$defaultValue;
-            }
-        } else {
-            $defaultValueData = null;
-        }
-
-        $columnPage->setDefaultValue($defaultValueData);
-    
-        $comment = $columnDefinition->getComment();
-        
-        # TODO: save column comment
-
-        return $columnPage;
-    }
-    
-    const BYTES_PER_DATAFILE = 131072; # = 128*1024;
-
-    protected function getRowsPerColumnData($columnId)
-    {
-
-        /* @var $columnSchemaPage ColumnSchema */
-        $columnSchemaPage = $this->getTableSchema()->getColumn($columnId);
-
-        return ceil(self::BYTES_PER_DATAFILE / $columnSchemaPage->getCellSize());
+        $columnSchema->setIndex($originalColumn->getIndex());
+        $tableSchema->writeColumn($columnIndex, $columnSchema);
     }
 
     public function getColumnData($columnId)
@@ -365,9 +275,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
             /* @var $columnData ColumnData */
             $columnData = $this->getColumnData($columnId);
             
-            $columnDataRowId = $rowId % $this->getRowsPerColumnData($columnId);
-                
-            $rowData[$columnId] = $columnData->getCellData($columnDataRowId);
+            $rowData[$columnId] = $columnData->getCellData($rowId);
         }
         
         if (count($this->rowCache) < self::ROWCACHE_SIZE) {
@@ -424,9 +332,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
             /* @var $columnData ColumnData */
             $columnData = $this->getColumnData($columnId);
             
-            $columnDataRowId = $rowId % $this->getRowsPerColumnData($columnId);
-            
-            $columnData->removeCell($columnDataRowId);
+            $columnData->removeCell($rowId);
         }
         
         $this->pushDeletedRowStack($rowId);
@@ -626,16 +532,29 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         /* @var $lastColumnData ColumnData */
         $lastColumnData = null;
 
+        /* @var $lastColumnSchema ColumnSchema */
+        $lastColumnSchema = null;
+
+        /* @var $tableSchema TableSchema */
         $tableSchema = $this->getTableSchema();
 
-        foreach ($tableSchema->getPrimaryKeyColumns() as $columnId => $columnPage) {
-            /* @var $columnPage ColumnSchema */
+        foreach ($tableSchema->getPrimaryKeyColumns() as $columnId => $columnSchema) {
+            /* @var $columnSchema ColumnSchema */
             
             /* @var $columnData ColumnData */
             $columnData = $this->getColumnData($columnId);
             
             $columnData->rewind();
             $lastColumnData = $columnData;
+            $lastColumnSchema = $columnSchema;
+        }
+
+        if (is_null($lastColumnSchema)) {
+            throw new ErrorException("No primary-columnd defined!");
+        }
+
+        if (is_null($lastColumnData)) {
+            throw new ErrorException("Missing column-data for primary-key column '{$lastColumnSchema->getName()}'!");
         }
 
         $this->seek($lastColumnData->key());

@@ -25,9 +25,19 @@ class ColumnData implements ColumnDataInterface
     {
         $this->file = $file;
         $this->columnSchema = $columnPage;
+
+        $cellSize = $columnPage->getCellSize();
+
+        if ($cellSize <= 1) {
+            $this->cellLengthSize = 1;
+        } else {
+            $this->cellLengthSize = ceil(log($columnPage->getCellSize(), 256));
+        }
     }
     
     private $file;
+
+    private $cellLengthSize;
     
     /**
      * @return FileResourceProxy
@@ -68,6 +78,8 @@ class ColumnData implements ColumnDataInterface
         
         $isNull = $flags & ColumnData::FLAG_ISNULL === ColumnData::FLAG_ISNULL;
         
+        $size = $this->strdec($file->read($this->cellLengthSize));
+
         if ($isNull) {
             $data = null;
 
@@ -76,14 +88,16 @@ class ColumnData implements ColumnDataInterface
             
             if (strlen($data) <= 0) {
                 $data = null;
+
             } else {
                 if (strlen($data) !== $columnSchema->getCellSize()) {
                     $file->seek($beforeSeek, SEEK_SET);
                     throw new ErrorException("No or corrupted cell-data at index '{$index}'!");
+                } else {
+                    $data = substr($data, 0, $size);
                 }
-                
-                $data = trim($data, "\0");
             }
+
         }
         
         $file->seek($beforeSeek, SEEK_SET);
@@ -108,10 +122,11 @@ class ColumnData implements ColumnDataInterface
         if ($isNull) {
             $flags = $flags ^ ColumnData::FLAG_ISNULL;
         }
-        
+
         # make sure data (string) fit's exactly into one cell
-        $data = str_pad($data, $columnSchema->getCellSize(), "\0", STR_PAD_LEFT);
         $data = substr($data, 0, $columnSchema->getCellSize());
+        $size = strlen($data);
+        $data = str_pad($data, $columnSchema->getCellSize(), "\0", STR_PAD_RIGHT);
         
         $count = $this->count();
 
@@ -167,6 +182,7 @@ class ColumnData implements ColumnDataInterface
         $file->write("\0\0\0\0"); # next-index (empty for used cell's)
         $file->write("\0"); # reserved byte (for future flags)
         $file->write(chr($flags));
+        $file->write(str_pad($this->decstr($size), $this->cellLengthSize, "\0", STR_PAD_RIGHT));
         $file->write($data);
 
         $file->seek($beforeSeek, SEEK_SET);
@@ -273,7 +289,7 @@ class ColumnData implements ColumnDataInterface
         /* @var $columnSchema ColumnSchema */
         $columnSchema = $this->getColumnSchema();
 
-        return $columnSchema->getCellSize() + 10;
+        return $columnSchema->getCellSize() + 10 + $this->cellLengthSize;
     }
 
     ### HELPERS
@@ -367,7 +383,7 @@ class ColumnData implements ColumnDataInterface
         $cellData = str_pad($cellData, $columnSchema->getCellSize(), "\0", STR_PAD_LEFT);
         assert(strlen($cellData) === $columnSchema->getCellSize());
 
-        $file->seek(10, SEEK_CUR);
+        $file->seek(10 + $this->cellLengthSize, SEEK_CUR);
         $file->write($cellData);
 
         $file->seek($beforeSeek);
@@ -408,11 +424,12 @@ class ColumnData implements ColumnDataInterface
         $beforeSeek = $file->tell();
 
         $file->seek(10, SEEK_CUR);
+        $size = $this->strdec($file->read($this->cellLengthSize));
         $cellData = $file->read($columnSchema->getCellSize());
 
         $file->seek($beforeSeek);
 
-        $cellData = trim($cellData, "\0");
+        $cellData = substr($cellData, 0, $size);
 
         return $cellData;
     }
@@ -449,7 +466,6 @@ class ColumnData implements ColumnDataInterface
         }
 
         $beforeSeek = $file->tell();
-        $file->seek(10, SEEK_CUR);
         $currentPageData = $file->read($this->getPageSize());
         $file->seek($beforeSeek);
 

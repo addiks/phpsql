@@ -21,7 +21,6 @@ class DataConverter
     
     public function convertStringToBinary($string, DataType $dataType)
     {
-        
         switch($dataType){
             
             case DataType::BIT():
@@ -68,61 +67,35 @@ class DataConverter
             ### TIME / DATE
                 
             case DataType::DATE():
-                return $string;
+                return $this->decstr(strtotime($string));
             
             case DataType::DATETIME():
-                return $string;
+                return $this->decstr(strtotime($string));
             
             case DataType::TIMESTAMP():
-                return $string;
+                return $this->decstr(strtotime($string));
             
             case DataType::TIME():
-                return $string;
+                return $this->decstr(strtotime($string));
 
             case DataType::YEAR():
-                return $string;
+                return $this->decstr($string);
                 
             ### TEXT
             
             case DataType::CHAR():
-                return $string;
-            
             case DataType::VARCHAR():
-                return $string;
-            
             case DataType::BINARY():
-                return $string;
-            
             case DataType::VARBINARY():
-                return $string;
-            
             case DataType::TINYBLOB():
-                return $string;
-                
             case DataType::TINYTEXT():
-                return $string;
-            
             case DataType::BLOB():
-                return $string;
-            
             case DataType::TEXT():
-                return $string;
-                
             case DataType::MEDIUMBLOB():
-                return $string;
-                
             case DataType::MEDIUMTEXT():
-                return $string;
-            
             case DataType::LONGBLOB():
-                return $string;
-                    
             case DataType::LONGTEXT():
-                return $string;
-                    
             case DataType::ENUM():
-                return $string;
-            
             case DataType::SET():
                 return $string;
         }
@@ -130,7 +103,6 @@ class DataConverter
     
     public function convertBinaryToString($binary, DataType $dataType)
     {
-        
         switch($dataType){
                 
             case DataType::BIT():
@@ -158,61 +130,35 @@ class DataConverter
                 ### TIME / DATE
         
             case DataType::DATE():
-                return $binary;
+                return date("Y-m-d", $this->strdec($binary));
                     
             case DataType::DATETIME():
-                return $binary;
+                return date("Y-m-d H:i:s", $this->strdec($binary));
                     
             case DataType::TIMESTAMP():
-                return $binary;
+                return date("Y-m-d H:i:s", $this->strdec($binary));
                     
             case DataType::TIME():
-                return $binary;
+                return date("H:i:s", $this->strdec($binary));
         
             case DataType::YEAR():
-                return $binary;
+                return (string)$this->strdec($binary);
         
                 ### TEXT
                     
             case DataType::CHAR():
-                return $binary;
-                
             case DataType::VARCHAR():
-                return $binary;
-                
             case DataType::BINARY():
-                return $binary;
-                
             case DataType::VARBINARY():
-                return $binary;
-                
             case DataType::TINYBLOB():
-                return $binary;
-        
             case DataType::TINYTEXT():
-                return $binary;
-                
             case DataType::BLOB():
-                return $binary;
-                
             case DataType::TEXT():
-                return $binary;
-        
             case DataType::MEDIUMBLOB():
-                return $binary;
-        
             case DataType::MEDIUMTEXT():
-                return $binary;
-                
             case DataType::LONGBLOB():
-                return $binary;
-                
             case DataType::LONGTEXT():
-                return $binary;
-                
             case DataType::ENUM():
-                return $binary;
-                
             case DataType::SET():
                 return $binary;
         }

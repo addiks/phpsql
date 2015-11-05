@@ -112,6 +112,7 @@ class StatementExecutor implements StatementExecutorInterface
         $schemaManager = $this->schemaManager;
         $tableManager = $this->tableManager;
         $valueResolver = $this->valueResolver;
+
         $selectExecutor = new SelectExecutor(
             $tableManager->getFilesystem(),
             $schemaManager,
@@ -119,18 +120,18 @@ class StatementExecutor implements StatementExecutorInterface
             $valueResolver
         );
 
-        $this->addStatementExecutor(new AlterExecutor($schemaManager, $tableManager));
-        $this->addStatementExecutor(new CreateDatabaseExecutor($valueResolver, $schemaManager));
-        $this->addStatementExecutor(new CreateIndexExecutor($tableManager));
-        $this->addStatementExecutor(new CreateTableExecutor($schemaManager, $tableManager, $valueResolver));
-        $this->addStatementExecutor(new DeleteExecutor($valueResolver, $schemaManager, $tableManager));
-        $this->addStatementExecutor(new DescribeExecutor($schemaManager));
-        $this->addStatementExecutor(new DropExecutor($schemaManager, $valueResolver));
-        $this->addStatementExecutor(new InsertExecutor($valueResolver, $tableManager, $selectExecutor, $schemaManager));
         $this->addStatementExecutor($selectExecutor);
         $this->addStatementExecutor(new SetExecutor($valueResolver));
         $this->addStatementExecutor(new ShowExecutor($schemaManager));
-        $this->addStatementExecutor(new UpdateExecutor($valueResolver, $schemaManager, $tableManager));
+        $this->addStatementExecutor(new DescribeExecutor($schemaManager));
+        $this->addStatementExecutor(new CreateIndexExecutor($tableManager));
         $this->addStatementExecutor(new UseExecutor($schemaManager, $valueResolver));
+        $this->addStatementExecutor(new DropExecutor($schemaManager, $valueResolver));
+        $this->addStatementExecutor(new CreateDatabaseExecutor($valueResolver, $schemaManager));
+        $this->addStatementExecutor(new AlterExecutor($schemaManager, $tableManager, $valueResolver));
+        $this->addStatementExecutor(new DeleteExecutor($valueResolver, $schemaManager, $tableManager));
+        $this->addStatementExecutor(new UpdateExecutor($valueResolver, $schemaManager, $tableManager));
+        $this->addStatementExecutor(new CreateTableExecutor($schemaManager, $tableManager, $valueResolver));
+        $this->addStatementExecutor(new InsertExecutor($valueResolver, $tableManager, $selectExecutor, $schemaManager));
     }
 }

@@ -52,7 +52,7 @@ class BTreeTest extends PHPUnit_Framework_TestCase
 
         $indexPage = new IndexSchema();
         $indexPage->setName("test-index");
-        $indexPage->setColumns([1, 2]);
+        $indexPage->setColumns([0, 1]);
         $indexPage->setType(Type::INDEX());
         $indexPage->setEngine(IndexEngine::BTREE());
 

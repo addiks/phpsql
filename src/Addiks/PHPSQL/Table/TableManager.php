@@ -129,11 +129,53 @@ class TableManager
         return $this->tables[$tableId];
     }
 
+    public function getTableIdByName($tableName, $schemaId = null)
+    {
+        if (is_null($schemaId)) {
+            $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
+        }
+        
+        /* @var $databaseSchema DatabaseSchemaInterface */
+        $databaseSchema = $this->schemaManager->getSchema($schemaId);
+
+        $tableIndex = $databaseSchema->getTableIndex($tableName);
+
+        return $tableIndex;
+    }
+
     protected $columnDataFactories;
 
     public function getColumnDataFactories()
     {
         return $this->columnDataFactories;
+    }
+
+    /**
+     * @param  string                     $tableName
+     * @param  string                     $schemaId
+     * @return ColumnDataFactoryInterface
+     */
+    public function getColumnDataFactory($tableName, $schemaId = null)
+    {
+        if (is_null($schemaId)) {
+            $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
+        }
+        
+        /* @var $databaseSchema DatabaseSchemaInterface */
+        $databaseSchema = $this->schemaManager->getSchema($schemaId);
+
+        $tableIndex = $databaseSchema->getTableIndex($tableName);
+
+        /* @var $databaseSchemaPage DatabaseSchemaPage */
+        $databaseSchemaPage = $databaseSchema->getTablePage($tableIndex, $schemaId);
+        
+        /* @var $engine Engine */
+        $engine = $databaseSchemaPage->getEngine();
+
+        /* @var $columnDataFactory  */
+        $columnDataFactory = $this->columnDataFactories[(string)$engine];
+
+        return $columnDataFactory;
     }
 
     protected $tableFactories;

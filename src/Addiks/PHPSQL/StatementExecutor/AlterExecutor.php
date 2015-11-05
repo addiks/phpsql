@@ -25,16 +25,43 @@ use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Entity\Page\SchemaPage as SchemaPage;
 use Addiks\PHPSQL\Table\TableInterface;
+use Addiks\PHPSQL\Column\ColumnSchema;
+use Addiks\PHPSQL\DataConverter;
+use Addiks\PHPSQL\Column\ColumnDataFactoryInterface;
+use Addiks\PHPSQL\Column\ColumnDataInterface;
+use Addiks\PHPSQL\Table\TableSchema;
 
 class AlterExecutor implements StatementExecutorInterface
 {
     
     public function __construct(
         SchemaManager $schemaManager,
-        TableManager $tableManager
+        TableManager $tableManager,
+        ValueResolver $valueResolver,
+        DataConverter $dataConverter = null
     ) {
+        if (is_null($dataConverter)) {
+            $dataConverter = new DataConverter();
+        }
+
         $this->schemaManager = $schemaManager;
+        $this->valueResolver = $valueResolver;
         $this->tableManager = $tableManager;
+        $this->dataConverter = $dataConverter;
+    }
+
+    private $dataConverter;
+
+    public function getDataConverter()
+    {
+        return $this->dataConverter;
+    }
+
+    private $valueResolver;
+
+    public function getValueResolver()
+    {
+        return $this->valueResolver;
     }
 
     protected $schemaManager;
@@ -87,7 +114,32 @@ class AlterExecutor implements StatementExecutorInterface
                     /* @var $columnDefinition ColumnDefinition */
                     $columnDefinition = $dataChange->getSubject();
                     
-                    $table->addColumnDefinition($columnDefinition, $executionContext);
+                    /* @var $columnSchema ColumnSchema */
+                    $columnSchema = $this->convertColumnDefinitionToColumnSchema(
+                        $columnDefinition,
+                        $executionContext
+                    );
+
+                    $columnId = $tableSchema->addColumnSchema($columnSchema);
+
+                    /* @var $columnDataFactory ColumnDataFactoryInterface */
+                    $columnDataFactory = $this->tableManager->getColumnDataFactory(
+                        $tableSpecifier->getTable(),
+                        $tableSpecifier->getDatabase()
+                    );
+
+                    /* @var $columnData ColumnDataInterface */
+                    $columnData = $columnDataFactory->createColumnData(
+                        $tableSpecifier->getDatabase(),
+                        $this->tableManager->getTableIdByName(
+                            $tableSpecifier->getTable(),
+                            $tableSpecifier->getDatabase()
+                        ),
+                        $columnId,
+                        $columnSchema
+                    );
+
+                    $table->addColumn($columnSchema, $columnData);
                     break;
                     
                 case AlterAttributeType::DROP():
@@ -105,7 +157,13 @@ class AlterExecutor implements StatementExecutorInterface
                     /* @var $columnDefinition ColumnDefinition */
                     $columnDefinition = $dataChange->getSubject();
                     
-                    $table->modifyColumnDefinition($columnDefinition, $executionContext);
+                    /* @var $columnSchema ColumnSchema */
+                    $columnSchema = $this->convertColumnDefinitionToColumnSchema(
+                        $columnDefinition,
+                        $executionContext
+                    );
+
+                    $table->modifyColumn($columnSchema);
 
                     if ($dataChange->getAttribute() === AlterAttributeType::SET_FIRST()) {
                         $subjectColumnIndex = $tableSchema->getColumnIndex($columnDefinition->getName());
@@ -190,4 +248,84 @@ class AlterExecutor implements StatementExecutorInterface
         
         return $result;
     }
+
+    protected function convertColumnDefinitionToColumnSchema (
+        ColumnDefinition $columnDefinition,
+        ExecutionContext $executionContext
+    ) {
+        
+        $columnPage = new ColumnSchema();
+        $columnPage->setName($columnDefinition->getName());
+        
+        /* @var $dataType DataType */
+        $dataType = $columnDefinition->getDataType();
+
+        $columnPage->setDataType($dataType);
+    
+        if (!is_null($columnDefinition->getDataTypeLength())) {
+            $columnPage->setLength($columnDefinition->getDataTypeLength());
+        }
+        
+        if (!is_null($columnDefinition->getDataTypeSecondLength())) {
+            $columnPage->setSecondLength($columnDefinition->getDataTypeSecondLength());
+        }
+        
+        $flags = 0;
+    
+        if ($columnDefinition->getIsAutoIncrement()) {
+            $flags = $flags ^ ColumnSchema::EXTRA_AUTO_INCREMENT;
+        }
+    
+        if (!$columnDefinition->getIsNullable()) {
+            $flags = $flags ^ ColumnSchema::EXTRA_NOT_NULL;
+        }
+    
+        if ($columnDefinition->getIsPrimaryKey()) {
+            $flags = $flags ^ ColumnSchema::EXTRA_PRIMARY_KEY;
+        }
+            
+        if ($columnDefinition->getIsUnique()) {
+            $flags = $flags ^ ColumnSchema::EXTRA_UNIQUE_KEY;
+        }
+    
+        if ($columnDefinition->getIsUnsigned()) {
+            $flags = $flags ^ ColumnSchema::EXTRA_UNSIGNED;
+        }
+    
+        if (false) {
+            $flags = $flags ^ ColumnSchema::EXTRA_ZEROFILL;
+        }
+        
+        $columnPage->setExtraFlags($flags);
+    
+        #$columnPage->setFKColumnIndex($index);
+        #$columnPage->setFKTableIndex($index);
+        
+        /* @var $defaultValue Value */
+        $defaultValue = $columnDefinition->getDefaultValue();
+        
+        if (!is_null($defaultValue)) {
+            if (!$dataType->mustResolveDefaultValue()) {
+                # default value must be resolved at insertion-time => save unresolved
+                $defaultValueData = $this->valueResolver->resolveValue($defaultValue, $executionContext);
+                $defaultValueData = $this->dataConverter->convertStringToBinary(
+                    $defaultValueData,
+                    $columnPage->getDataType()
+                );
+            } else {
+                $defaultValueData = (string)$defaultValue;
+            }
+        } else {
+            $defaultValueData = null;
+        }
+
+        $columnPage->setDefaultValue($defaultValueData);
+    
+        $comment = $columnDefinition->getComment();
+        
+        # TODO: save column comment
+
+        return $columnPage;
+    }
+    
 }

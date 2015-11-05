@@ -18,6 +18,7 @@ use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Column\ColumnSchema;
+use Addiks\PHPSQL\Column\ColumnDataInterface;
 
 /**
  * This resultset will not be stored permanent but only to the RAM.
@@ -223,14 +224,12 @@ class TemporaryResult implements ResultInterface
         return $this->tableSchema;
     }
     
-    public function addColumnDefinition(ColumnDefinition $columnDefinition, ExecutionContext $executionContext)
+    public function addColumn(ColumnSchema $columnDefinition, ColumnDataInterface $columnData)
     {
     }
     
-    public function modifyColumnDefinition(
-        ColumnDefinition $columnDefinition,
-        ExecutionContext $executionContext
-    ) {
+    public function modifyColumn(ColumnSchema $columnDefinition)
+    {
     }
  
     public function getCellData($rowId, $columnId)

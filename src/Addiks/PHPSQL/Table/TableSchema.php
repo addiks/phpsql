@@ -159,6 +159,7 @@ class TableSchema implements TableSchemaInterface
 
     public function addColumnSchema(ColumnSchema $column)
     {
+        assert(!$this->hasColumn($column));
 
         if ($this->getColumnFile()->getLength()<=0) {
             $writeIndex = 0;
@@ -244,7 +245,7 @@ class TableSchema implements TableSchemaInterface
             $iterator = $this->getColumnIterator();
             $iterator->rewind();
             while ($iterator->valid()) {
-                $this->columnIdCache[] = $iterator->key();
+                $this->columnIdCache[] = (int)$iterator->key();
                 $iterator->next();
             }
         }
@@ -286,17 +287,48 @@ class TableSchema implements TableSchemaInterface
 
     public function listColumns()
     {
-
         $columns = array();
         foreach ($this->getColumnIterator() as $index => $columnPage) {
             /* @var $columnPage ColumnSchema */
 
             $columns[$index] = clone $columnPage;
+
+            assert(is_int($index) && $index >= 0);
             
             $this->columnCache[$index] = $columns[$index];
         }
 
         return $columns;
+    }
+
+    public function getColumnNames()
+    {
+        $columns = array();
+        foreach ($this->listColumns() as $index => $columnPage) {
+            /* @var $columnPage ColumnSchema */
+
+            $columns[$index] = $columnPage->getName();
+        }
+
+        return $columns;
+    }
+
+    public function hasColumn($column)
+    {
+        $hasColumn = null;
+
+        if (is_numeric($column)) {
+            $hasColumn = in_array((int)$column, $this->getCachedColumnIds());
+
+        } else {
+            if ($column instanceof ColumnSchema) {
+                $column = $column->getName();
+            }
+
+            $hasColumn = in_array($column, $this->getColumnNames());
+        }
+
+        return $hasColumn;
     }
 
     private $columnCache = array();
@@ -313,11 +345,13 @@ class TableSchema implements TableSchemaInterface
     
     public function getColumn($index)
     {
-
-        if (is_string($index)) {
+        if (!is_numeric($index)) {
             $index = $this->getColumnIndex($index);
         }
         
+        assert(is_numeric($index) && $index >= 0);
+        $index = (int)$index;
+
         if (!isset($this->columnCache[$index])) {
             $file = $this->getColumnFile();
             
@@ -369,13 +403,21 @@ class TableSchema implements TableSchemaInterface
     {
 
         if (is_null($index)) {
+            assert(!$this->hasColumn($column));
+
             if (is_null($this->getLastIndex())) {
                 $index = 0;
             } else {
                 $index = $this->getLastIndex()+1;
             }
+
+        } else {
+            $columnId = $this->getColumnIndex($column->getName());
+            assert(is_null($columnId) || ($columnId === $index));
         }
-        
+            
+        assert(is_int($index) && $index >= 0);
+
         $this->columnCache[$index] = $column;
         
         $file = $this->getColumnFile();

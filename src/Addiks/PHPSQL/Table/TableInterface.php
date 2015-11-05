@@ -11,9 +11,10 @@
 
 namespace Addiks\PHPSQL\Table;
 
-use Addiks\PHPSQL\Job\Part\ColumnDefinition;
 use Addiks\PHPSQL\Iterators\DataProviderInterface;
 use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
+use Addiks\PHPSQL\Column\ColumnSchema;
+use Addiks\PHPSQL\Column\ColumnDataInterface;
 
 interface TableInterface extends DataProviderInterface
 {
@@ -24,15 +25,9 @@ interface TableInterface extends DataProviderInterface
      */
     public function getTableSchema();
     
-    public function addColumnDefinition(
-        ColumnDefinition $columnDefinition,
-        ExecutionContext $executionContext
-    );
+    public function addColumn(ColumnSchema $columnSchema, ColumnDataInterface $columnData);
 
-    public function modifyColumnDefinition(
-        ColumnDefinition $columnDefinition,
-        ExecutionContext $executionContext
-    );
+    public function modifyColumn(ColumnSchema $columnSchema);
 
     public function getCellData($rowId, $columnId);
     

@@ -42,6 +42,8 @@ class BTree implements \IteratorAggregate, IndexInterface
             /* @var $columnPage ColumnSchema */
             $columnPage = $tableSchema->getColumn($columnId);
 
+            assert(!is_null($columnPage));
+
             $keyLength += $columnPage->getCellSize();
         }
 
@@ -401,7 +403,6 @@ class BTree implements \IteratorAggregate, IndexInterface
                 $reference = $node->getNearestReferenceByValue($value);
         
                 if (ltrim($reference, "\0")!=='') {
-
                     if (in_array($reference, $nodePathKeys)) {
                         throw new ErrorException("Circular refrence in B-Tree! ('{$this->strdec($reference)}')!");
                     }
