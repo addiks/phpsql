@@ -125,9 +125,8 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         }
     }
 
-    public function modifyColumn(ColumnSchema $columnSchema)
+    public function modifyColumn(ColumnSchema $columnSchema, ColumnDataInterface $addedColumnData)
     {
-        
         /* @var $tableSchema TableSchema */
         $tableSchema = $this->getTableSchema();
         
@@ -140,6 +139,14 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
 
         $columnSchema->setIndex($originalColumn->getIndex());
         $tableSchema->writeColumn($columnIndex, $columnSchema);
+
+        $oldColumnData = $this->getColumnData($columnIndex);
+
+        foreach ($oldColumnData as $rowId => $cellData) {
+            $addedColumnData->setCellData($rowId, $cellData);
+        }
+
+        $this->columnDatas[$columnIndex] = $addedColumnData;
     }
 
     public function getColumnData($columnId)

@@ -100,11 +100,13 @@ class TableTest extends PHPUnit_Framework_TestCase
         /* @var $table Table */
         $table = $this->table;
 
-        ### EXECUTE
+        ### PREPARE
 
         foreach ($fixtureRows as $row) {
             $table->addRowData($row);
         }
+
+        ### EXECUTE
 
         $table->addColumn(
             $columnSchema,
@@ -131,15 +133,45 @@ class TableTest extends PHPUnit_Framework_TestCase
     /**
      * @group intregration.table
      * @group intregration.table.modify_column
-     * @dataProvider dataProviderAddColumn
+     * @dataProvider dataProviderModifyColumn
      */
-    public function testModifyColumn()
-    {
-        $this->markTestIncomplete();
+    public function testModifyColumn(
+        array $fixtureRows,
+        ColumnSchema $columnSchema,
+        array $appendedRows,
+        array $expectedRows
+    ) {
+        /* @var $table Table */
+        $table = $this->table;
+
+        ### PREPARE
+
+        foreach ($fixtureRows as $row) {
+            $table->addRowData($row);
+        }
 
         ### EXECUTE
 
-        $this->table;    
+        $table->modifyColumn(
+            $columnSchema,
+            new ColumnData(
+                new FileResourceProxy(fopen("php://memory", "w")),
+                $columnSchema
+            )
+        );
+
+        foreach ($appendedRows as $row) {
+            $table->addRowData($row);
+        }
+
+        ### CHECK RESULTS
+
+        $actualRows = array();
+        foreach ($table as $row) {
+            $actualRows[] = array_values($row);
+        }
+
+        $this->assertEquals($expectedRows, $actualRows); 
     }
 
     /**
@@ -149,11 +181,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testGetColumnData()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -163,11 +198,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testSetCellData()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;   
     }
 
     /**
@@ -177,11 +215,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testDoesRowExists()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -191,11 +232,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testGetRowCount()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -205,11 +249,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testGetNamedRowData()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table; 
     }
 
     /**
@@ -219,11 +266,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testGetRowData()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -233,11 +283,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testSetRowData()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -247,11 +300,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testAddRowData()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -261,11 +317,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testRemoveRow()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -275,11 +334,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testIncrementAutoIncrementId()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -289,11 +351,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testGetAutoIncrementId()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -303,11 +368,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testSeek()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -317,11 +385,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testTell()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -331,11 +402,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testCount()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     /**
@@ -345,11 +419,14 @@ class TableTest extends PHPUnit_Framework_TestCase
      */
     public function testIterate()
     {
+        /* @var $table Table */
+        $table = $this->table;
+
         $this->markTestIncomplete();
 
         ### EXECUTE
 
-        $this->table;    
+        $table;
     }
 
     ### DATA-PROVIDER
@@ -377,6 +454,34 @@ class TableTest extends PHPUnit_Framework_TestCase
                     ['789', "amet",        "1990-10-02 10:20:30", '1'],
                     ['234', "",            null,                  false],
                 ]
+            ]
+        );
+    }
+
+    public function dataProviderModifyColumn()
+    {
+        $columnSchema = new ColumnSchema();
+        $columnSchema->setName("baz");
+        $columnSchema->setDataType(DataType::VARCHAR());
+        $columnSchema->setLength(5);
+
+        return array(
+            [
+                [
+                    [123, "Lorem ipsum", null],
+                    [456, "dolor sit",   "2015-06-07 12:34:56"],
+                ],
+                $columnSchema,
+                [
+                    [789, "amet", "1990-10-02 10:20:30"],
+                    [234, "",     null],
+                ],
+                [
+                    ['123', "Lorem", null],
+                    ['456', "dolor", "2015-06-07 12:34:56"],
+                    ['789', "amet",  "1990-10-02 10:20:30"],
+                    ['234', "",      null],
+                ],
             ]
         );
     }

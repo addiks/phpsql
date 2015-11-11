@@ -27,7 +27,7 @@ interface TableInterface extends DataProviderInterface
     
     public function addColumn(ColumnSchema $columnSchema, ColumnDataInterface $columnData);
 
-    public function modifyColumn(ColumnSchema $columnSchema);
+    public function modifyColumn(ColumnSchema $columnSchema, ColumnDataInterface $columnData);
 
     public function getCellData($rowId, $columnId);
     

@@ -228,7 +228,7 @@ class TemporaryResult implements ResultInterface
     {
     }
     
-    public function modifyColumn(ColumnSchema $columnDefinition)
+    public function modifyColumn(ColumnSchema $columnDefinition, ColumnDataInterface $columnData)
     {
     }
  

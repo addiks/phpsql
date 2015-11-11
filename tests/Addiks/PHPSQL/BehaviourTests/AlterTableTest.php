@@ -180,6 +180,10 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
         ], $actualRows);
     }
 
+    /**
+     * @group behaviour.alter
+     * @group behaviour.alter.set_after
+     */
     public function testSetAfter()
     {
         ### EXECUTE

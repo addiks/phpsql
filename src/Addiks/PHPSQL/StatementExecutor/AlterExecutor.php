@@ -102,6 +102,11 @@ class AlterExecutor implements StatementExecutorInterface
             $tableSpecifier->getDatabase()
         );
 
+        $tableId = $this->tableManager->getTableIdByName(
+            $tableSpecifier->getTable(),
+            $tableSpecifier->getDatabase()
+        );
+
         /* @var $tableSchema TableSchema */
         $tableSchema = $table->getTableSchema();
         
@@ -131,10 +136,7 @@ class AlterExecutor implements StatementExecutorInterface
                     /* @var $columnData ColumnDataInterface */
                     $columnData = $columnDataFactory->createColumnData(
                         $tableSpecifier->getDatabase(),
-                        $this->tableManager->getTableIdByName(
-                            $tableSpecifier->getTable(),
-                            $tableSpecifier->getDatabase()
-                        ),
+                        $tableId,
                         $columnId,
                         $columnSchema
                     );
@@ -163,7 +165,30 @@ class AlterExecutor implements StatementExecutorInterface
                         $executionContext
                     );
 
-                    $table->modifyColumn($columnSchema);
+                    $columnId = $tableSchema->getColumnIndex($columnSchema->getName());
+
+                    /* @var $oldColumnSchema ColumnSchema */
+                    $oldColumnSchema = $tableSchema->getColumn($columnId);
+
+                    $columnSchema->setIndex($oldColumnSchema->getIndex());
+                
+                    $tableSchema->writeColumn($columnId, $columnSchema);
+
+                    /* @var $columnDataFactory ColumnDataFactoryInterface */
+                    $columnDataFactory = $this->tableManager->getColumnDataFactory(
+                        $tableSpecifier->getTable(),
+                        $tableSpecifier->getDatabase()
+                    );
+
+                    /* @var $columnData ColumnDataInterface */
+                    $columnData = $columnDataFactory->createColumnData(
+                        $tableSpecifier->getDatabase(),
+                        $tableId,
+                        $columnId,
+                        $columnSchema
+                    );
+
+                    $table->modifyColumn($columnSchema, $columnData);
 
                     if ($dataChange->getAttribute() === AlterAttributeType::SET_FIRST()) {
                         $subjectColumnIndex = $tableSchema->getColumnIndex($columnDefinition->getName());
