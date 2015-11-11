@@ -53,7 +53,7 @@ class ColumnData implements ColumnDataInterface
      *
      * @return ColumnSchema
      */
-    protected function getColumnSchema()
+    public function getColumnSchema()
     {
         return $this->columnSchema;
     }

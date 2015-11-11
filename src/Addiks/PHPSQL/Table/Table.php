@@ -172,7 +172,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         /* @var $columnData ColumnData */
         $columnData = $this->getColumnData($columnId);
 
-        $columnData->getCellData($rowId);
+        return $columnData->getCellData($rowId);
     }
 
     public function setCellData($rowId, $columnId, $data)
@@ -191,7 +191,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
             $rowId = $this->tell();
         }
 
-        if (is_null($rowId)) {
+        if (is_null($rowId) || $rowId < 0) {
             return false;
         }
 

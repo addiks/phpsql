@@ -21,6 +21,7 @@ use Addiks\PHPSQL\Table\TableSchema;
 use Addiks\PHPSQL\Index\IndexSchema;
 use Addiks\PHPSQL\Value\Enum\Page\Index\IndexEngine;
 use Addiks\PHPSQL\Value\Enum\Page\Index\Type;
+use Addiks\PHPSQL\Column\ColumnDataInterface;
 
 class TableTest extends PHPUnit_Framework_TestCase
 {
@@ -176,53 +177,67 @@ class TableTest extends PHPUnit_Framework_TestCase
 
     /**
      * @group intregration.table
-     * @group intregration.table.add_column
-     * @dataProvider dataProviderAddColumn
+     * @group intregration.table.get_column_data
+     * @dataProvider dataProviderGetColumnData
      */
-    public function testGetColumnData()
+    public function testGetColumnData($columnId, $columnName)
     {
         /* @var $table Table */
         $table = $this->table;
 
-        $this->markTestIncomplete();
-
         ### EXECUTE
 
-        $table;
+        /* @var $columnData */
+        $columnData = $table->getColumnData($columnId);
+
+        $this->assertTrue($columnData instanceof ColumnDataInterface);
+
+        /* @var $columnSchema ColumnSchema */
+        $columnSchema = $columnData->getColumnSchema();
+
+        $this->assertEquals($columnName, $columnSchema->getName());
     }
 
     /**
      * @group intregration.table
      * @group intregration.table.add_column
-     * @dataProvider dataProviderAddColumn
+     * @dataProvider dataProviderSetGetCellData
      */
-    public function testSetCellData()
+    public function testSetGetCellData($rowId, $columnId, $cellData)
     {
         /* @var $table Table */
         $table = $this->table;
 
-        $this->markTestIncomplete();
-
         ### EXECUTE
 
-        $table;   
+        $table->setCellData($rowId, $columnId, $cellData);
+
+        $actualCellData = $table->getCellData($rowId, $columnId);
+
+        $this->assertEquals($cellData, $actualCellData);
     }
 
     /**
      * @group intregration.table
      * @group intregration.table.add_column
-     * @dataProvider dataProviderAddColumn
+     * @dataProvider dataProviderDoesRowExists
      */
-    public function testDoesRowExists()
+    public function testDoesRowExists(array $fixtureRows, $needleRowId, $expectedResult)
     {
         /* @var $table Table */
         $table = $this->table;
 
-        $this->markTestIncomplete();
+        ### PREPARE
+
+        foreach ($fixtureRows as $row) {
+            $table->addRowData($row);
+        }
 
         ### EXECUTE
 
-        $table;
+        $actualResult = $table->doesRowExists($needleRowId);
+
+        $this->assertEquals($expectedResult, $actualResult);
     }
 
     /**
@@ -483,6 +498,103 @@ class TableTest extends PHPUnit_Framework_TestCase
                     ['234', "",      null],
                 ],
             ]
+        );
+    }
+
+    public function dataProviderGetColumnData()
+    {
+        return array(
+            [0, "foo"],
+            [1, "baz"],
+            [2, "bar"],
+        );
+    }
+
+    public function dataProviderSetGetCellData()
+    {
+        return array(
+            [0, 0, "123"],
+            [0, 1, "foo"],
+            [1, 0, "456"],
+            [1, 1, "bar"],
+            [1024, 1, "baz"],
+        );
+    }
+
+    public function dataProviderDoesRowExists()
+    {
+        return array(
+            [
+                [],
+                3,
+                false
+            ],
+            [
+                [],
+                0,
+                false
+            ],
+            [
+                [
+                    [123, "Lorem ipsum", null]
+                ],
+                0,
+                true
+            ],
+            [
+                [
+                    [123, "Lorem ipsum", null]
+                ],
+                1,
+                false
+            ],
+            [
+                [
+                    [123, "Lorem ipsum", null]
+                ],
+                2,
+                false
+            ],
+            [
+                [
+                    [123, "Lorem ipsum", null],
+                    [456, "dolor sit",   "2015-06-07 12:34:56"],
+                ],
+                0,
+                true
+            ],
+            [
+                [
+                    [123, "Lorem ipsum", null],
+                    [456, "dolor sit",   "2015-06-07 12:34:56"],
+                ],
+                1,
+                true
+            ],
+            [
+                [
+                    [123, "Lorem ipsum", null],
+                    [456, "dolor sit",   "2015-06-07 12:34:56"],
+                ],
+                2,
+                false
+            ],
+            [
+                [
+                    [123, "Lorem ipsum", null],
+                    [456, "dolor sit",   "2015-06-07 12:34:56"],
+                ],
+                3,
+                false
+            ],
+            [
+                [
+                    [123, "Lorem ipsum", null],
+                    [456, "dolor sit",   "2015-06-07 12:34:56"],
+                ],
+                -1,
+                false
+            ],
         );
     }
 

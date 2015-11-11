@@ -12,9 +12,15 @@ namespace Addiks\PHPSQL\Column;
 
 use Countable;
 use SeekableIterator;
+use Addiks\PHPSQL\Column\ColumnSchema;
 
 interface ColumnDataInterface extends Countable, SeekableIterator
 {
+
+    /**
+     * @return ColumnSchema
+     */
+    public function getColumnSchema();
 
     public function getCellData($index);
 
