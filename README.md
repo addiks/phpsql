@@ -11,20 +11,18 @@ It's purposes are wide ranged:
 (To be honest, everyone knew it was only a matter of time until some maniac
  writes a full SQL-database in PHP, and well... here it is.)
 
-## Features
+## SQL Compatibility (TODO-List):
 
- - SELECT stuff:
-    - WHERE
-    - ORDER BY
-    - UNION
-    - GROUP BY
-    - HAVING
- - UPDATE; DELETE; INSERT
- - CREATE DATABASES
-    - in memory
-    - in files (binary)
- - CREATE TABLE:
-    - indexes: b-tree, hash, insertion-sort, ...
-    - foreign keys
- - ALTER TABLE
- - Parse SQL-queries into statement-objects
+Missing for SQL 1999 / SQL3:
+    
+Missing for SQL 2003:
+
+Missing for SQL 2006:
+
+Missing for SQL 2008:
+
+Missing for SQL 2011:
+
+## Benchmarks:
+
+## How to use:

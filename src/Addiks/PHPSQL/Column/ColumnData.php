@@ -195,7 +195,7 @@ class ColumnData implements ColumnDataInterface
     
     public function removeCell($index)
     {
-        /* @var $file file */
+        /* @var $file File */
         $file = $this->getFile();
         
         /* @var $columnSchema Column */
@@ -212,7 +212,7 @@ class ColumnData implements ColumnDataInterface
 
         $count = $this->count();
 
-        $previousIndex = 0;
+        $previousIndex = null;
         if ($index > 0) {
             $previousIndex = $index - 1;
             $this->seek($previousIndex);
@@ -249,11 +249,28 @@ class ColumnData implements ColumnDataInterface
             }
         }
 
-        $this->seek($previousIndex + 1);
-        $this->writeCurrentNextIndex($nextIndex);
+        if ($nextIndex < $count) {
+            if (is_null($previousIndex)) {
+                $this->seek(0);
+            } else {
+                $this->seek($previousIndex + 1);
+            }
+            $this->writeCurrentNextIndex($nextIndex);
+        } else {
+            $file->truncate($index * $this->getPageSize());
+            $count = $index;
+        }
         
-        $this->seek($nextIndex - 1);
-        $this->writeCurrentPreviousIndex($previousIndex);
+        if ($previousIndex !== null) {
+            if ($nextIndex >= $count) {
+                $this->seek($count - 1);
+            } else {
+                $this->seek($nextIndex - 1);
+            }
+            if ($this->key() > $previousIndex) {
+                $this->writeCurrentPreviousIndex($previousIndex);
+            }
+        }
 
         $file->seek($seekBefore);
     }

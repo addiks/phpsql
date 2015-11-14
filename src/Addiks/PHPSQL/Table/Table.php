@@ -418,12 +418,15 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
 
     public function incrementAutoIncrementId()
     {
-    
         $currentValue = (int)$this->getAutoIncrementId();
         $currentValue++;
-    
+        $this->setAutoIncrementId($currentValue);
+    }
+
+    public function setAutoIncrementId($newAutoIncrementId)
+    {
         $file = $this->autoIncrementFile;
-        $file->setData((string)$currentValue);
+        $file->setData((string)$newAutoIncrementId);
     }
     
     public function getAutoIncrementId()
@@ -435,7 +438,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
             $file->setData("1");
         }
     
-        return $file->getData();
+        return (int)$file->getData();
     }
     
     ### ITEARTOR
@@ -564,8 +567,10 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
             throw new ErrorException("Missing column-data for primary-key column '{$lastColumnSchema->getName()}'!");
         }
 
-        $this->seek($lastColumnData->key());
         $this->isValid = $lastColumnData->valid();
+        if ($this->isValid) {
+            $this->seek($lastColumnData->key());
+        }
     }
 
     public function valid()
