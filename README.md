@@ -1,6 +1,8 @@
 Addiks PHP-SQL Database
 ===================================
 
+[![Build Status](https://travis-ci.org/addiks/phpsql.svg?branch=master)](https://travis-ci.org/addiks/phpsql)
+
 This projects's goal is to create an SQL-compliant database completely written in PHP.
 It's purposes are wide ranged:
 
