@@ -34,7 +34,7 @@ Add the following to the **require**-area your **composer.json** require-area:
 
 ```json
     "require": {
-        "addiks/phpsql": "dev-master"
+        "addiks/phpsql": "^0.1.0"
     },
 ```
 
