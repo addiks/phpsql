@@ -97,7 +97,7 @@ class TableSchema implements TableSchemaInterface
                 $file->seek(0-IndexSchema::PAGE_SIZE, SEEK_CUR);
                 $iteratorEntity->setData($data);
                 $iteratorEntity->setId($file->tell() / IndexSchema::PAGE_SIZE);
-                return $iteratorEntity;
+                return clone $iteratorEntity;
             },
             'next' => function () use ($file) {
                 $file->seek(IndexSchema::PAGE_SIZE, SEEK_CUR);

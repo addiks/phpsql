@@ -28,6 +28,11 @@ class ConditionJob extends Part
         }
         return $this->firstParameter;
     }
+
+    public function hasFirstParameter()
+    {
+        return !is_null($this->firstParameter);
+    }
     
     public function setFirstParameter($parameter)
     {
@@ -42,6 +47,11 @@ class ConditionJob extends Part
             $this->setLastParameter(SqlToken::T_TRUE());
         }
         return $this->lastParameter;
+    }
+    
+    public function hasLastParameter()
+    {
+        return !is_null($this->lastParameter);
     }
     
     public function setLastParameter($parameter)
@@ -63,4 +73,18 @@ class ConditionJob extends Part
         }
         return $this->operator;
     }
+
+    public function resolve()
+    {
+        if ($this->firstParameter instanceof Part) {
+            $this->firstParameter->resolve();
+        }
+
+        if ($this->lastParameter instanceof Part) {
+            $this->lastParameter->resolve();
+        }
+
+        parent::resolve();
+    }
+
 }

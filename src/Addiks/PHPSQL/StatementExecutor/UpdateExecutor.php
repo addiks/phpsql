@@ -76,7 +76,10 @@ class UpdateExecutor implements StatementExecutorInterface
         $tableSpecifier = $statement->getTables()[0];
         
         /* @var $tableResource Table */
-        $tableResource = $this->tableManager->getTable($tableSpecifier);
+        $tableResource = $this->tableManager->getTable(
+            $tableSpecifier->getTable(),
+            $tableSpecifier->getDatabase()
+        );
 
         /* @var $tableSchema TableSchema */
         $tableSchema = $tableResource->getTableSchema();

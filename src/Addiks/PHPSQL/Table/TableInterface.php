@@ -18,25 +18,17 @@ use Addiks\PHPSQL\Column\ColumnDataInterface;
 
 interface TableInterface extends DataProviderInterface
 {
-    
-    /**
-     *
-     * @return TableSchema
-     */
-    public function getTableSchema();
-    
+
     public function addColumn(ColumnSchema $columnSchema, ColumnDataInterface $columnData);
 
     public function modifyColumn(ColumnSchema $columnSchema, ColumnDataInterface $columnData);
 
-    public function getCellData($rowId, $columnId);
-    
-    public function setCellData($rowId, $columnId, $data);
-    
     public function setRowData($rowId, array $rowData);
-    
+
     public function addRowData(array $rowData);
-    
+
+    public function setCellData($rowId, $columnId, $data);
+
     public function removeRow($rowId);
-    
+
 }

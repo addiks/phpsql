@@ -16,10 +16,18 @@ use Countable;
 interface DataProviderInterface extends SeekableIterator, Countable
 {
 
+    /**
+     *
+     * @return TableSchema
+     */
+    public function getTableSchema();
+
     public function doesRowExists($rowId = null);
-    
+
     public function getRowData($rowId = null);
 
+    public function getCellData($rowId, $columnId);
+
     public function tell();
-    
+
 }

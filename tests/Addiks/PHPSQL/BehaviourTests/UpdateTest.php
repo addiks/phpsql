@@ -22,6 +22,9 @@ class UpdateTest extends PHPUnit_Framework_TestCase
         $this->pdo = new PDO("inmemory:phpunit");
     }
     
+    /**
+     * @group behaviour.update
+     */
     public function testUpdate()
     {
         ### PREPARE

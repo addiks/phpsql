@@ -14,6 +14,7 @@ namespace Addiks\PHPSQL\Job\Part;
 use Addiks\PHPSQL\Job\Part;
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
 use Addiks\PHPSQL\Job\Part\FunctionJob;
+use Addiks\PHPSQL\Job\Part\ConditionJob;
 
 class ValuePart extends Part
 {
@@ -59,6 +60,40 @@ class ValuePart extends Part
             
         }
         return $this->getAlias();
+    }
+
+    public function resolve()
+    {
+        $lastIndex = count($this->chain)-1;
+
+        do {
+            $this->chain = array_values($this->chain);
+
+            foreach ($this->chain as $index => $chainValue) {
+                if ($chainValue instanceof ConditionJob) {
+                    if (!$chainValue->hasLastParameter() && $index < $lastIndex) {
+                        $parameter = $this->chain[$index+1];
+                        unset($this->chain[$index+1]);
+                        $chainValue->setLastParameter($parameter);
+                        continue 2;
+                    }
+                    if (!$chainValue->hasFirstParameter() && $index > 0) {
+                        $parameter = $this->chain[$index-1];
+                        unset($this->chain[$index-1]);
+                        $chainValue->setFirstParameter($parameter);
+                        continue 2;
+                    }
+                }
+
+                if ($chainValue instanceof Part) {
+                    $chainValue->resolve();
+                }
+            }
+
+            break;
+        } while (true);
+
+        parent::resolve();
     }
 
     public function __toString()

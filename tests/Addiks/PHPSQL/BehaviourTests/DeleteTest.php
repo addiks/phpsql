@@ -17,12 +17,12 @@ use Addiks\PHPSQL\Result\ResultWriter;
 
 class DeleteTest extends PHPUnit_Framework_TestCase
 {
-    
+
     public function setUp()
     {
         $this->pdo = new PDO("inmemory:phpunit");
     }
-    
+
     /**
      * @group behaviour.delete
      */

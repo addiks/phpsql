@@ -68,7 +68,7 @@ class JoinIterator implements DataProviderInterface
     {
         return $this->selectExecutor;
     }
-    
+
     /**
      * Alias of fetchArray
      * @return array
@@ -77,44 +77,44 @@ class JoinIterator implements DataProviderInterface
     {
         return $this->fetchArray();
     }
-    
+
     public function fetchArray()
     {
-        
+
         $row = $this->fetchAssoc();
-        
+
         $number = 0;
         foreach ($row as $value) {
             $row[$number] = $value;
             $number++;
         }
-        
+
         return $row;
     }
-    
+
     public function fetchAssoc()
     {
-        
+
         $row = $this->current();
         $this->next();
-        
+
         return $row;
     }
-    
+
     public function fetchRow()
     {
-        
+
         $row = $this->fetchAssoc();
-        
+
         $returnRow = array();
-        
+
         foreach ($row as $value) {
             $returnRow[] = $value;
         }
-        
+
         return $returnRow;
     }
-    
+
     private $schemaId;
 
     public function getSchemaId()
@@ -148,7 +148,7 @@ class JoinIterator implements DataProviderInterface
     private $rowPath = array();
 
     private $tableResources = array();
-    
+
     public function setTableResources(array $tableResources)
     {
         $this->tableResources = $tableResources;
@@ -171,30 +171,31 @@ class JoinIterator implements DataProviderInterface
                 $alias = (string)$tableSpecifier;
             }
 
+            /* @var $tableResource DataProviderInterface */
             $tableResource = $this->executionContext->getTable($alias);
-
-            ### TODO: implement a filter here to skip non-relevant rows in $tableResource
 
             $this->tableResources[$alias] = $tableResource;
         }
     }
-    
+
     private $initialized = false;
-    
+
     public function rewind()
     {
-        
+
         if (!$this->initialized) {
             $this->initialized = true;
             $this->init();
         }
-        
+
         $rowPath = array();
         foreach ($this->tableResources as $tableResource) {
             $tableResource->rewind();
-            $rowPath[] = $tableResource->tell();
+            if ($tableResource->valid()) {
+                $rowPath[] = $tableResource->tell();
+            }
         }
-        
+
         $this->rowPath = $rowPath;
         $this->rowCounter = 0;
     }
@@ -229,24 +230,24 @@ class JoinIterator implements DataProviderInterface
                 $type = get_class($tableResource);
                 throw new ErrorException("Table-Resource '{$alias}' ({$type}) returned non-array as row!");
             }
-            
+
             if ($tableResource instanceof UsesBinaryDataInterface && $tableResource->usesBinaryData()) {
                 $rows[$alias] = $tableResource->convertDataRowToStringRow($rows[$alias]);
             }
         }
 
         $mergedRow = array();
-        
+
         foreach ($rows as $alias => $row) {
             foreach ($row as $columnName => $cellData) {
                 $mergedRow[$columnName] = $cellData;
                 $mergedRow["{$alias}.{$columnName}"] = $cellData;
             }
         }
-        
+
         return $mergedRow;
     }
-    
+
     public function key()
     {
         $rowPath = implode(":", $this->rowPath);
@@ -256,13 +257,13 @@ class JoinIterator implements DataProviderInterface
 
     public function next()
     {
-        
+
         $this->rowCounter++;
-        
+
         if (!$this->valid()) {
             return;
         }
-        
+
         $index = 0;
         foreach (array_reverse($this->tableResources) as $alias => $tableResource) {
             if ($tableResource instanceof IteratorAggregate) {
@@ -271,11 +272,11 @@ class JoinIterator implements DataProviderInterface
 
             $tableResource->next();
             $this->rowPath[$index] = $tableResource->tell();
-            
+
             if ($tableResource->valid()) {
                 /* @var $table Table */
                 $table = $this->getJoinDefinition()->getTables()[$index];
-        
+
                 if ($table->getIsInner()) {
                     // TODO: skip row when INNER and key is null
                 }
@@ -288,11 +289,11 @@ class JoinIterator implements DataProviderInterface
                 }
                 $this->rowPath[$index-1] = $tableResource->tell();
             }
-            
+
         }
-        
+
     }
-    
+
     public function seek($rowPath)
     {
         $rowPath = $this->decstr($rowPath);
@@ -304,22 +305,22 @@ class JoinIterator implements DataProviderInterface
             $index++;
         }
     }
-    
+
     public function count()
     {
         $count = 1;
-        
+
         foreach ($this->tableResources as $alias => $tableResource) {
             # TODO: give better count taking INNER/OUTER-JOIN with NULL values in consideration.
             $count *= $tableResource->count();
         }
-        
+
         return $count;
     }
-    
+
     public function getUnsortedIterator()
     {
-        
+
         $unsortedJoinIterator = new JoinIterator(
             $this->joinDefinition,
             $this->executionContext,
@@ -332,19 +333,19 @@ class JoinIterator implements DataProviderInterface
         if (count($this->tableResources)<=0) {
             $this->init();
         }
-        
+
         $unsortedJoinIterator->setTableResources($this->tableResources);
-        
+
         return $unsortedJoinIterator;
     }
-    
+
     private $columnMetaData = array();
-    
+
     public function setColumnMetaData($columnName, array $data)
     {
         $this->columnMetaData[$columnName] = $data;
     }
-    
+
     public function getColumnMetaData($columnName)
     {
         return $this->columnMetaData[$columnName];
@@ -363,6 +364,12 @@ class JoinIterator implements DataProviderInterface
         return $this->key();
     }
 
+    public function getTableSchema()
+    {
+        throw new ErrorException("UNIMPLEMENTED");
+        # TODO: implement this!
+    }
+
     public function getRowData($rowIndex = null)
     {
         if (is_null($rowId)) {
@@ -378,6 +385,13 @@ class JoinIterator implements DataProviderInterface
         $this->seek($beforeSeek);
 
         return $row;
+    }
+
+    public function getCellData($rowId, $columnId)
+    {
+        $row = $this->getRowData();
+
+        return $row[$columnId];
     }
 
 }

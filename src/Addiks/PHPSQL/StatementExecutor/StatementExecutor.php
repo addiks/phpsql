@@ -41,7 +41,7 @@ class StatementExecutor implements StatementExecutorInterface
         $this->schemaManager = $schemaManager;
         $this->tableManager = $tableManager;
         $this->valueResolver = $valueResolver;
-        
+
         if ($doInitStatementExecutors) {
             $this->initStatementExecutors();
         }

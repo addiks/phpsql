@@ -10,10 +10,14 @@
  */
 
 namespace Addiks\PHPSQL\Index;
+use Addiks\PHPSQL\Index\IndexSchema;
 
 interface IndexInterface
 {
     
+    /**
+     * @return IndexSchema
+     */
     public function getIndexSchema();
 
     public function updateRow(array $oldRow, array $newRow, $rowId);

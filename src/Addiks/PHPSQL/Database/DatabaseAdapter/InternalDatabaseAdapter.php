@@ -167,72 +167,82 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
     {
         return 'internal';
     }
-    
+
     private $currentDatabaseId = SchemaManager::DATABASE_ID_DEFAULT;
-    
+
     public function getCurrentlyUsedDatabaseId()
     {
         return $this->currentDatabaseId;
     }
-    
+
     public function setCurrentlyUsedDatabaseId($schemaId)
     {
-        
+
         $pattern = Internal::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
             throw new InvalidArgument("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
-        
+
         if (!$this->schemaExists($schemaId)) {
             throw new InvalidArgumentException("Database '{$schemaId}' does not exist!");
         }
-        
+
         $this->currentDatabaseId = $schemaId;
-        
+
         return true;
     }
-    
+
     public function query($statementString, array $parameters = array(), SQLTokenIterator $tokens = null)
     {
-        
+
         $result = null;
-            
+
         try {
             if (is_null($tokens)) {
                 $tokens = new SQLTokenIterator($statementString);
             }
-            
+
             $jobs = $this->getSqlParser()->convertSqlToJob($tokens);
-            
+
             foreach ($jobs as $statement) {
                 /* @var $statement StatementJob */
-                
+
                 $result = $this->queryStatement($statement, $parameters);
             }
-            
+
         } catch (InvalidArgumentException $exception) {
             print($exception);
-            
+
             throw $exception;
-            
+
         } catch (MalformedSqlException $exception) {
             print($exception);
-            
+
             throw $exception;
         }
-        
+
         if (is_null($result)) {
             $result = new TemporaryResult();
         }
 
         return $result;
     }
-    
+
     public function queryStatement(StatementJob $statement, array $parameters = array())
     {
-        
         $result = $this->getStatementExecutor()->executeJob($statement, $parameters);
-        
+
         return $result;
+    }
+
+    public function prepare($statementString, SQLTokenIterator $tokens = null)
+    {
+        if (is_null($tokens)) {
+            $tokens = new SQLTokenIterator($statementString);
+        }
+
+        $jobs = $this->getSqlParser()->convertSqlToJob($tokens);
+
+        return $jobs;
     }
 }

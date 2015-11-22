@@ -20,7 +20,7 @@ class ColumnData implements ColumnDataInterface
 {
 
     use BinaryConverterTrait;
-    
+
     public function __construct(FileResourceProxy $file, ColumnSchema $columnPage)
     {
         $this->file = $file;
@@ -33,12 +33,13 @@ class ColumnData implements ColumnDataInterface
         } else {
             $this->cellLengthSize = ceil(log($columnPage->getCellSize(), 256));
         }
+        assert($this->file->getLength() % $this->getPageSize() === 0);
     }
-    
+
     private $file;
 
     private $cellLengthSize;
-    
+
     /**
      * @return FileResourceProxy
      */
@@ -46,9 +47,9 @@ class ColumnData implements ColumnDataInterface
     {
         return $this->file;
     }
-    
+
     private $columnSchema;
-    
+
     /**
      *
      * @return ColumnSchema
@@ -57,68 +58,80 @@ class ColumnData implements ColumnDataInterface
     {
         return $this->columnSchema;
     }
-    
+
     const FLAG_ISNULL = 0x01;
-    
+
     public function getCellData($index)
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
+
+        $data = null;
+
         /* @var $file file */
         $file = $this->getFile();
-        
+
         /* @var $columnSchema Column */
         $columnSchema = $this->getColumnSchema();
-        
+
         $beforeSeek = $file->tell();
-        
-        $file->seek($index * $this->getPageSize());
-        
-        $file->seek(9, SEEK_CUR); # skip next/previous index-fields and reserved byte
 
-        $flags = ord($file->read(1));
-        
-        $isNull = $flags & ColumnData::FLAG_ISNULL === ColumnData::FLAG_ISNULL;
-        
-        $size = $this->strdec($file->read($this->cellLengthSize));
+        if ($index === 0 || $index < $this->count()) {
+            $file->seek($index * $this->getPageSize());
 
-        if ($isNull) {
-            $data = null;
+            $file->seek(9, SEEK_CUR); # skip next/previous index-fields and reserved byte
 
-        } else {
-            $data = $file->read($columnSchema->getCellSize());
-            
-            if (strlen($data) <= 0) {
+            $flags = ord($file->read(1));
+
+            $isNull = $flags & ColumnData::FLAG_ISNULL === ColumnData::FLAG_ISNULL;
+
+            $size = $this->strdec($file->read($this->cellLengthSize));
+
+            if ($isNull) {
                 $data = null;
 
             } else {
-                if (strlen($data) !== $columnSchema->getCellSize()) {
-                    $file->seek($beforeSeek, SEEK_SET);
-                    throw new ErrorException("No or corrupted cell-data at index '{$index}'!");
+                $data = $file->read($columnSchema->getCellSize());
+
+                if (strlen($data) <= 0) {
+                    $data = null;
+
                 } else {
-                    $data = substr($data, 0, $size);
+                    if (strlen($data) !== $columnSchema->getCellSize()) {
+                        $file->seek($beforeSeek, SEEK_SET);
+                        throw new ErrorException("No or corrupted cell-data at index '{$index}'!");
+                    } else {
+                        $data = substr($data, 0, $size);
+                    }
                 }
+
             }
 
+            $file->seek($beforeSeek, SEEK_SET);
         }
-        
-        $file->seek($beforeSeek, SEEK_SET);
 
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         return $data;
     }
-    
+
     public function setCellData($index, $data)
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         /* @var $file file */
         $file = $this->getFile();
-        
+
         /* @var $columnSchema Column */
         $columnSchema = $this->getColumnSchema();
-        
+
         $beforeSeek = $file->tell();
-        
+
+        if ($index >= $this->count()) {
+            $file->seek(($index+1) * $this->getPageSize());
+        }
+
         $isNull = is_null($data);
-        
+
         $flags = 0;
-        
+
         if ($isNull) {
             $flags = $flags ^ ColumnData::FLAG_ISNULL;
         }
@@ -127,7 +140,7 @@ class ColumnData implements ColumnDataInterface
         $data = substr($data, 0, $columnSchema->getCellSize());
         $size = strlen($data);
         $data = str_pad($data, $columnSchema->getCellSize(), "\0", STR_PAD_RIGHT);
-        
+
         $count = $this->count();
 
         ### SET UP REFERENCES
@@ -177,7 +190,7 @@ class ColumnData implements ColumnDataInterface
         ### WRITE CELL
 
         $this->seek($index);
-        
+
         $file->write("\0\0\0\0"); # before-index (empty for used cell's)
         $file->write("\0\0\0\0"); # next-index (empty for used cell's)
         $file->write("\0"); # reserved byte (for future flags)
@@ -186,23 +199,30 @@ class ColumnData implements ColumnDataInterface
         $file->write($data);
 
         $file->seek($beforeSeek, SEEK_SET);
+
+        assert($this->file->getLength() % $this->getPageSize() === 0);
     }
-    
+
     public function addCellData($data)
     {
         $this->setCellData($this->count(), $data);
     }
-    
+
     public function removeCell($index)
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         /* @var $file File */
         $file = $this->getFile();
-        
+
         /* @var $columnSchema Column */
         $columnSchema = $this->getColumnSchema();
-        
+
         $seekBefore = $file->tell();
-        
+
+        if ($index >= $this->count()) {
+            $file->seek(($index+1) * $this->getPageSize());
+        }
+
         ### DELETE CELL
 
         $this->seek($index);
@@ -260,7 +280,7 @@ class ColumnData implements ColumnDataInterface
             $file->truncate($index * $this->getPageSize());
             $count = $index;
         }
-        
+
         if ($previousIndex !== null) {
             if ($nextIndex >= $count) {
                 $this->seek($count - 1);
@@ -273,8 +293,10 @@ class ColumnData implements ColumnDataInterface
         }
 
         $file->seek($seekBefore);
+
+        assert($this->file->getLength() % $this->getPageSize() === 0);
     }
-    
+
     /**
      * @deprecated ?
      */
@@ -284,7 +306,7 @@ class ColumnData implements ColumnDataInterface
 
         /* @var $file file */
         $file = $this->getFile();
-        
+
         $beforeSeek = $file->tell();
 
         $this->seek($lastIndex + 1);
@@ -297,7 +319,7 @@ class ColumnData implements ColumnDataInterface
 
         $file->seek($beforeSeek + 4);
         $file->write($lastIndex);
-        
+
         $file->seek($beforeSeek);
     }
 
@@ -313,17 +335,18 @@ class ColumnData implements ColumnDataInterface
 
     private function readCurrentPreviousIndex()
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         assert($this->isValid);
         $previousIndex = null;
 
         $file = $this->getFile();
-        
+
         $beforeSeek = $file->tell();
 
         $previousIndex = $file->read(4);
         $previousIndex = $this->strdec($previousIndex);
         $previousIndex--;
-        
+
         $file->seek($beforeSeek);
 
         return $previousIndex;
@@ -331,13 +354,14 @@ class ColumnData implements ColumnDataInterface
 
     private function writeCurrentPreviousIndex($previousIndex)
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         assert($this->isValid);
         assert(is_int($previousIndex));
 
         $file = $this->getFile();
-        
+
         $beforeSeek = $file->tell();
-    
+
         $previousIndex++;
         $previousIndex = $this->decstr($previousIndex);
         $previousIndex = str_pad($previousIndex, 4, "\0", STR_PAD_LEFT);
@@ -345,6 +369,8 @@ class ColumnData implements ColumnDataInterface
         $file->write($previousIndex);
 
         $file->seek($beforeSeek);
+
+        assert($this->file->getLength() % $this->getPageSize() === 0);
     }
 
     private function readCurrentNextIndex()
@@ -356,44 +382,52 @@ class ColumnData implements ColumnDataInterface
 
         $beforeSeek = $file->tell();
 
-        $file->seek(4, SEEK_CUR);
-        $nextIndex = $file->read(4);
-        $nextIndex = $this->strdec($nextIndex);
-        $nextIndex--;
-        
-        $file->seek($beforeSeek);
+        if ($beforeSeek < $file->getLength()) {
+            $file->seek(4, SEEK_CUR);
+            $nextIndex = $file->read(4);
+            $nextIndex = $this->strdec($nextIndex);
+            $nextIndex--;
+
+            $file->seek($beforeSeek);
+        }
         return $nextIndex;
     }
 
     private function writeCurrentNextIndex($nextIndex)
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         assert($this->isValid);
         assert(is_int($nextIndex));
 
         $file = $this->getFile();
-        
+
         $beforeSeek = $file->tell();
-    
-        $file->seek(4, SEEK_CUR);
 
-        $nextIndex++;
-        $nextIndex = $this->decstr($nextIndex);
-        $nextIndex = str_pad($nextIndex, 4, "\0", STR_PAD_LEFT);
-        assert(strlen($nextIndex) === 4);
-        $file->write($nextIndex);
+        if ($beforeSeek < $file->getLength()) {
+            $file->seek(4, SEEK_CUR);
 
-        $file->seek($beforeSeek);
+            $nextIndex++;
+            $nextIndex = $this->decstr($nextIndex);
+            $nextIndex = str_pad($nextIndex, 4, "\0", STR_PAD_LEFT);
+            assert(strlen($nextIndex) === 4);
+            $file->write($nextIndex);
+
+            $file->seek($beforeSeek);
+        }
+
+        assert($this->file->getLength() % $this->getPageSize() === 0);
     }
 
     private function writeCurrentCellData($cellData)
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         assert(is_string($cellData));
         assert($this->isValid);
 
         $file = $this->getFile();
-        
+
         $beforeSeek = $file->tell();
-    
+
         /* @var $columnSchema ColumnSchema */
         $columnSchema = $this->getColumnSchema();
 
@@ -404,6 +438,8 @@ class ColumnData implements ColumnDataInterface
         $file->write($cellData);
 
         $file->seek($beforeSeek);
+
+        assert($this->file->getLength() % $this->getPageSize() === 0);
     }
 
     ### ITERATOR
@@ -412,6 +448,7 @@ class ColumnData implements ColumnDataInterface
 
     public function rewind()
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         $file = $this->getFile();
         $columnSchema = $this->getColumnSchema();
 
@@ -423,15 +460,19 @@ class ColumnData implements ColumnDataInterface
         }
 
         $beforeSeek = $file->tell();
-        $file->seek(10, SEEK_CUR);
-        $currentPageData = $file->read($this->getPageSize());
-        $file->seek($beforeSeek);
+        $currentPageData = null;
+        if ($beforeSeek < $file->getLength()) {
+            $file->seek(10, SEEK_CUR);
+            $currentPageData = $file->read($this->getPageSize());
+            $file->seek($beforeSeek);
+        }
 
         $this->isValid = !empty(trim($currentPageData, "\0"));
     }
 
     public function current()
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         assert($this->isValid);
         $cellData = null;
 
@@ -440,19 +481,22 @@ class ColumnData implements ColumnDataInterface
 
         $beforeSeek = $file->tell();
 
-        $file->seek(10, SEEK_CUR);
-        $size = $this->strdec($file->read($this->cellLengthSize));
-        $cellData = $file->read($columnSchema->getCellSize());
+        if ($beforeSeek < $file->getLength()) {
+            $file->seek(10, SEEK_CUR);
+            $size = $this->strdec($file->read($this->cellLengthSize));
+            $cellData = $file->read($columnSchema->getCellSize());
+            $cellData = substr($cellData, 0, $size);
 
-        $file->seek($beforeSeek);
+            $file->seek($beforeSeek);
+        }
 
-        $cellData = substr($cellData, 0, $size);
-
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         return $cellData;
     }
 
     public function key()
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         assert($this->isValid);
         $key = null;
 
@@ -466,6 +510,7 @@ class ColumnData implements ColumnDataInterface
 
     public function valid()
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         return $this->isValid;
     }
 
@@ -478,7 +523,7 @@ class ColumnData implements ColumnDataInterface
         $file->seek($this->getPageSize(), SEEK_CUR);
 
         $nextIndex = $this->readCurrentNextIndex();
-        if ($nextIndex >= 0) {
+        if (!is_null($nextIndex) && $nextIndex >= 0) {
             $this->seek($nextIndex);
         }
 
@@ -493,28 +538,30 @@ class ColumnData implements ColumnDataInterface
     {
         /* @var $file file */
         $file = $this->getFile();
-        
+
         $beforeSeek = $file->tell();
-        
+
         $file->seek(0, SEEK_END);
-        
+
         $count = (int)(floor($file->tell() / $this->getPageSize())  );
-        
+
         $file->seek($beforeSeek, SEEK_SET);
 
         if ($count < 0) {
             $count = 0;
         }
-        
+
         return $count;
     }
-    
+
     public function seek($index)
     {
+        assert($this->file->getLength() % $this->getPageSize() === 0);
         /* @var $file file */
         $file = $this->getFile();
 
         $file->seek($index * $this->getPageSize());
         $this->isValid = true;
+        assert($this->file->getLength() % $this->getPageSize() === 0);
     }
 }

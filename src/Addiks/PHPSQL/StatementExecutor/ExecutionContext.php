@@ -16,6 +16,7 @@ use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Table\TableInterface;
 use InvalidArgumentException;
 use Addiks\PHPSQL\Result\ResultInterface;
+use Addiks\PHPSQL\Iterators\DataProviderInterface;
 
 /**
  * Contains information about and for the currently executed statement.
@@ -83,7 +84,7 @@ class ExecutionContext
         return $this->tables[$alias];
     }
 
-    public function setTable(TableInterface $table, $alias)
+    public function setTable(DataProviderInterface $table, $alias)
     {
         $this->tables[$alias] = $table;
     }

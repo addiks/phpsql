@@ -54,7 +54,7 @@ class DeleteExecutor implements StatementExecutorInterface
     {
         return $this->tableManager;
     }
-    
+
     public function canExecuteJob(StatementJob $statement)
     {
         return $statement instanceof DeleteStatement;
@@ -63,27 +63,27 @@ class DeleteExecutor implements StatementExecutorInterface
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
         /* @var $statement DeleteStatement */
-        
+
         $result = new TemporaryResult();
-        
+
         $executionContext = new ExecutionContext(
             $this->schemaManager,
             $statement,
             $parameters
         );
-        
+
         /* @var $conditionValue Value */
         $conditionValue = $statement->getCondition();
-        
+
         $rowCount = 0;
         $rowSkip  = 0;
-        
+
         $limitOffset = $statement->getLimitOffset();
         $limitCount  = $statement->getLimitRowCount();
-        
+
         foreach ($statement->getDeleteTables() as $tableSpecifier) {
             /* @var $tableSpecifier TableSpecifier */
-            
+
             /* @var $tableResource Table */
             $tableResource = $this->tableManager->getTable(
                 $tableSpecifier->getTable(),

@@ -78,7 +78,7 @@ class SelectTest extends PHPUnit_Framework_TestCase
      */
     public function testSelectSimple()
     {
-        
+
         ### EXECUTE
 
         try {
@@ -88,7 +88,7 @@ class SelectTest extends PHPUnit_Framework_TestCase
         }
 
         ### CHECK RESULTS
-        
+
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
             ["789", "sit amet",    "2029-06-15 12:00:00"],
@@ -98,12 +98,14 @@ class SelectTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @depends testSelectSimple
+     * @dep ends testSelectSimple
      * @group behaviour.select
+     * @group behaviour.select.where
+     * @group behaviour.select.where.simple
      */
     public function testSelectWhere()
     {
-        
+
         ### EXECUTE
 
         try {
@@ -118,10 +120,40 @@ class SelectTest extends PHPUnit_Framework_TestCase
         }
 
         ### CHECK RESULTS
-        
+
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
             ["789", "sit amet",    "2029-06-15 12:00:00"],
+            ["456", "dolor",       "1984-10-26 00:00:00"],
+        ], $actualRows);
+    }
+
+    /**
+     * @depe ds testSelectSimple
+     * @group behaviour.select
+     * @group behaviour.select.where
+     * @group behaviour.select.where.id
+     */
+    public function testSelectWhereId()
+    {
+
+        ### EXECUTE
+
+        try {
+            $result = $this->pdo->query("
+                SELECT foo, bar, baz
+                FROM `phpunit_select_first`
+                WHERE id = 2
+                ORDER BY baz DESC
+            ");
+        } catch(Exception $exception) {
+            throw $exception;
+        }
+
+        ### CHECK RESULTS
+
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $this->assertEquals([
             ["456", "dolor",       "1984-10-26 00:00:00"],
         ], $actualRows);
     }
@@ -146,7 +178,7 @@ class SelectTest extends PHPUnit_Framework_TestCase
         }
 
         ### CHECK RESULTS
-        
+
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
             ["789", "sit amet",    "2029-06-15 12:00:00"],
@@ -161,7 +193,7 @@ class SelectTest extends PHPUnit_Framework_TestCase
      */
     public function testSelectJoin()
     {
-        
+
         ### EXECUTE
 
         try {

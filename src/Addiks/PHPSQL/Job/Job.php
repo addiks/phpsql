@@ -39,4 +39,8 @@ abstract class Job
     {
     }
 
+    public function resolve()
+    {
+    }
+
 }

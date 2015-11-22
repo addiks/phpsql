@@ -26,9 +26,9 @@ use Addiks\PHPSQL\Value\Database\Dsn;
  */
 class PDO extends BasePDO
 {
-    
+
     const DRIVERNAME = "internal";
-    
+
     /**
      * Creates a PDO instance representing a connection to a database
      * @link http://www.php.net/manual/en/pdo.construct.php
@@ -57,7 +57,7 @@ class PDO extends BasePDO
         $this->databaseResource = $database;
         $this->databaseResource->setCurrentDatabaseType($dsn->getDriverName());
     }
-    
+
     /**
      * The PDO options.
      *
@@ -69,7 +69,7 @@ class PDO extends BasePDO
     {
         return $this->options;
     }
-    
+
     /**
      * The DSN containing the database-id to use for this connection.
      * @see Dsn
@@ -84,13 +84,13 @@ class PDO extends BasePDO
     {
         return $this->dsn;
     }
-    
+
     /**
      * The database-resource to communicate with the database.
      * @var Database
      */
     private $databaseResource;
-        
+
     /**
      * @return Database
      */
@@ -98,7 +98,7 @@ class PDO extends BasePDO
     {
         return $this->databaseResource;
     }
-    
+
     /**
      * Prepares a statement for execution and returns a statement object
      * @link http://www.php.net/manual/en/pdo.prepare.php
@@ -127,12 +127,14 @@ class PDO extends BasePDO
      */
     public function prepare($statement, $driver_options = null)
     {
-    
+        $statementJobs = $this->getDatabaseResource()->prepare($statement);
+
         $statementResource = new Statement($statement, $this);
-        
+        $statementResource->setStatementJobs($statementJobs);
+
         return $statementResource;
     }
-    
+
     /**
      * Initiates a transaction
      * @link http://www.php.net/manual/en/pdo.begintransaction.php
@@ -141,7 +143,7 @@ class PDO extends BasePDO
     public function beginTransaction()
     {
     }
-    
+
     /**
      * Commits a transaction
      * @link http://www.php.net/manual/en/pdo.commit.php
@@ -150,7 +152,7 @@ class PDO extends BasePDO
     public function commit()
     {
     }
-    
+
     /**
      * Rolls back a transaction
      * @link http://www.php.net/manual/en/pdo.rollback.php
@@ -159,7 +161,7 @@ class PDO extends BasePDO
     public function rollBack()
     {
     }
-    
+
     /**
      * Set an attribute
      * @link http://www.php.net/manual/en/pdo.setattribute.php
@@ -170,7 +172,7 @@ class PDO extends BasePDO
     public function setAttribute($attribute, $value)
     {
     }
-    
+
     /**
      * Execute an SQL statement and return the number of affected rows
      * @link http://www.php.net/manual/en/pdo.exec.php
@@ -195,16 +197,16 @@ class PDO extends BasePDO
      */
     public function exec($statementString)
     {
-        
+
         $statement = new Statement($statementString, $this);
 
         $statement->execute();
-        
+
         $this->lastInsertId = $statement->getLastInsertId();
-        
+
         return 0;
     }
-    
+
     /**
      * Executes an SQL statement, returning a result set as a PDOStatement object
      * @link http://www.php.net/manual/en/pdo.query.php
@@ -219,22 +221,22 @@ class PDO extends BasePDO
      */
     public function query($statementString, array $parameters = array())
     {
-        
+
         $statement = new Statement($statementString, $this);
         $statement->execute($parameters);
-        
+
         $this->lastInsertId = $statement->getLastInsertId();
-        
+
         return $statement;
     }
-    
+
     private $lastInsertId;
-    
+
     public function setLastInsetId(array $row)
     {
         $this->lastInsertId = $row;
     }
-    
+
     /**
      * Returns the ID of the last inserted row or sequence value
      * @link http://www.php.net/manual/en/pdo.lastinsertid.php
@@ -261,15 +263,15 @@ class PDO extends BasePDO
     {
         if (count($this->lastInsertId)<=0) {
             return null;
-            
+
         } elseif (count($this->lastInsertId)===1) {
             return current($this->lastInsertId);
-            
+
         } else {
             return $this->lastInsertId;
         }
     }
-    
+
     /**
      * Fetch the SQLSTATE associated with the last operation on the database handle
      * @link http://www.php.net/manual/en/pdo.errorcode.php
@@ -298,7 +300,7 @@ class PDO extends BasePDO
     public function errorCode()
     {
     }
-    
+
     /**
      * Fetch extended error information associated with the last operation on the database handle
      * @link http://www.php.net/manual/en/pdo.errorinfo.php
@@ -340,7 +342,7 @@ class PDO extends BasePDO
     public function errorInfo()
     {
     }
-    
+
     /**
      * Retrieve a database connection attribute
      * @link http://www.php.net/manual/en/pdo.getattribute.php
@@ -370,7 +372,7 @@ class PDO extends BasePDO
                 return 'internal';
         }
     }
-    
+
     /**
      * Quotes a string for use in a query.
      * @link http://www.php.net/manual/en/pdo.quote.php
@@ -386,9 +388,9 @@ class PDO extends BasePDO
      */
     public function quote($string, $parameter_type = null)
     {
-        
+
     }
-    
+
     /**
      * Return an array of available PDO drivers
      * @link http://www.php.net/manual/en/pdo.getavailabledrivers.php

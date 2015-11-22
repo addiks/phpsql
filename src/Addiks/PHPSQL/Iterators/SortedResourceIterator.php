@@ -41,7 +41,7 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
 {
 
     public function __construct(
-        Iterator $resource,
+        DataProviderInterface $resource,
         ValueResolver $valueResolver
     ) {
         $this->resource = $resource;
@@ -55,6 +55,9 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
         return $this->valueResolver;
     }
 
+    /**
+     * @var DataProviderInterface
+     */
     private $resource;
 
     public function getResource()
@@ -64,71 +67,71 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
 
     private $iterator;
 
-    public function setChildIterator(\Iterator $iterator)
+    public function setChildIterator(Iterator $iterator)
     {
         $this->iterator = $iterator;
     }
-    
+
     public function getSortIndexByColumns(array $orderColumns)
     {
         $insertionSortFile = new FileResourceProxy(fopen("php://memory", "w"));
-        
+
         $columnPage = new ColumnSchema();
-            
+
         $columnPages = array();
         foreach ($orderColumns as $columnIndex => $columnDataset) {
             if ($columnDataset instanceof Column) {
                 $direction = 'ASC';
                 $columnPage = $columnDataset;
-                
+
             } else {
                 $direction = $columnDataset['direction'] === SqlToken::T_ASC() ?'ASC' :'DESC';
-                
+
                 /* @var $value Value */
                 $value = $columnDataset['value'];
-                
+
                 $columnPage->setDataType(DataType::VARCHAR()); # TODO: get actual column-page if possible
                 $columnPage->setLength(64);
                 $columnPage->setName("INDEXVALUE_{$columnIndex}");
             }
-            
+
             $columnPages[] = [
                 clone $columnPage,
                 $direction
             ];
         }
-        
+
         $sortIndex = new QuickSort($insertionSortFile, $columnPages);
-        
+
         return $sortIndex;
     }
-    
+
     public function setTemporaryBuildChildIteratorByValue(
         array $orderColumns,
         DataProviderInterface $dataSource,
         ExecutionContext $context
     ) {
-        
+
         /* @var $sortIndex QuickSort */
         $sortIndex = $this->getSortIndexByColumns($orderColumns);
-        
+
         /* @var $valueResolver ValueResolver */
         $valueResolver = $this->valueResolver;
 
         $columnPage = false;
-        
+
         $indexAlreadyBuilt = false;
-        
+
         $rebuildIndex = function () use ($orderColumns, $dataSource, $sortIndex, $valueResolver, $context) {
-            
+
             $iterator = $dataSource;
-            
+
             if ($iterator instanceof JoinIterator) {
                 $iterator = $iterator->getUnsortedIterator();
             }
 
             $indexBuildContext = clone $context;
-            
+
             $dataSource->rewind();
             foreach ($iterator as $rowId => $rows) {
                 #$mergedRow = array();
@@ -138,23 +141,23 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
                 #        $mergedRow["{$alias}.{$columnName}"] = $cell;
                 #    }
                 #}
-                
+
                 $indexBuildContext->setCurrentSourceRow($rows);
-                
+
                 $insertRow = array();
                 foreach ($orderColumns as $columnIndex => $columnDataset) {
                     $value = $columnDataset['value'];
                     /* @var $value Value */
-                    
+
                     $insertRow[$columnIndex] = $valueResolver->resolveValue($value, $indexBuildContext);
                 }
-                
+
                 $sortIndex->addRow($rowId, $insertRow);
             }
-            
+
             $sortIndex->sort();
         };
-        
+
         $iterator = new CustomIterator($this, [
             'rewind' => function () use (&$indexAlreadyBuilt, $rebuildIndex, $sortIndex) {
                 if (!$indexAlreadyBuilt) {
@@ -176,7 +179,7 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
                 $sortIndex->next();
             },
         ]);
-            
+
         $this->setChildIterator($iterator);
     }
 
@@ -187,24 +190,24 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
 
     public function getCurrentRowId()
     {
-        
+
         /* @var $iterator \Iterator*/
         $iterator = $this->getChildIterator();
-        
+
         if (!$iterator->valid()) {
             $rowId = null;
-        
+
         } else {
             $rowId = $iterator->current();
-        
+
             if (is_array($rowId)) {
                 $rowId = reset($rowId);
             }
         }
-        
+
         return $rowId;
     }
-    
+
     public function getIterator()
     {
         return $this;
@@ -212,9 +215,9 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
 
     public function rewind()
     {
-        
+
         $this->getChildIterator()->rewind();
-        
+
         if ($this->getChildIterator()->valid()) {
             $this->syncResourceToIterator();
         }
@@ -222,7 +225,7 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
 
     public function valid()
     {
-        
+
         return $this->getChildIterator()->valid();
     }
 
@@ -243,28 +246,24 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
 
     public function next()
     {
-
         /* @var $iterator \Iterator*/
         $iterator = $this->getChildIterator();
-        
+
         $iterator->next();
 
         $this->syncResourceToIterator();
     }
-    
+
     public function count()
     {
-        
-        $resource = $this->getResource();
-        
-        return $resource->count();
+        return $this->resource->count();
     }
 
     public function doesRowExists($rowId = null)
     {
         return $this->getResource()->doesRowExists();
     }
-    
+
     public function tell()
     {
         return $this->getChildIterator()->tell();
@@ -272,13 +271,22 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
 
     public function seek($rowId)
     {
-        
+
         /* @var $iterator \Iterator*/
         $iterator = $this->getChildIterator();
-        
+
         $iterator->seek($rowId);
 
         $this->syncResourceToIterator();
+    }
+
+    /**
+     *
+     * @return TableSchema
+     */
+    public function getTableSchema()
+    {
+        return $this->resource->getTableSchema();
     }
 
     public function getRowData($rowId = null)
@@ -289,28 +297,35 @@ class SortedResourceIterator implements DataProviderInterface, UsesBinaryDataInt
         $this->seek($beforeSeek);
         return $row;
     }
-    
+
+    public function getCellData($rowId, $columnId)
+    {
+        $row = $this->getRowData();
+
+        return $row[$columnId];
+    }
+
     protected function syncResourceToIterator()
     {
-        
+
         $resource = $this->getResource();
-        
+
         /* @var $iterator \Iterator*/
         $iterator = $this->getChildIterator();
-        
+
         if (!$iterator->valid()) {
             $rowId = null;
-                
+
         } else {
             $rowId = $iterator->current();
-            
+
             if (is_array($rowId)) {
                 $rowId = reset($rowId);
             }
 
             $resource->seek($rowId);
         }
-        
+
     }
 
     public function usesBinaryData()

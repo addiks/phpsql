@@ -9,15 +9,17 @@
  * @package Addiks
  */
 
-define("BASEDIR", realpath(__DIR__."/.."));
+if (!defined("ADDIKS_PHPSQL_BASEDIR")) {
+    define("ADDIKS_PHPSQL_BASEDIR", realpath(__DIR__."/.."));
 
-function addiks_phpsql_auto_loader($className)
-{
-    $filePath = str_replace("\\", "/", $className);
-    $filePath = BASEDIR."/src/{$filePath}.php";
-    if (file_exists($filePath)) {
-        require_once($filePath);
+    function addiks_phpsql_auto_loader($className)
+    {
+        $filePath = str_replace("\\", "/", $className);
+        $filePath = ADDIKS_PHPSQL_BASEDIR."/src/{$filePath}.php";
+        if (file_exists($filePath)) {
+            require_once($filePath);
+        }
     }
-}
 
-spl_autoload_register('addiks_phpsql_auto_loader');
+    spl_autoload_register('addiks_phpsql_auto_loader');
+}

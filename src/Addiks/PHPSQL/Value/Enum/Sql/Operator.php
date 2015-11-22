@@ -42,4 +42,5 @@ class Operator extends Enum
     const OP_SUBTRACTION    = "% - %";
     const OP_MULTIPLICATION = "% * %";
     const OP_DIVISION       = "% / %";
+
 }

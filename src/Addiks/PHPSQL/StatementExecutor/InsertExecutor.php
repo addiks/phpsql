@@ -63,12 +63,12 @@ class InsertExecutor implements StatementExecutorInterface
     }
 
     protected $selectExecutor;
-    
+
     public function getSelectExecutor()
     {
         return $this->selectExecutor;
     }
-    
+
     public function canExecuteJob(StatementJob $statement)
     {
         return $statement instanceof InsertStatement;
@@ -77,7 +77,7 @@ class InsertExecutor implements StatementExecutorInterface
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
         /* @var $statement InsertStatement */
-        
+
         $result = new TemporaryResult();
 
         $context = new ExecutionContext(
@@ -87,48 +87,48 @@ class InsertExecutor implements StatementExecutorInterface
         );
 
         $tableName = (string)$statement->getTable();
-        
+
         /* @var $table TableInterface */
         $table = $this->tableManager->getTable($tableName);
-        
+
         /* @var $tableSchema TableSchema */
         $tableSchema = $table->getTableSchema();
-        
+
         ### BUILD COLUMN MAP
-        
+
         $columnNameToIdMap = array();
-        
+
         foreach ($tableSchema->getColumnIterator() as $columnId => $columnPage) {
             /* @var $columnPage Column */
-            
+
             $columnName = $columnPage->getName();
-            
+
             $columnNameToIdMap[$columnName] = $columnId;
         }
-        
+
         ### GET INDICES
-        
+
         $indices = array();
-        
+
         foreach ($tableSchema->getIndexIterator() as $indexId => $indexPage) {
             /* @var $indexPage Index */
-            
+
             /* @var $index Index */
             $index = $table->getIndex($indexId);
 
             $indices[$indexId] = $index;
         }
-        
+
         ### BUILD ROW DATA
-        
+
         $rowDatas = array();
-        
+
         switch(true){
-            
+
             case $statement->getDataSource() instanceof Select:
-                
+
                 $subResult = $this->selectExecutor->executeJob($statement->getDataSource(), $parameters);
-                
+
                 foreach ($subResult as $subResultRow) {
                     $rowData = array();
                     foreach ($subResultRow as $columnName => $value) {
@@ -138,62 +138,62 @@ class InsertExecutor implements StatementExecutorInterface
                     $rowDatas[] = $rowData;
                 }
                 break;
-                
+
             case is_array($statement->getDataSource()):
-                
+
                 foreach ($statement->getDataSource() as $row) {
                     $sourceRow = array();
                     foreach ($statement->getColumns() as $sourceColumnId => $sourceColumn) {
                         /* @var $sourceColumn Column */
-                        
+
                         $sourceColumnName = (string)$sourceColumn;
-                        
+
                         $sourceRow[$sourceColumnName] = $row[$sourceColumnId];
                     }
-                    
+
                     $rowData = array();
-                    
+
                     foreach ($statement->getColumns() as $sourceColumnId => $sourceColumn) {
                         /* @var $sourceColumn Column */
-                        
+
                         $columnName = (string)$sourceColumn;
-                        
+
                         if (!isset($columnNameToIdMap[$columnName])) {
                             throw new ErrorException("Unknown column '{$columnName}' in statement!");
                         }
-                        
+
                         $columnId = $columnNameToIdMap[$columnName];
-                        
+
                         if (isset($sourceRow[$columnName])) {
                             $value = $sourceRow[$columnName];
                             $value = $this->valueResolver->resolveValue($value, $context);
                         } else {
                             $value = null;
                         }
-                        
+
                         /* @var $columnPage Column */
                         $columnPage = $tableSchema->getColumn($columnId);
-                        
+
                         if (is_null($value) && $columnPage->isAutoIncrement()) {
                             $value = $table->getAutoIncrementId();
                             $table->incrementAutoIncrementId();
                         }
-                        
+
                         if ($columnPage->isNotNull() && is_null($value)) {
                             $columnName = $tableSchema->getColumn($columnId)->getName();
                             throw new ErrorException("Column '{$columnName}' cannot be NULL!");
                         }
-                        
+
                         $rowData[$columnId] = $value;
                     }
-                    
+
                     $primaryKey = array();
-                    
+
                     // fill up missing columns
                     foreach ($columnNameToIdMap as $columnName => $columnId) {
                         /* @var $columnPage Column */
                         $columnPage = $tableSchema->getColumn($columnId);
-                            
+
                         if (!isset($rowData[$columnId])) {
                             if ($columnPage->isNotNull()) {
                                 if ($columnPage->isAutoIncrement()) {
@@ -214,45 +214,48 @@ class InsertExecutor implements StatementExecutorInterface
                                     } else {
                                         $rowData[$columnId] = $columnPage->getDefaultValue();
                                     }
-                                    
+
                                 } else {
                                     throw new ErrorException("Column '{$columnName}' cannot be NULL!");
                                 }
                             }
                         }
-                        
+
                         if ($columnPage->isPrimaryKey()) {
                             $primaryKey[$columnName] = $rowData[$columnId];
                         }
                     }
-                    
+
                     $result->setLastInsertId($primaryKey);
-                    
+
                     $rowData = $table->convertStringRowToDataRow($rowData);
-                    
+
                     foreach ($indices as $indexId => $index) {
                         /* @var $index Index */
-                        
+
                         if (!$index->getIndexSchema()->isUnique()) {
                             continue;
                         }
                         if (count($index->searchRow($rowData))>0) {
                             $rowDataString = implode(", ", $rowData);
-                            throw new ErrorException("Cannot insert because row '{$rowDataString}' collides with unique key '{$index->getIndexSchema()->getName()}'!");
+                            throw new ErrorException(
+                                "Cannot insert because row '{$rowDataString}' collides ".
+                                "with unique key '{$index->getIndexSchema()->getName()}'!"
+                            );
                         }
                     }
                     $rowDatas[] = $rowData;
                 }
                 break;
-            
+
         }
-        
+
         ### INSERT DATA
-            
+
         $insertedRowIds = array();
-        
+
         $success = false;
-        
+
         try {
             foreach ($rowDatas as $rowData) {
                 // check unique keys
@@ -261,40 +264,49 @@ class InsertExecutor implements StatementExecutorInterface
                         continue;
                     }
                     if (count($index->searchRow($rowData))>0) {
-                        throw new ErrorException("Cannot insert because of unique key '{$index->getIndexSchema()->getName()}'!");
+                        throw new ErrorException(
+                            "Cannot insert because of unique key '{$index->getIndexSchema()->getName()}'!"
+                        );
                     }
                 }
-                
+
                 $rowId = $table->addRowData($rowData);
                 $insertedRowIds[] = $rowId;
-                
+
                 // insert into indicies
                 foreach ($indices as $indexId => $index) {
                     $index->insertRow($rowData, $this->decstr($rowId));
                 }
             }
-            
+
             $success = true;
-            
+
         } catch (Exception $exception) {
             ### ROLLBACK
-            
+
             foreach ($insertedRowIds as $rowId) {
                 $table->removeRow($rowId);
-                
+
                 // remove from indicies
                 foreach ($indices as $indexId => $index) {
                     $index->removeRow($row, $this->decstr($rowId));
                 }
             }
-            
-            throw new ErrorException("Exception in INSERT statement, rollback executed.", null, null, null, 0, $exception);
+
+            throw new ErrorException(
+                "Exception in INSERT statement, rollback executed.",
+                null,
+                null,
+                null,
+                0,
+                $exception
+            );
         }
-        
+
         ### RESULT
-        
+
         $result->setIsSuccess((bool)$success);
-        
+
         return $result;
     }
 }

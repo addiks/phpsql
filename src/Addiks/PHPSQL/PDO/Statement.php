@@ -16,21 +16,22 @@ use Addiks\PHPSQL\Result\ResultInterface;
 use Addiks\PHPSQL\Database\Database;
 use Addiks\PHPSQL\PDO\PDO;
 use ErrorException;
+use Addiks\PHPSQL\Job\StatementJob;
 
 /**
  *
  */
 class Statement
 {
-    
+
     public function __construct($statementString, PDO $pdo)
     {
         $this->statementString = $statementString;
         $this->pdo = $pdo;
     }
-    
+
     private $statementString;
-    
+
     protected function getStatementString()
     {
         return $this->statementString;
@@ -42,14 +43,39 @@ class Statement
     {
         return $this->pdo;
     }
-    
+
+    protected $statementJobs;
+
+    public function setStatementJobs(array $statementJobs)
+    {
+        foreach ($statementJobs as $statementJob) {
+            $this->addStatementJob($statementJob);
+        }
+    }
+
+    public function addStatementJob(StatementJob $statementJob)
+    {
+        if (is_null($this->statementJobs)) {
+            $this->statementJobs = array();
+        }
+        $this->statementJobs[] = $statementJob;
+    }
+
+    public function getStatementJobs()
+    {
+        if (is_null($this->statementJobs)) {
+            $this->setStatementJobs($this->pdo->getDatabaseResource()->prepare($this->statementString));
+        }
+        return $this->statementJobs;
+    }
+
     public function getDatabase()
     {
         return $this->pdo->getDatabaseResource();
     }
-    
+
     private $result;
-    
+
     public function getResult()
     {
         if (is_null($this->result)) {
@@ -57,24 +83,24 @@ class Statement
         }
         return $this->result;
     }
-    
+
     protected function setResult(ResultInterface $result)
     {
         $this->result = $result;
     }
-    
+
     public function getLastInsertId()
     {
         return $this->getResult()->getLastInsertId();
     }
-    
+
     private $boundColumns = array();
-    
+
     protected function getBoundColumns()
     {
         return $this->boundColumns;
     }
-    
+
     /**
      * Bind a column to a PHP variable
      *
@@ -88,7 +114,7 @@ class Statement
     public function bindColumn($column, $param, $type = null)
     {
         switch($type){
-            
+
             case \PDO::PARAM_BOOL:
             case \PDO::PARAM_INPUT_OUTPUT:
             case \PDO::PARAM_INT:
@@ -98,19 +124,19 @@ class Statement
             case \PDO::PARAM_STR:
                 $this->boundColumns[] = [(string)$column, $param, $type];
                 break;
-                
+
             default:
                 throw new Exception("Invalid data-type '{$type}'! Must be one of \PDO::PARAM_* constants.");
         }
     }
 
     private $boundValues = array();
-    
+
     protected function getBoundValues()
     {
         return $this->boundValues;
     }
-    
+
     /**
      * Binds a value to a corresponding named or question mark
      * placeholder in the SQL statement that was use to prepare the statement.
@@ -126,13 +152,13 @@ class Statement
      */
     public function bindValue($param, $value, $type = null)
     {
-        
+
         if (is_numeric($param)) {
             $param--;
         }
-        
+
         switch($type){
-        
+
             case \PDO::PARAM_BOOL:
             case \PDO::PARAM_INPUT_OUTPUT:
             case \PDO::PARAM_INT:
@@ -142,19 +168,19 @@ class Statement
             case \PDO::PARAM_STR:
                 $this->boundValues[] = [(string)$value, $param, $type];
                 break;
-                
+
             default:
                 throw new Exception("Invalid data-type '{$type}'! Must be one of \PDO::PARAM_* constants.");
         }
     }
 
     private $boundParams = array();
-    
+
     protected function getBoundParams()
     {
         return $this->boundParams;
     }
-    
+
     /**
      * Binds a PHP variable to a corresponding named or question mark placeholder in the
      * SQL statement that was use to prepare the statement. Unlike Interface->bindValue(),
@@ -184,7 +210,7 @@ class Statement
     public function bindParam($column, &$variable, $type = null, $length = null, $driverOptions = array())
     {
         switch($type){
-        
+
             case \PDO::PARAM_BOOL:
             case \PDO::PARAM_INPUT_OUTPUT:
             case \PDO::PARAM_INT:
@@ -194,7 +220,7 @@ class Statement
             case \PDO::PARAM_STR:
                 $this->boundParams[] = [$column, $param, $type];
                 break;
-        
+
             default:
                 throw new Exception("Invalid data-type '{$type}'! Must be one of \PDO::PARAM_* constants.");
         }
@@ -231,7 +257,7 @@ class Statement
      */
     public function errorCode()
     {
-        
+
     }
 
     /**
@@ -242,7 +268,7 @@ class Statement
      */
     public function errorInfo()
     {
-        
+
     }
 
     /**
@@ -261,35 +287,38 @@ class Statement
      */
     public function execute($parameters = array())
     {
-        
         /* @var $databaseResource Database */
         $databaseResource = $this->getDatabase();
-        
+
         foreach ($this->getBoundValues() as $data) {
             list($value, $index, $type) = $data;
-            
+
             $parameters[$index] = $value;
         }
-        
+
         foreach ($this->getBoundColumns() as $data) {
             // TODO: implement!
         }
-        
+
         foreach ($this->getBoundParams() as $data) {
             // TODO: implement!
         }
-        
+
         /* @var $result ResultInterface */
-        $result = $databaseResource->query($this->getStatementString(), $parameters);
-        
+        $result = null;
+
+        foreach ($this->getStatementJobs() as $statementJob) {
+            $result = $databaseResource->queryStatement($statementJob, $parameters);
+        }
+
         if (is_null($result)) {
             return true;
         }
-        
+
         $this->setResult($result);
-        
+
         $this->pdo->setLastInsetId($result->getLastInsertId());
-        
+
         return $result->getIsSuccess();
     }
 
@@ -325,25 +354,25 @@ class Statement
         $cursorOrientation = \PDO::FETCH_ORI_NEXT,
         $cursorOffset = null
     ) {
-        
+
         /* @var $result Interface */
         $result = $this->getResult();
-                            
+        
         if (is_int($cursorOffset)) {
             $result->seek($cursorOffset);
         }
-        
+
         switch($fetchStyle){
-                
+
             case \PDO::FETCH_NUM:
                 return $result->fetchRow();
-                
+
             case \PDO::FETCH_ASSOC:
                 return $result->fetchAssoc();
-                
+
             case \PDO::FETCH_BOTH:
                 return $result->fetchArray();
-                
+
             case \PDO::FETCH_OBJ:
                 $assoc = $result->fetchAssoc();
                 $object = new _stdClass();
@@ -368,13 +397,13 @@ class Statement
      */
     public function fetchAll($fetchStyle = \PDO::FETCH_BOTH)
     {
-        
+
         $rows = array();
-        
+
         while ($row = $this->fetch($fetchStyle)) {
             $rows[] = $row;
         }
-        
+
         return $rows;
     }
 
@@ -390,9 +419,9 @@ class Statement
      */
     public function fetchColumn($columnIndex = 0)
     {
-        
+
         $row = $this->fetch(Code::FETCH_NUM);
-        
+
         return $row[(int)$columnIndex];
     }
 
@@ -412,12 +441,12 @@ class Statement
     {
         $reflectionClass = new ReflectionClass($className);
         $object = $reflectionClass->newInstanceArgs($args);
-        
+
         $assoc = $result->fetchAssoc();
         foreach ($assoc as $key => $value) {
             $object->$key = $value; # TODO: set via reflection-property
         }
-        
+
         return $object;
     }
 
@@ -440,30 +469,30 @@ class Statement
      */
     public function getColumnMeta($column)
     {
-        
+
         $result = $this->getResult();
         $headers = $result->getHeaders();
-        
+
         if (!isset($headers[$column])) {
             $columnCount = count($headers[$column]);
             throw new Exception("Invalid column index '{$column}'! Result only has {$columnCount} columns!");
         }
-        
+
         $columnName = $headers[$column];
-        
+
         $metadata = $result->getColumnMetaData($columnName);
-        
+
         $type      = $metadata['datatype'];
         $length    = $metadata['length'];
         $precision = $metadata['precision'];
-        
+
         switch($type){
             case DataType::BOOL:
             case DataType::BOOLEAN:
             case DataType::BIT:
                 $phpType = 'bool';
                 break;
-                
+
             case DataType::BIGINT:
             case DataType::INT:
             case DataType::INTEGER:
@@ -475,13 +504,13 @@ class Statement
             case DataType::DECIMAL:
                 $phpType = 'int';
                 break;
-                
+
             case DataType::DOUBLE:
             case DataType::DOUBLE_PRECISION:
             case DataType::FLOAT:
                 $phpType = 'float';
                 break;
-                
+
             case DataType::CHAR:
             case DataType::VARCHAR:
             case DataType::BINARY:
@@ -501,12 +530,12 @@ class Statement
             case DataType::VARBINARY:
                 $phpType = "string";
                 break;
-                
+
             default:
                 throw new ErrorException("Invalid data-type!");
         }
-        
-        
+
+
     }
 
     /**
@@ -539,9 +568,9 @@ class Statement
     {
         return $this->getResult()->count();
     }
-    
+
     private $attributes = array();
-    
+
     /**
      * Retrieve a statement attribute
      *
@@ -555,7 +584,7 @@ class Statement
             return $this->attributes[$attribute];
         }
     }
-    
+
     /**
      * Set a statement attribute
      *
@@ -566,7 +595,7 @@ class Statement
     public function setAttribute($attribute, $value)
     {
         switch($attribute){
-            
+
             case Core::ATTR_AUTO_ACCESSOR_OVERRIDE:
             case Core::ATTR_AUTO_FREE_QUERY_OBJECTS:
             case Core::ATTR_AUTOCOMMIT:
@@ -645,7 +674,7 @@ class Statement
             case Core::ATTR_VALIDATE:
                 $this->attributes[$attribute] = $value;
                 break;
-            
+
             default:
                 throw new Exception("Invalid attribute '{$attribute}'! Must be one of Core::ATTR_* constants.");
         }
@@ -659,6 +688,6 @@ class Statement
      */
     public function setFetchMode($mode, $arg1 = null, $arg2 = null)
     {
-        
+
     }
 }

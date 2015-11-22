@@ -157,6 +157,8 @@ class ValueParser extends SqlParser
             
         } while ($this->parsePlainOperator($tokens, $valueJob));
         
+        $valueJob->resolve();
+
         return $valueJob;
     }
     

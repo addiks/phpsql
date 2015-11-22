@@ -645,7 +645,7 @@ class TableTest extends PHPUnit_Framework_TestCase
         foreach ($table as $rowId => $row) {
             $actualResult[$rowId] = $row;
         }
-        
+
         $this->assertEquals($expectedResult, $actualResult);
     }
 
@@ -734,7 +734,7 @@ class TableTest extends PHPUnit_Framework_TestCase
         foreach ($table as $rowId => $row) {
             $actualResult[$rowId] = array_values($row);
         }
-        
+
         $this->assertEquals($expectedResult, $actualResult);
     }
 
@@ -898,7 +898,7 @@ class TableTest extends PHPUnit_Framework_TestCase
         ### CHECK RESULTS
 
         $actualResult = array_values($table->current());
-        
+
         $this->assertEquals($expectedResult, $actualResult);
     }
 
@@ -958,7 +958,7 @@ class TableTest extends PHPUnit_Framework_TestCase
         $actualResult = $table->tell();
 
         ### CHECK RESULTS
-        
+
         $this->assertEquals($expectedResult, $actualResult);
     }
 
@@ -1016,7 +1016,7 @@ class TableTest extends PHPUnit_Framework_TestCase
         $actualResult = $table->count();
 
         ### CHECK RESULTS
-        
+
         $this->assertEquals($expectedResult, $actualResult);
     }
 
@@ -1076,7 +1076,7 @@ class TableTest extends PHPUnit_Framework_TestCase
         }
 
         ### CHECK RESULTS
-        
+
         $this->assertEquals($expectedResult, $actualResult);
     }
 

@@ -19,7 +19,7 @@ use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 
 class ColumnDataTest extends PHPUnit_Framework_TestCase
 {
-    
+
     public function setUp()
     {
         $file = new FileResourceProxy(fopen("php://memory", "w"));
@@ -34,7 +34,7 @@ class ColumnDataTest extends PHPUnit_Framework_TestCase
     }
 
     protected $columnData;
-    
+
     ### TESTS
 
     /**
@@ -87,7 +87,7 @@ class ColumnDataTest extends PHPUnit_Framework_TestCase
     public function testIterate($cells)
     {
         ### PREPARE
-        
+    
         foreach ($cells as $index => $cellData) {
             $this->columnData->setCellData($index, $cellData);
         }
@@ -124,7 +124,7 @@ class ColumnDataTest extends PHPUnit_Framework_TestCase
         }
 
         $this->columnData->removeCell($removeIndex);
-        
+    
         ### EXECUTE
 
         $actualResult = array();
