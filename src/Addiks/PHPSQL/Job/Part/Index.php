@@ -19,29 +19,31 @@ use Addiks\PHPSQL\Job\Part;
 
 class Index extends Part
 {
-    
+
     public function __construct()
     {
         $this->setType(IndexType::BTREE());
     }
-    
+
     private $name;
-    
+
     public function setName($name)
     {
         $this->name = $name;
     }
-    
+
     public function getName()
     {
         if (is_null($this->name)) {
-            return reset($this->getColumns())->getColumn();
+            $columns = $this->getColumns();
+            $firstColumn = reset($columns);
+            return $firstColumn->getColumn();
         }
         return $this->name;
     }
-    
+
     private $isPrimary = false;
-    
+
     public function setIsPrimary($bool)
     {
         $this->isPrimary = (bool)$bool;
@@ -49,14 +51,14 @@ class Index extends Part
             $this->setIsUnique(true);
         }
     }
-    
+
     public function getIsPrimary()
     {
         return $this->isPrimary;
     }
-    
+
     private $isUnique = false;
-    
+
     public function setIsUnique($bool)
     {
         $this->isUnique = (bool)$bool;
@@ -64,91 +66,91 @@ class Index extends Part
             $this->setIsPrimary(false);
         }
     }
-    
+
     public function getIsUnique()
     {
         return $this->isUnique;
     }
-    
+
     private $isFullText = false;
-    
+
     public function setIsFullText($bool)
     {
         $this->isFullText = (bool)$bool;
     }
-    
+
     public function getIsFullText()
     {
         return $this->isFullText;
     }
-    
+
     private $isSpatial = false;
-    
+
     public function setIsSpatial($bool)
     {
         $this->isSpatial = (bool)$bool;
     }
-    
+
     public function getIsSpatial()
     {
         return $this->isSpatial;
     }
-    
+
     private $type;
-    
+
     public function setType(IndexType $type)
     {
         $this->type = $type;
     }
-    
+
     public function getType()
     {
         return $this->type;
     }
-    
+
     private $columns = array();
-    
+
     public function addColumn(ColumnSpecifier $column)
     {
         $this->columns[] = $column;
     }
-    
+
     public function getColumns()
     {
         return $this->columns;
     }
-    
+
     private $constraintSymbol;
-    
+
     public function setContraintSymbol($symbol)
     {
         $this->constraintSymbol = $symbol;
     }
-    
+
     public function getConstraintSymbol()
     {
         return $this->constraintSymbol;
     }
-    
+
     private $foreignKeys;
-    
+
     public function addForeignKey(ColumnSpecifier $column)
     {
         $this->foreignKeys[] = $column;
     }
-    
+
     public function getForeignKeys()
     {
         return $this->foreignKeys;
     }
-    
+
     private $foreignKeyMatchType;
-    
+
     public function setForeignKeyMatchType(MatchType $matchTypes)
     {
         $this->foreignKeyMatchType = $matchType;
     }
-    
+
     public function getForeignKeyMatchType()
     {
         if (is_null($this->foreignKeyMatchType)) {
@@ -156,14 +158,14 @@ class Index extends Part
         }
         return $this->foreignKeyMatchType;
     }
-    
+
     private $foreignKeyOnDeleteReferenceOption;
-    
+
     public function setForeignKeyOnDeleteReferenceOption(ReferenceOption $option)
     {
         $this->foreignKeyOnDeleteReferenceOption = $option;
     }
-    
+
     public function getForeignKeyOnDeleteReferenceOption()
     {
         if (is_null($this->foreignKeyOnDeleteReferenceOption)) {
@@ -171,14 +173,14 @@ class Index extends Part
         }
         return $this->foreignKeyOnDeleteReferenceOption;
     }
-    
+
     private $foreignKeyOnUpdateReferenceOption;
-    
+
     public function setForeignKeyOnUpdateReferenceOption(ReferenceOption $option)
     {
         $this->foreignKeyOnUpdateReferenceOption = $option;
     }
-    
+
     public function getForeignKeyOnUpdateReferenceOption()
     {
         if (is_null($this->foreignKeyOnUpdateReferenceOption)) {

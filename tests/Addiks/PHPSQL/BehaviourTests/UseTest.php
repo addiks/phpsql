@@ -19,7 +19,7 @@ use Addiks\PHPSQL\PDO\PDO;
  */
 class UseTest extends PHPUnit_Framework_TestCase
 {
-    
+
     public function setUp()
     {
         $this->pdo = new PDO("inmemory:phpunit");
@@ -27,26 +27,28 @@ class UseTest extends PHPUnit_Framework_TestCase
 
     public function testUseSQL()
     {
-        
+
         ### PREPARE
-        
+
         $expectedDatabaseId = "testDatabaseAfter";
         $beforeDatabaseId   = "testDatabaseBefore";
-        
+
         $this->pdo->query("CREATE DATABASE ?", [$expectedDatabaseId]);
         $this->pdo->query("CREATE DATABASE ?", [$beforeDatabaseId]);
         $this->pdo->query("USE ?", [$beforeDatabaseId]);
 
-        $checkedBeforeDatabaseId = reset($this->pdo->query("SELECT DATABASE()")->fetch());
-        
+        $resultRow = $this->pdo->query("SELECT DATABASE()")->fetch();
+
+        $checkedBeforeDatabaseId = reset($resultRow);
+
         ### EXECUTE
-        
+
         $this->pdo->query("USE ?", [$expectedDatabaseId]);
-        
+
         ### COMPARE RESULTS
-        
+
         $actualDatabaseId = reset($this->pdo->query("SELECT DATABASE();")->fetch());
-        
+
         $this->assertEquals($checkedBeforeDatabaseId, $beforeDatabaseId, "Could not set database in preperation for 'USE' statement test!");
         $this->assertEquals($expectedDatabaseId, $actualDatabaseId, "Could not change database using the 'USE' statement!");
     }

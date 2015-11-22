@@ -38,7 +38,7 @@ class InmemoryDirectoryIterator extends DirectoryIterator
         return 0;
     }
 
-    public function getBasename($suffix)
+    public function getBasename($suffix = null)
     {
         return basename($this->getPath(), $suffix);
     }
