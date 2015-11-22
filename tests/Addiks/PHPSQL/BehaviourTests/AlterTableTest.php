@@ -33,7 +33,7 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
         ### CHECK BEFORE STATE
 
         $result = $this->pdo->query("DESCRIBE `phpunit_alter_table`");
-        
+
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
             ["id",  "int(4)",      "NO",  "PRI", "",  "auto_increment"],
@@ -60,7 +60,7 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
         ### CHECK RESULTS
 
         $result = $this->pdo->query("DESCRIBE `phpunit_alter_table`");
-        
+
         #echo new ResultWriter($result->getResult());
 
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
@@ -90,7 +90,7 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
         ### CHECK RESULTS
 
         $result = $this->pdo->query("DESCRIBE `phpunit_alter_table`");
-        
+
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
             ["id",  "int(4)",   "NO",  "PRI", "",  "auto_increment"],
@@ -116,7 +116,7 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
         ### CHECK RESULTS
 
         $result = $this->pdo->query("DESCRIBE `phpunit_alter_table`");
-        
+
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
             ["id",  "int(4)",     "NO",  "PRI", null,    "auto_increment"],
@@ -143,7 +143,7 @@ class AlterTableTest extends PHPUnit_Framework_TestCase
         ### CHECK RESULTS
 
         $result = $this->pdo->query("DESCRIBE `phpunit_schnitzel_table`");
-        
+
         $actualRows = $result->fetchAll(PDO::FETCH_NUM);
         $this->assertEquals([
             ["id",  "int(4)",      "NO",  "PRI", "", "auto_increment"],

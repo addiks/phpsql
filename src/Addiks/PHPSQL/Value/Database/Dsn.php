@@ -36,7 +36,7 @@ abstract class Dsn extends Line
                 break;
         }
     }
-    
+
     /**
      * gets the driver-name.
      * @return string
@@ -44,15 +44,15 @@ abstract class Dsn extends Line
     public function getDriverName()
     {
         $value = $this->getValue();
-        
+
         $value = explode(":", $value);
-        
+
         $driver = reset($value);
-        
+
         return $driver;
     }
 
-    public function factorizeDSN($dsn)
+    public static function factorizeDSN($dsn)
     {
         $dsnValue = null;
 
