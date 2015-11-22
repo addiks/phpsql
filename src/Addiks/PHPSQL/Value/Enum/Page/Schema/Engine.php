@@ -15,7 +15,7 @@ use Addiks\PHPSQL\Value\Enum;
 
 class Engine extends Enum
 {
-    
+
     const VIEW        = 0x00;
     const MYISAM      = 0x01;
     const INNODB      = 0x02;
