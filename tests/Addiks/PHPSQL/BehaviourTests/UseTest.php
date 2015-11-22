@@ -38,7 +38,6 @@ class UseTest extends PHPUnit_Framework_TestCase
         $this->pdo->query("USE ?", [$beforeDatabaseId]);
 
         $resultRow = $this->pdo->query("SELECT DATABASE()")->fetch();
-
         $checkedBeforeDatabaseId = reset($resultRow);
 
         ### EXECUTE
@@ -47,7 +46,8 @@ class UseTest extends PHPUnit_Framework_TestCase
 
         ### COMPARE RESULTS
 
-        $actualDatabaseId = reset($this->pdo->query("SELECT DATABASE();")->fetch());
+        $resultRow = $this->pdo->query("SELECT DATABASE();")->fetch();
+        $actualDatabaseId = reset($resultRow);
 
         $this->assertEquals($checkedBeforeDatabaseId, $beforeDatabaseId, "Could not set database in preperation for 'USE' statement test!");
         $this->assertEquals($expectedDatabaseId, $actualDatabaseId, "Could not change database using the 'USE' statement!");
