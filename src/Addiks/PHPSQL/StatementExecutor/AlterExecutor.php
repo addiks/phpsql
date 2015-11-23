@@ -33,7 +33,7 @@ use Addiks\PHPSQL\Table\TableSchema;
 
 class AlterExecutor implements StatementExecutorInterface
 {
-    
+
     public function __construct(
         SchemaManager $schemaManager,
         TableManager $tableManager,
@@ -77,7 +77,7 @@ class AlterExecutor implements StatementExecutorInterface
     {
         return $this->tableManager;
     }
-    
+
     public function canExecuteJob(StatementJob $statement)
     {
         return $statement instanceof AlterStatement;
@@ -86,7 +86,7 @@ class AlterExecutor implements StatementExecutorInterface
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
         /* @var $statement AlterStatement */
-        
+
         $executionContext = new ExecutionContext(
             $this->schemaManager,
             $statement,
@@ -95,7 +95,7 @@ class AlterExecutor implements StatementExecutorInterface
 
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTable();
-        
+
         /* @var $table TableInterface */
         $table = $this->tableManager->getTable(
             $tableSpecifier->getTable(),
@@ -109,16 +109,16 @@ class AlterExecutor implements StatementExecutorInterface
 
         /* @var $tableSchema TableSchema */
         $tableSchema = $table->getTableSchema();
-        
+
         foreach ($statement->getDataChanges() as $dataChange) {
             /* @var $dataChange DataChange */
-            
+
             switch($dataChange->getAttribute()){
-                
+
                 case AlterAttributeType::ADD():
                     /* @var $columnDefinition ColumnDefinition */
                     $columnDefinition = $dataChange->getSubject();
-                    
+
                     /* @var $columnSchema ColumnSchema */
                     $columnSchema = $this->convertColumnDefinitionToColumnSchema(
                         $columnDefinition,
@@ -143,22 +143,22 @@ class AlterExecutor implements StatementExecutorInterface
 
                     $table->addColumn($columnSchema, $columnData);
                     break;
-                    
+
                 case AlterAttributeType::DROP():
                     /* @var $columnSpecifier ColumnSpecifier */
                     $columnSpecifier = $dataChange->getSubject();
-                    
+
                     $columnId = $tableSchema->getColumnIndex($columnSpecifier->getColumn());
-                    
+
                     $tableSchema->removeColumn($columnId);
                     break;
-                        
+
                 case AlterAttributeType::SET_AFTER():
                 case AlterAttributeType::SET_FIRST():
                 case AlterAttributeType::MODIFY():
                     /* @var $columnDefinition ColumnDefinition */
                     $columnDefinition = $dataChange->getSubject();
-                    
+
                     /* @var $columnSchema ColumnSchema */
                     $columnSchema = $this->convertColumnDefinitionToColumnSchema(
                         $columnDefinition,
@@ -171,7 +171,7 @@ class AlterExecutor implements StatementExecutorInterface
                     $oldColumnSchema = $tableSchema->getColumn($columnId);
 
                     $columnSchema->setIndex($oldColumnSchema->getIndex());
-                
+
                     $tableSchema->writeColumn($columnId, $columnSchema);
 
                     /* @var $columnDataFactory ColumnDataFactoryInterface */
@@ -220,7 +220,8 @@ class AlterExecutor implements StatementExecutorInterface
                                     $tableSchema->writeColumn($columnIndex, $columnPage);
                                 }
                             }
-                            $subjectColumnSchema->getIndex($afterColumnSchema->getIndex() + 1);
+
+                            $subjectColumnSchema->setIndex($afterColumnSchema->getIndex() + 1);
                             $tableSchema->writeColumn($subjectColumnIndex, $subjectColumnSchema);
 
                         } else {
@@ -238,7 +239,7 @@ class AlterExecutor implements StatementExecutorInterface
                         }
                     }
                     break;
-                    
+
                 case AlterAttributeType::RENAME():
                     $databaseSchema = $this->schemaManager->getSchema($tableSpecifier->getDatabase());
                     /* @var $tablePage SchemaPage */
@@ -247,30 +248,30 @@ class AlterExecutor implements StatementExecutorInterface
                     $tablePage->setName($dataChange->getValue());
                     $databaseSchema->registerTableSchema($tablePage, $tableIndex);
                     break;
-                     
+ 
                 case AlterAttributeType::CHARACTER_SET():
                     break;
-                    
+
                 case AlterAttributeType::COLLATE():
                     break;
-                    
+
                 case AlterAttributeType::CONVERT():
                     break;
-                
+
                 case AlterAttributeType::DEFAULT_VALUE():
                     break;
-                    
+
                 case AlterAttributeType::ORDER_BY_ASC():
                     break;
-                
+
                 case AlterAttributeType::ORDER_BY_DESC():
                     break;
-                        
+
             }
         }
-        
+
         $result = new TemporaryResult();
-        
+
         return $result;
     }
 
@@ -278,57 +279,57 @@ class AlterExecutor implements StatementExecutorInterface
         ColumnDefinition $columnDefinition,
         ExecutionContext $executionContext
     ) {
-        
+
         $columnPage = new ColumnSchema();
         $columnPage->setName($columnDefinition->getName());
-        
+
         /* @var $dataType DataType */
         $dataType = $columnDefinition->getDataType();
 
         $columnPage->setDataType($dataType);
-    
+
         if (!is_null($columnDefinition->getDataTypeLength())) {
             $columnPage->setLength($columnDefinition->getDataTypeLength());
         }
-        
+
         if (!is_null($columnDefinition->getDataTypeSecondLength())) {
             $columnPage->setSecondLength($columnDefinition->getDataTypeSecondLength());
         }
-        
+
         $flags = 0;
-    
+
         if ($columnDefinition->getIsAutoIncrement()) {
             $flags = $flags ^ ColumnSchema::EXTRA_AUTO_INCREMENT;
         }
-    
+
         if (!$columnDefinition->getIsNullable()) {
             $flags = $flags ^ ColumnSchema::EXTRA_NOT_NULL;
         }
-    
+
         if ($columnDefinition->getIsPrimaryKey()) {
             $flags = $flags ^ ColumnSchema::EXTRA_PRIMARY_KEY;
         }
-            
+
         if ($columnDefinition->getIsUnique()) {
             $flags = $flags ^ ColumnSchema::EXTRA_UNIQUE_KEY;
         }
-    
+
         if ($columnDefinition->getIsUnsigned()) {
             $flags = $flags ^ ColumnSchema::EXTRA_UNSIGNED;
         }
-    
+
         if (false) {
             $flags = $flags ^ ColumnSchema::EXTRA_ZEROFILL;
         }
-        
+
         $columnPage->setExtraFlags($flags);
-    
+
         #$columnPage->setFKColumnIndex($index);
         #$columnPage->setFKTableIndex($index);
-        
+
         /* @var $defaultValue Value */
         $defaultValue = $columnDefinition->getDefaultValue();
-        
+
         if (!is_null($defaultValue)) {
             if (!$dataType->mustResolveDefaultValue()) {
                 # default value must be resolved at insertion-time => save unresolved
@@ -345,12 +346,12 @@ class AlterExecutor implements StatementExecutorInterface
         }
 
         $columnPage->setDefaultValue($defaultValueData);
-    
+
         $comment = $columnDefinition->getComment();
-        
+
         # TODO: save column comment
 
         return $columnPage;
     }
-    
+
 }

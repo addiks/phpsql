@@ -97,16 +97,28 @@ echo new ResultWriter($pdo->query('DESCRIBE foo')->getResult());
 
 There is a simple benchmarking script in 'bin/benchmark.php', which can compare execution-speed between mysql and phpsql.
 Currently phpsql has no caches or other performance-improving measures built into it, which means that currently it is very slow.
-On my machine phpsql is only about 30% as fast as mysql at insert's and select's are the same speed as insert's:
+On my machine phpsql (with PHP-5) is only about 30% as fast as mysql at insert's and select's are the same speed as insert's:
 
+On mylsq (InnoDB):
 ```
  - opened database 'mysql:host=127.0.0.1;dbname=benchmark'.
  - inserting 10000 rows took 19.008 seconds.
  - selecting 10000 rows took 0.657 seconds.
+```
  
+On PHP-5.5:
+```
  - opened database 'inmemory:benchmark'.
  - inserting 10000 rows took 67.782 seconds.
  - selecting 10000 rows took 65.639 seconds.
 ```
 
-At it's current state, phpsql is NOT usable for any productive environment.
+On PHP-7:
+```
+ - opened database 'inmemory:benchmark'.
+ - inserting 10000 rows took 8.108 seconds.
+ - selecting 10000 rows took 7.716 seconds.
+```
+
+Again: At it's current state, phpsql is NOT usable for any productive environment.
+
