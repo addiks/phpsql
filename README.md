@@ -26,11 +26,11 @@ It's purposes are wide ranged:
 
 I currently use phpsql only as an in-memory database. While in theory it can also work on the filesystem (for in-memory databases, it mocks an in-memory filesystem), that is currently mostly untested.
 
-## Installation:
+# Installation:
 
 There are several ways to install PHPSQL. The recommended way of installation is using composer.
 
-# Using composer:
+## Using composer:
 
 Add the following to the **require**-area your **composer.json** require-area:
 
@@ -42,17 +42,17 @@ Add the following to the **require**-area your **composer.json** require-area:
 
 Then [install or update your requirements using composer](https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies)
 
-# Git:
+## Git:
 
  - Clone the URL **https://github.com/addiks/phpsql.git** into any directory.
  - Include the file **bin/bootstrap.php** in PHP.
 
-# Archive download
+## Archive download
 
  - Download the URL **https://github.com/addiks/phpsql/archive/master.zip** into any directory.
  - Include the file **bin/bootstrap.php** in PHP.
 
-## How to use:
+# How to use:
 
 PHPSQL provides an PDO replacement, which should be used to instanciate the database.
 
@@ -95,7 +95,7 @@ echo new ResultWriter($pdo->query('DESCRIBE foo')->getResult());
 
 ```
 
-## Benchmarks:
+# Benchmarks:
 
 There is a simple benchmarking script in 'bin/benchmark.php', which can compare execution-speed between mysql and phpsql.
 Currently phpsql has no caches or other performance-improving measures built into it, which means that currently it is very slow.
@@ -122,5 +122,36 @@ On PHP-7:
  - selecting 10000 rows took 7.716 seconds.
 ```
 
+As you can see, phpsql benefit's extremely from using php-7.
+
 Again: At it's current state, phpsql is NOT usable for any productive environment.
+
+# Versions / Releases
+
+The releases are numbered like 'v*X*.*Y*.*Z*' and git-tags are used to manage releases.
+
+ - X refers to an implementation.
+    0: Pre-released unstable developer version.
+    1: Stable release
+
+ - Y refers to an set of features/API.
+    Any version increase means changed/added features and/or changed API.
+    Third-party components might become incompatible.
+
+ - Z refers to the bugfix-version.
+    The features and API did not change, only bugs in existing features were squashed.
+    Third-party components will not become incompatible.
+      (Except they relied on a bug to exist which hints to the developer of that component to be an idiot)
+
+# Collaboration
+
+See the file **HACKING.md** for instructions you need to be aware of when making changes to the code-base of this project.
+
+For any change on phpsql, there should be an [issue](https://github.com/addiks/phpsql/issues/new) on github.
+Branches related to issues should be named like 'issue#1234', where 1234 is the number of that issue.
+
+There are many ways to contribute to this project:
+ - Create issues for existing bug's or missing features. (Provide information on what you expected to happen and what instead happened.)
+ - Implement feature that are yet missing. (Remember to open an issue before making changes to let others know you are currently implementing it)
+ - Write tests. (Tests for yet missing features or failing tests should be committed in a different branch. Remeber to create an issue for that.)
 
