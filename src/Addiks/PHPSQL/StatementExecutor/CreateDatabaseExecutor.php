@@ -23,7 +23,7 @@ use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 
 class CreateDatabaseExecutor implements StatementExecutorInterface
 {
-    
+
     public function __construct(
         ValueResolver $valueResolver,
         SchemaManager $schemaManager
@@ -38,7 +38,7 @@ class CreateDatabaseExecutor implements StatementExecutorInterface
     {
         return $this->schemaManager;
     }
-    
+
     protected $valueResolver;
 
     public function getValueResolver()
@@ -60,16 +60,16 @@ class CreateDatabaseExecutor implements StatementExecutorInterface
             $statement,
             $parameters
         );
-        
+
         $name = $this->valueResolver->resolveValue($statement->getName(), $executionContext);
-        
+
         $this->schemaManager->createSchema($name);
-        
+
         ### CREATE RESULTSET
-        
+
         $result = new TemporaryResult();
         $result->setIsSuccess($this->schemaManager->schemaExists($name));
-        
+
         return $result;
     }
 }

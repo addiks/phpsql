@@ -11,122 +11,122 @@
 
 namespace Addiks\PHPSQL\Table\Meta;
 
-use Addiks\PHPSQL\Index\IndexInterface;
+use Addiks\PHPSQL\Table\TableInterface;
 
 /**
  *
  */
-abstract class InformationSchema implements IndexInterface
+abstract class InformationSchema implements TableInterface
 {
-    
+
     public function __construct($tableName, $schemaId = null)
     {
-        
+
         $this->schemaId = $schemaId;
         $this->tableName = $tableName;
     }
-    
+
     private $index;
-    
+
     public function getIndex()
     {
         return $this->index;
     }
-    
+
     private $schemaId;
-    
+
     public function getDBSchemaId()
     {
         return $this->schemaId;
     }
-    
+
     public function getDBSchema()
     {
-    
+
     }
-    
+
     private $tableName;
-    
+
     public function getTableName()
     {
         return $this->tableName;
     }
-    
+
     public function getTableId()
     {
-        
+
     }
-    
+
     private $tableSchema;
-    
+
     public function getTableSchema()
     {
         if (is_null($this->tableSchema)) {
         }
         return $this->tableSchema;
     }
-    
+
     private $iterator;
-    
+
     public function getIterator()
     {
-    
+
         if (is_null($this->iterator)) {
             $this->iterator = new \ArrayIterator(array());
         }
         return $this->iterator;
     }
-    
+
     public function getCellData($rowId, $columnId)
     {
         return null;
     }
-    
+
     public function setCellData($rowId, $columnId, $data)
     {
-    
+
     }
-    
+
     public function getRowData($rowId = null)
     {
         return null;
     }
-    
+
     public function setRowData($rowId, array $rowData)
     {
-    
+
     }
-    
+
     public function addRowData(array $rowData)
     {
-    
+
     }
-    
+
     public function removeRow($rowId)
     {
-        
+
     }
-    
+
     public function doesRowExists($rowId = null)
     {
         return false;
     }
-    
+
     public function count()
     {
         return 0;
     }
-    
+
     public function seek($rowId)
     {
-    
+
     }
-    
+
     public function convertStringRowToDataRow(array $row)
     {
         return $row;
     }
-    
+
     public function convertDataRowToStringRow(array $row)
     {
         return $row;

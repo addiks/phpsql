@@ -16,32 +16,38 @@ use Addiks\PHPSQL\Database\DatabaseSchemaPage;
 
 interface DatabaseSchemaInterface
 {
-    
+
     ### TABLES
-    
+
     public function listTables();
-    
+
     public function tableExists($tableName);
-    
+
     public function getTableIndex($tableName);
-    
+
     public function registerTable($tableName);
-    
+
     public function registerTableSchema(DatabaseSchemaPage $schemaPage);
-    
+
     public function unregisterTable($tableName);
-    
+
     public function getTablePage($tableId);
-    
+
+    public function createTableSchema(
+        $tableSchemaFile,
+        $indexSchemaFile,
+        $tableName
+    );
+
     ### VIEWS
-    
+
     public function listViews();
-    
+
     public function viewExists($viewName);
-    
+
     public function getViewIndex($viewName);
-    
+
     public function registerView($viewName);
-    
+
     public function unregisterView($viewName);
 }

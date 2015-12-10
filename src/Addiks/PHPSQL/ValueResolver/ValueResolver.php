@@ -236,6 +236,9 @@ class ValueResolver
 
             case is_scalar($value):
                 return $value;
+
+            default:
+                return (string)$value;
         }
 
         if (is_scalar($returnValue) || is_null($returnValue)) {

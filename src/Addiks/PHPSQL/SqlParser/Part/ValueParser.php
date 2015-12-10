@@ -28,7 +28,7 @@ use Addiks\PHPSQL\Value\Sql\Variable;
 
 class ValueParser extends SqlParser
 {
-    
+
     protected $conditionParser;
 
     public function getConditionParser()
@@ -88,7 +88,7 @@ class ValueParser extends SqlParser
     {
         $this->likeConditionParser = $likeConditionParser;
     }
-    
+
     protected $caseParser;
 
     public function getCaseParser()
@@ -107,7 +107,7 @@ class ValueParser extends SqlParser
     {
         return $this->parenthesisParser;
     }
-    
+
     public function setParenthesisParser(ParenthesisParser $parenthesisParser)
     {
         $this->parenthesisParser = $parenthesisParser;
@@ -116,9 +116,9 @@ class ValueParser extends SqlParser
 
     public function canParseTokens(SQLTokenIterator $tokens)
     {
-        
+
         switch(true){
-            
+
             case is_int($tokens->isTokenNum(SqlToken::T_DEFAULT())):
             case is_int($tokens->isTokenNum(SqlToken::T_NULL())):
             case is_int($tokens->isTokenNum(SqlToken::T_FALSE())):
@@ -135,74 +135,74 @@ class ValueParser extends SqlParser
             case $this->columnParser->canParseTokens($tokens):
             case $this->caseParser->canParseTokens($tokens):
                 return true;
-                
+
             default:
                 return false;
         }
     }
-    
+
     public function convertSqlToJob(SQLTokenIterator $tokens)
     {
-        
+
         $valueJob = new ValueJob();
-        
+
         if (!$this->parsePlainValue($tokens, $valueJob)) {
             throw new MalformedSqlException("Missing valid value!", $tokens);
         }
-        
+
         do {
             if ($this->enumConditionParser->canParseTokens($tokens)) {
                 $valueJob->addChainValue($this->enumConditionParser->convertSqlToJob($tokens));
             }
-            
+
         } while ($this->parsePlainOperator($tokens, $valueJob));
-        
+
         $valueJob->resolve();
 
         return $valueJob;
     }
-    
+
     public function parsePlainOperator(SQLTokenIterator $tokens, ValueJob $valueJob)
     {
 
         switch(true){
-            
+
             case $this->conditionParser->canParseTokens($tokens):
                 $valueJob->addChainValue($this->conditionParser->convertSqlToJob($tokens));
                 break;
-            
+
             case $this->likeConditionParser->canParseTokens($tokens):
                 $valueJob->addChainValue($this->likeConditionParser->convertSqlToJob($tokens));
                 break;
-                
+
             default:
                 return false;
         }
-        
+
         return true;
     }
-    
+
     public function parsePlainValue(SQLTokenIterator $tokens, ValueJob $valueJob)
     {
-        
+
         switch(true){
-            
+
             case $tokens->seekTokenNum(T_NUM_STRING):
                 $valueJob->addChainValue((float)$tokens->getCurrentTokenString());
                 break;
-        
+
             case $tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING):
-                
+
                 $string = $tokens->getCurrentTokenString();
-                
+
                 if (($string[0] === '"' || $string[0] === "'") && $string[0] === $string[strlen($string)-1]) {
                     // remove quotes if needed
                     $string = substr($string, 1, strlen($string)-2);
                 }
-                
+
                 $valueJob->addChainValue($string);
                 break;
-        
+
             case $tokens->seekTokenNum(T_VARIABLE):
                 $variableString = $tokens->getCurrentTokenString();
                 $variable = Variable::factory($variableString);
@@ -211,23 +211,23 @@ class ValueParser extends SqlParser
                 }
                 $valueJob->addChainValue($variable);
                 break;
-                
+
             case $this->parenthesisParser->canParseTokens($tokens):
                 $valueJob->addChainValue($this->parenthesisParser->convertSqlToJob($tokens));
                 break;
-                
+
             case $this->functionParser->canParseTokens($tokens):
                 $valueJob->addChainValue($this->functionParser->convertSqlToJob($tokens));
                 break;
-                
+
             case $this->columnParser->canParseTokens($tokens):
                 $valueJob->addChainValue($this->columnParser->convertSqlToJob($tokens));
                 break;
-                
+
             case $this->caseParser->canParseTokens($tokens):
                 $valueJob->addChainValue($this->caseParser->convertSqlToJob($tokens));
                 break;
-                
+
             case $tokens->seekTokenNum(SqlToken::T_DEFAULT()):
             case $tokens->seekTokenNum(SqlToken::T_NULL()):
             case $tokens->seekTokenNum(SqlToken::T_FALSE()):
@@ -238,11 +238,11 @@ class ValueParser extends SqlParser
             case $tokens->seekTokenNum(SqlToken::T_CURRENT_USER()):
                 $valueJob->addChainValue($tokens->getCurrentTokenNumber());
                 break;
-                
+
             default:
                 return false;
         }
-        
+
         return true;
     }
 }

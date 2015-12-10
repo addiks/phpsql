@@ -30,6 +30,7 @@ use Addiks\PHPSQL\DataConverter;
 use Addiks\PHPSQL\Column\ColumnDataFactoryInterface;
 use Addiks\PHPSQL\Column\ColumnDataInterface;
 use Addiks\PHPSQL\Table\TableSchema;
+use Addiks\PHPSQL\Table\TableFactoryInterface;
 
 class AlterExecutor implements StatementExecutorInterface
 {
@@ -127,21 +128,19 @@ class AlterExecutor implements StatementExecutorInterface
 
                     $columnId = $tableSchema->addColumnSchema($columnSchema);
 
-                    /* @var $columnDataFactory ColumnDataFactoryInterface */
-                    $columnDataFactory = $this->tableManager->getColumnDataFactory(
+                    /* @var $tableFactory TableFactoryInterface */
+                    $tableFactory = $this->tableManager->getTableFactoryByTable(
                         $tableSpecifier->getTable(),
                         $tableSpecifier->getDatabase()
                     );
 
-                    /* @var $columnData ColumnDataInterface */
-                    $columnData = $columnDataFactory->createColumnData(
+                    $tableFactory->addColumnToTable(
                         $tableSpecifier->getDatabase(),
                         $tableId,
                         $columnId,
+                        $table,
                         $columnSchema
                     );
-
-                    $table->addColumn($columnSchema, $columnData);
                     break;
 
                 case AlterAttributeType::DROP():
@@ -174,21 +173,19 @@ class AlterExecutor implements StatementExecutorInterface
 
                     $tableSchema->writeColumn($columnId, $columnSchema);
 
-                    /* @var $columnDataFactory ColumnDataFactoryInterface */
-                    $columnDataFactory = $this->tableManager->getColumnDataFactory(
+                    /* @var $tableFactory TableFactoryInterface */
+                    $tableFactory = $this->tableManager->getTableFactoryByTable(
                         $tableSpecifier->getTable(),
                         $tableSpecifier->getDatabase()
                     );
 
-                    /* @var $columnData ColumnDataInterface */
-                    $columnData = $columnDataFactory->createColumnData(
+                    $tableFactory->modifyColumnOnTable(
                         $tableSpecifier->getDatabase(),
                         $tableId,
                         $columnId,
+                        $table,
                         $columnSchema
                     );
-
-                    $table->modifyColumn($columnSchema, $columnData);
 
                     if ($dataChange->getAttribute() === AlterAttributeType::SET_FIRST()) {
                         $subjectColumnIndex = $tableSchema->getColumnIndex($columnDefinition->getName());

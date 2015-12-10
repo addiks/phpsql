@@ -12,11 +12,22 @@ namespace Addiks\PHPSQL\Table;
 
 use Addiks\PHPSQL\Table\TableSchemaInterface;
 use Addiks\PHPSQL\Index\IndexFactoryInterface;
+use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Column\ColumnSchema;
+use Addiks\PHPSQL\Column\ColumnDataInterface;
 use Addiks\PHPSQL\Table\TableInterface;
+use Addiks\PHPSQL\Table\InformationSchema\TablesInformationSchemaTable;
 
-interface TableFactoryInterface
+class InformationSchemaTableFactory implements TableFactoryInterface
 {
+
+    public function __construct(SchemaManager $schemaManager)
+    {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
     /**
      *
      * @param  integer        $tableId
@@ -27,7 +38,17 @@ interface TableFactoryInterface
         $tableId,
         TableSchemaInterface $tableSchema,
         IndexFactoryInterface $indexFactory
-    );
+    ) {
+        $table = null;
+
+        switch ($tableId) {
+            case 'TABLES':
+                $table = new TablesInformationSchemaTable($this->schemaManager);
+                break;
+        }
+
+        return $table;
+    }
 
     public function addColumnToTable(
         $schemaId,
@@ -35,7 +56,9 @@ interface TableFactoryInterface
         $columnId,
         TableInterface $table,
         ColumnSchema $columnSchema
-    );
+    ) {
+    }
+
 
     public function modifyColumnOnTable(
         $schemaId,
@@ -43,5 +66,7 @@ interface TableFactoryInterface
         $columnId,
         TableInterface $table,
         ColumnSchema $columnSchema
-    );
+    ) {
+    }
+
 }

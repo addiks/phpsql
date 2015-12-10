@@ -122,7 +122,7 @@ On PHP-7:
  - selecting 10000 rows took 7.716 seconds.
 ```
 
-As you can see, phpsql benefit's extremely from using php-7.
+As you can see, phpsql benefit's extremely from using php-7 (Kudos to the PHP-dev's!).
 
 Again: At it's current state, phpsql is NOT usable for any productive environment.
 
@@ -151,7 +151,12 @@ For any change on phpsql, there should be an [issue](https://github.com/addiks/p
 Branches related to issues should be named like 'issue#1234', where 1234 is the number of that issue.
 
 There are many ways to contribute to this project:
+
  - Create issues for existing bug's or missing features. (Provide information on what you expected to happen and what instead happened.)
+ 
  - Implement feature that are yet missing. (Remember to open an issue before making changes to let others know you are currently implementing it)
+ 
  - Write tests. (Tests for yet missing features or failing tests should be committed in a different branch. Remeber to create an issue for that.)
+ 
+Also, i still need a precise and complete reference to the SQL standards. If someone can provide or link me **legally** to documents describing the SQL standards, that would be extremely helpful. Currently i just look at the MySQL manual and practically build a MySQL-clone. If i were rich i would just buy the complete [ISO/IEC 9075(1-4,9-11,13,14):2011](http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=53681) for a few hundred bucks, but sadly i am not. That reminds me, [donations](https://paypal.me/addiks) are also helpful.
 

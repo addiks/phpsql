@@ -15,6 +15,7 @@ use Addiks\PHPSQL\Value\Enum\Page\Schema\Type;
 use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 use Addiks\PHPSQL\Database\DatabaseSchemaPage;
+use Addiks\PHPSQL\Table\TableSchema;
 
 /**
  * This entity manages the schema-information about tables, views, ... in the database.
@@ -27,12 +28,12 @@ use Addiks\PHPSQL\Database\DatabaseSchemaPage;
  */
 class DatabaseSchema implements DatabaseSchemaInterface
 {
-    
+
     public function __construct(FileResourceProxy $file)
     {
         $this->schemaIndexFile = $file;
     }
-    
+
     private $id;
 
     public function setId($id)
@@ -52,7 +53,7 @@ class DatabaseSchema implements DatabaseSchemaInterface
      * @var FileResourceProxy
      */
     private $schemaIndexFile;
-    
+
     /**
      * @return FileResourceProxy
      */
@@ -60,14 +61,14 @@ class DatabaseSchema implements DatabaseSchemaInterface
     {
         return $this->schemaIndexFile;
     }
-    
+
     public function getSchemaIndexIterator()
     {
-        
+
         $file = $this->getSchemaIndexFile();
-        
+
         $iteratorEntity = new DatabaseSchemaPage();
-        
+
         $skipDeleted = function () use ($file) {
             while (true) {
                 $data = $file->read(DatabaseSchemaPage::PAGE_SIZE);
@@ -80,7 +81,7 @@ class DatabaseSchema implements DatabaseSchemaInterface
                 }
             }
         };
-        
+
         return new CustomIterator(null, [
             'valid' => function () use ($file) {
                 $data = $file->read(DatabaseSchemaPage::PAGE_SIZE);
@@ -106,102 +107,113 @@ class DatabaseSchema implements DatabaseSchemaInterface
             }
         ]);
     }
-    
+
     ### TABLES
-    
+
     public function listTables()
     {
-        
+
         $tables = array();
         foreach ($this->getSchemaIndexIterator() as $index => $schemaPage) {
             /* @var $schemaPage Schema */
-            
+
             if ($schemaPage->getType() === Type::TABLE()) {
                 $tables[$index] = $schemaPage->getName();
             }
         }
-        
+
         return $tables;
     }
-    
+
     public function tableExists($tableName)
     {
-        
+
         return !is_null($this->getTableIndex($tableName));
     }
-    
+
     public function getTableIndex($tableName)
     {
-        
+
         foreach ($this->getSchemaIndexIterator() as $index => $schemaPage) {
             /* @var $schemaPage Schema */
-                
+
             if ($schemaPage->getType() !== Type::TABLE()) {
                 continue;
             }
-                
+
             if ($schemaPage->getName() === $tableName) {
                 return $index;
             }
         }
     }
-    
+
     public function getTablePage($tableId)
     {
-        
+
         if (!is_numeric($tableId)) {
             $tableId = $this->getTableIndex($tableId);
         }
-        
+
         $file = $this->getSchemaIndexFile();
 
         $beforeSeek = $file->tell();
-        
+
         $file->seek($tableId * DatabaseSchemaPage::PAGE_SIZE, SEEK_SET);
-        
+
         $data = $file->read(DatabaseSchemaPage::PAGE_SIZE);
-        
+
         $file->seek($beforeSeek, SEEK_SET);
-        
+
         $entity = new DatabaseSchemaPage();
         $entity->setData($data);
-        
+
         return $entity;
     }
-    
+
+    public function createTableSchema(
+        $tableSchemaFile,
+        $indexSchemaFile,
+        $tableName
+    ) {
+        return new TableSchema(
+            $tableSchemaFile,
+            $indexSchemaFile
+        );
+    }
+
     public function registerTable($tableName)
     {
-        
+
         $schemaPage = new DatabaseSchemaPage();
         $schemaPage->setName($name);
         $schemaPage->setType(Type::TABLE());
-        
+
         $indexFile = $this->getSchemaIndexFile();
         $indexFile->addData($schemaPage->getData());
     }
-    
+
     public function registerTableSchema(DatabaseSchemaPage $schemaPage, $index = null)
     {
-        
+
         switch($schemaPage->getType()){
             case Type::TABLE():
                 if ($this->tableExists($schemaPage->getName())) {
                     throw new InvalidArgumentException("Table '{$schemaPage->getName()}' already exist!");
                 }
                 break;
-                
+
             case Type::VIEW():
                 if ($this->viewExists($schemaPage->getName())) {
                     throw new InvalidArgumentException("View '{$schemaPage->getName()}' already exist!");
                 }
                 break;
-                
+
             default:
                 throw new ErrorException("Unknown schema-page-type!");
         }
-        
+
         $indexFile = $this->getSchemaIndexFile();
-        
+
         if (is_null($index)) {
             $indexFile->addData($schemaPage->getData());
         } else {
@@ -209,80 +221,80 @@ class DatabaseSchema implements DatabaseSchemaInterface
             $indexFile->write($schemaPage->getData());
         }
     }
-    
+
     public function unregisterTable($tableName)
     {
-        
+
         if (!$this->tableExists($tableName)) {
             throw new InvalidArgumentException("Table '{$tableName}' does not exist!");
         }
-        
+
         $index = $this->getTableIndex($tableName);
-        
+
         $indexFile = $this->getSchemaIndexFile();
         $indexFile->seek($index * DatabaseSchemaPage::PAGE_SIZE, SEEK_SET);
         $indexFile->write(str_pad("", DatabaseSchemaPage::PAGE_SIZE, "\0"));
         $indexFile->flush();
     }
-    
+
     ### VIEWS
-    
+
     public function listViews()
     {
-        
+
         $views = array();
         foreach ($this->getSchemaIndexIterator() as $index => $schemaPage) {
             /* @var $schemaPage Schema */
-                
+
             if ($schemaPage->getType() === Type::VIEW()) {
                 $views[$index] = $schemaPage->getName();
             }
         }
-        
+
         return $views;
     }
-    
+
     public function viewExists($viewName)
     {
         return !is_null($this->getViewIndex());
     }
-    
+
     public function getViewIndex($viewName)
     {
-    
+
         foreach ($this->getSchemaIndexIterator() as $index => $schemaPage) {
             /* @var $schemaPage Schema */
-    
+
             if ($schemaPage->getType() !== Type::VIEW()) {
                 continue;
             }
-    
+
             if ($schemaPage->getName() === $tableName) {
                 return $index;
             }
         }
     }
-    
+
     public function registerView($viewName)
     {
-        
+
         $schemaPage = new Schema();
         $schemaPage->setName($name);
         $schemaPage->setType(Type::VIEW());
-        
+
         $indexFile = $this->getSchemaIndexFile();
         $indexFile->addData($schemaPage->getData());
     }
-    
+
     public function unregisterView($viewName)
     {
-        
+
         if (!$this->viewExists($viewName)) {
             return;
         }
-        
+
         $index = $this->getViewIndex($viewName);
-        
+
         $indexFile = $this->getSchemaIndexFile();
         $indexFile->seek($index * DatabaseSchemaPage::PAGE_SIZE, SEEK_SET);
         $indexFile->write(str_pad("", "\0", Schema::PAGE_SIZE));

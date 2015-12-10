@@ -18,10 +18,12 @@ use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 use Addiks\PHPSQL\SqlParser\SqlParser;
 use Addiks\PHPSQL\Job\Statement\UseStatement;
 use Addiks\PHPSQL\SqlParser\Part\ValueParser;
+use Addiks\PHPSQL\Value\Sql\Variable;
+use Addiks\PHPSQL\Job\Part\ValuePart;
 
 class UseSqlParser extends SqlParser
 {
-    
+
     protected $valueParser;
 
     public function getValueParser()
@@ -39,24 +41,41 @@ class UseSqlParser extends SqlParser
         return is_int($tokens->isTokenNum(SqlToken::T_USE(), TokenIterator::CURRENT))
             || is_int($tokens->isTokenNum(SqlToken::T_USE(), TokenIterator::NEXT));
     }
-    
+
     public function convertSqlToJob(SQLTokenIterator $tokens)
     {
-        
+
         $tokens->seekTokenNum(SqlToken::T_USE());
-        
+
         if ($tokens->getCurrentTokenNumber() !== SqlToken::T_USE()) {
             throw new MalformedSqlException("Tried to parse USE statement when token-iterator does not point to T_USE!", $tokens);
         }
-        
 
-        if (!$this->valueParser->canParseTokens($tokens)) {
+        if ($tokens->seekTokenNum(T_VARIABLE)) {
+            $databaseName = Variable::factory($tokens->getCurrentTokenString());
+
+        } elseif ($tokens->seekTokenNum(T_STRING)) {
+            $databaseName = $tokens->getCurrentTokenString();
+
+        } elseif ($tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING)) {
+            $databaseName = $tokens->getCurrentTokenString();
+
+            if (($databaseName[0] === '"' || $databaseName[0] === "'")
+             && $databaseName[0] === $databaseName[strlen($databaseName)-1]) {
+                // remove quotes if needed
+                $databaseName = substr($databaseName, 1, strlen($databaseName)-2);
+            }
+
+        } else {
             throw new MalformedSqlException("Missing database-specifier for USE statement!", $tokens);
         }
-        
+
+        $databaseNameValue = new ValuePart();
+        $databaseNameValue->addChainValue($databaseName);
+
         $useJob = new UseStatement();
-        $useJob->setDatabase($this->valueParser->convertSqlToJob($tokens));
-        
+        $useJob->setDatabase($databaseNameValue);
+
         return $useJob;
     }
 }

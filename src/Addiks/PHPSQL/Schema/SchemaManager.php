@@ -13,8 +13,8 @@ namespace Addiks\PHPSQL\Schema;
 
 use ErrorException;
 use InvalidArgumentException;
-use Addiks\PHPSQL\Schema\Meta\InformationSchema;
 use Addiks\PHPSQL\Database\DatabaseSchema;
+use Addiks\PHPSQL\Database\DatabaseSchemaInterface;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Value\Database\Dsn\InternalDsn;
 use Addiks\PHPSQL\Table\TableSchema;
@@ -22,7 +22,7 @@ use Addiks\PHPSQL\Filesystem\FilePathes;
 
 class SchemaManager
 {
-    
+
     const DATABASE_ID_DEFAULT = "default";
     const DATABASE_ID_META_MYSQL = "mysql";
     const DATABASE_ID_META_INFORMATION_SCHEMA = "information_schema";
@@ -42,30 +42,37 @@ class SchemaManager
     }
 
     private $currentDatabaseId = SchemaManager::DATABASE_ID_DEFAULT;
-    
+
     public function getCurrentlyUsedDatabaseId()
     {
         return $this->currentDatabaseId;
     }
-    
+
     public function setCurrentlyUsedDatabaseId($schemaId)
     {
-        
+
         $pattern = InternalDsn::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
-            throw new InvalidArgument("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
+            throw new InvalidArgumentException(
+                "Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')"
+            );
         }
-        
+
         if (!$this->schemaExists($schemaId)) {
             throw new InvalidArgumentException("Database '{$schemaId}' does not exist!");
         }
-        
+
         $this->currentDatabaseId = $schemaId;
-        
+
         return true;
     }
-    
+
     protected $schemas = array();
+
+    public function setSchema($schemaId, DatabaseSchemaInterface $schema)
+    {
+        $this->schemas[$schemaId] = $schema;
+    }
 
     /**
      * Gets the schema for a database.
@@ -73,45 +80,33 @@ class SchemaManager
      *
      * @param string $schemaId
      * @throws ErrorException
-     * @return DatabaseSchema
+     * @return DatabaseSchemaInterface
      */
     public function getSchema($schemaId = null)
     {
-        
+
         if (is_null($schemaId)) {
             $schemaId = $this->getCurrentlyUsedDatabaseId();
         }
-        
+
         if (!$this->schemaExists(self::DATABASE_ID_DEFAULT)) {
             $this->createSchema(self::DATABASE_ID_DEFAULT);
         }
-        
+
         $pattern = InternalDsn::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
             throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
-        
+
         if (!isset($this->schemas[$schemaId])) {
-            switch($schemaId){
-                case self::DATABASE_ID_META_INDICES:
-                    $this->schemas[$schemaId] = new Indicies($this);
-                    break;
-                    
-                case self::DATABASE_ID_META_INFORMATION_SCHEMA:
-                    $this->schemas[$schemaId] = new InformationSchema($this);
-                    break;
-                    
-                default:
-                    $schemaFilePath = sprintf(FilePathes::FILEPATH_SCHEMA, $schemaId);
-                    $schemaFile = $this->filesystem->getFile($schemaFilePath);
-                    $this->schemas[$schemaId] = new DatabaseSchema($schemaFile);
-                    break;
-                    
-            }
+            $schemaFilePath = sprintf(FilePathes::FILEPATH_SCHEMA, $schemaId);
+            $schemaFile = $this->filesystem->getFile($schemaFilePath);
+            $this->schemas[$schemaId] = new DatabaseSchema($schemaFile);
         }
+
         return $this->schemas[$schemaId];
     }
-    
+
     public function isMetaSchema($schemaId)
     {
         return in_array($schemaId, [
@@ -121,34 +116,34 @@ class SchemaManager
             self::DATABASE_ID_META_PERFORMANCE_SCHEMA,
         ]);
     }
-    
+
     public function schemaExists($schemaId)
     {
-        
+
         $pattern = InternalDsn::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
             throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
-        
-        if ($this->isMetaSchema($schemaId)) {
+
+        if (isset($this->schemas[$schemaId])) {
             return true;
         }
-        
+
         return $this->filesystem->fileExists(sprintf(FilePathes::FILEPATH_SCHEMA, $schemaId));
     }
-    
+
     public function createSchema($schemaId)
     {
-        
+
         $pattern = InternalDsn::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
             throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
-        
+
         if ($this->schemaExists($schemaId)) {
             throw new ErrorException("Database '{$schemaId}' already exist!");
         }
-        
+
         $schemaFilePath = sprintf(FilePathes::FILEPATH_SCHEMA, $schemaId);
         $schemaFile = $this->filesystem->getFile($schemaFilePath);
 
@@ -158,31 +153,31 @@ class SchemaManager
 
         return $schema;
     }
-    
+
     public function removeSchema($schemaId)
     {
-        
+
         $pattern = InternalDsn::PATTERN;
         if (!preg_match("/{$pattern}/is", $schemaId)) {
             throw new ErrorException("Invalid database-id '{$schemaId}' given! (Does not match pattern '{$pattern}')");
         }
-        
+
         if ($this->isMetaSchema($schemaId)) {
             throw new ErrorException("Cannot remove or modify meta-database '{$schemaId}'!");
         }
-        
+
         $schemaFilePath = sprintf(FilePathes::FILEPATH_SCHEMA, $schemaId);
 
         $this->filesystem->fileUnlink($schemaFilePath);
     }
-    
+
     public function listSchemas()
     {
-        
+
         if (!$this->schemaExists(self::DATABASE_ID_DEFAULT)) {
             $this->createSchema(self::DATABASE_ID_DEFAULT);
         }
-        
+
         /* @var $filesystem FilesystemInterface */
         $filesystem = $this->filesystem;
 
@@ -197,38 +192,39 @@ class SchemaManager
             }
         }
 
-        $result[] = self::DATABASE_ID_META_INDICES;
+    #   $result[] = self::DATABASE_ID_META_INDICES;
         $result[] = self::DATABASE_ID_META_INFORMATION_SCHEMA;
     #	$result[] = self::DATABASE_ID_META_PERFORMANCE_SCHEMA;
     #	$result[] = self::DATABASE_ID_META_MYSQL;
-        
+
         $result = array_unique($result);
-        
+
         return $result;
     }
 
     protected $tableSchemas = array();
-    
+
     public function getTableSchema($tableName, $schemaId = null)
     {
-        
+
         if (is_null($schemaId)) {
             $schemaId = $this->getCurrentlyUsedDatabaseId();
         }
-        
-        $schema = $this->getSchema($schemaId);
-        
+
+        /* @var $databaseSchema DatabaseSchemaInterface */
+        $databaseSchema = $this->getSchema($schemaId);
+
         if (is_int($tableName)) {
             $tableIndex = $tableName;
-            
+
         } else {
-            $tableIndex = $schema->getTableIndex((string)$tableName);
+            $tableIndex = $databaseSchema->getTableIndex((string)$tableName);
         }
-        
+
         if (is_null($tableIndex)) {
             return null;
         }
-        
+
         $cacheKey = "{$schemaId}.{$tableIndex}";
         if (!isset($this->tableSchemas[$cacheKey])) {
             $tableSchemaFilepath = sprintf(FilePathes::FILEPATH_TABLE_SCHEMA, $schemaId, $tableIndex);
@@ -237,59 +233,47 @@ class SchemaManager
             $tableSchemaFile = $this->filesystem->getFile($tableSchemaFilepath);
             $indexSchemaFile = $this->filesystem->getFile($indexSchemaFilepath);
 
-            switch($schemaId){
-                
-                case self::DATABASE_ID_META_INFORMATION_SCHEMA:
-                    $this->tableSchemas[$cacheKey] = new InformationSchema(
-                        $tableSchemaFile,
-                        $indexSchemaFile,
-                        $tableName
-                    );
-                    break;
-                
-                default:
-                    $this->tableSchemas[$cacheKey] = new TableSchema(
-                        $tableSchemaFile,
-                        $indexSchemaFile
-                    );
-                    break;
-            }
+            $this->tableSchemas[$cacheKey] = $databaseSchema->createTableSchema(
+                $tableSchemaFile,
+                $indexSchemaFile,
+                $tableName
+            );
         }
-        
-        $this->tableSchemas[$cacheKey]->setDatabaseSchema($schema);
-        
+
+        $this->tableSchemas[$cacheKey]->setDatabaseSchema($databaseSchema);
+
         return $this->tableSchemas[$cacheKey];
     }
-    
+
     public function dropTable($tableName, $schemaId = null)
     {
-        
+
         if (is_null($schemaId)) {
             $schemaId = $this->getCurrentlyUsedDatabaseId();
         }
-        
-        /* @var $schema DatabaseSchema */
+
+        /* @var $schema DatabaseSchemaInterface */
         $schema = $this->getSchema($schemaId);
-        
+
         if (!$schema->tableExists($tableName)) {
             throw new ErrorException("Table {$tableName} does not exist!");
         }
-        
+
         $schema->unregisterTable($tableName);
-        
+
     }
-    
+
     ### VIEW
-    
-    public function getViewQuery($viewName, DatabaseSchema $schema = null)
+
+    public function getViewQuery($viewName, DatabaseSchemaInterface $schema = null)
     {
-        
+
         if (is_null($schema)) {
             $schema = $this->getSchema();
         }
-        
+
         $viewIndex = $schema->getViewIndex($viewName);
-        
+
         if (is_null($viewIndex)) {
             return null;
         }
@@ -297,16 +281,16 @@ class SchemaManager
         $viewFilePath = sprintf(FilePathes::FILEPATH_VIEW_SQL, $schema->getId(), $viewIndex);
         return $this->filesystem->getFileContents($viewFilePath);
     }
-    
-    public function setViewQuery($query, $viewName, DatabaseSchema $schema = null)
+
+    public function setViewQuery($query, $viewName, DatabaseSchemaInterface $schema = null)
     {
-        
+
         if (is_null($schema)) {
             $schema = $this->getSchema();
         }
-        
+
         $viewIndex = $schema->getViewIndex($viewName);
-        
+
         if (is_null($viewIndex)) {
             $schema->registerView($viewName);
             $viewIndex = $schema->getViewIndex($viewName);

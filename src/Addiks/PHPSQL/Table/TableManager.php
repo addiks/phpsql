@@ -56,12 +56,6 @@ class TableManager
 
     ### TABLES
 
-    protected $metaTables = array(
-        SchemaManager::DATABASE_ID_META_INDICES            => InternalIndices::class,
-        SchemaManager::DATABASE_ID_META_MYSQL              => MySQLTable::class,
-        SchemaManager::DATABASE_ID_META_INFORMATION_SCHEMA => InformationSchema::class
-    );
-
     protected $tables = array();
 
     public function getTable($tableName, $schemaId = null)
@@ -72,56 +66,33 @@ class TableManager
 
         $tableId = "{$schemaId}.{$tableName}";
         if (!isset($this->tables[$tableId])) {
-            if (isset($this->metaTables[$schemaId])) {
-                $table = $this->metaTables[$schemaId];
+            /* @var $databaseSchema DatabaseSchemaInterface */
+            $databaseSchema = $this->schemaManager->getSchema($schemaId);
 
-                if (is_string($table)) {
-                    $table = new $table($tableName, $schemaId);
+            $tableSchema = $this->schemaManager->getTableSchema($tableName, $schemaId);
 
-                    $this->metaTables[$schemaId] = $table;
-                }
+            $tableIndex = $databaseSchema->getTableIndex($tableName);
 
-            } else {
-                /* @var $databaseSchema DatabaseSchemaInterface */
-                $databaseSchema = $this->schemaManager->getSchema($schemaId);
+            /* @var $databaseSchemaPage DatabaseSchemaPage */
+            $databaseSchemaPage = $databaseSchema->getTablePage($tableIndex, $schemaId);
 
-                $tableSchema = $this->schemaManager->getTableSchema($tableName, $schemaId);
-                
-                $tableIndex = $databaseSchema->getTableIndex($tableName);
+            /* @var $engine Engine */
+            $engine = $databaseSchemaPage->getEngine();
 
-                /* @var $databaseSchemaPage DatabaseSchemaPage */
-                $databaseSchemaPage = $databaseSchema->getTablePage($tableIndex, $schemaId);
-                
-                /* @var $engine Engine */
-                $engine = $databaseSchemaPage->getEngine();
+            # TODO: fix up this scattered schema-madness above! That should not be neccessary!
 
-                # TODO: fix up this scattered schema-madness above! That should not be neccessary!
+            /* @var $tableFactory TableFactoryInterface */
+            $tableFactory = $this->getTableFactory($engine);
 
-                if (!isset($this->tableFactories[(string)$engine])) {
-                    throw new ErrorException("Missing table-factory for table-engine '{$engine}'!");
-                }
+            $indexFactory = $this->getIndexFactory();
 
-                if (!isset($this->columnDataFactories[(string)$engine])) {
-                    throw new ErrorException("Missing column-data-factory for table-engine '{$engine}'!");
-                }
-
-                /* @var $tableFactory TableFactoryInterface */
-                $tableFactory = $this->tableFactories[(string)$engine];
-
-                /* @var $columnDataFactory  */
-                $columnDataFactory = $this->columnDataFactories[(string)$engine];
-
-                $indexFactory = $this->getIndexFactory();
-
-                /* @var $table TableInterface */
-                $table = $tableFactory->createTable(
-                    $schemaId,
-                    $tableIndex,
-                    $tableSchema,
-                    $columnDataFactory,
-                    $indexFactory
-                );
-            }
+            /* @var $table TableInterface */
+            $table = $tableFactory->createTable(
+                $schemaId,
+                $tableIndex,
+                $tableSchema,
+                $indexFactory
+            );
 
             $this->tables[$tableId] = $table;
         }
@@ -134,7 +105,7 @@ class TableManager
         if (is_null($schemaId)) {
             $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
         }
-        
+
         /* @var $databaseSchema DatabaseSchemaInterface */
         $databaseSchema = $this->schemaManager->getSchema($schemaId);
 
@@ -143,55 +114,43 @@ class TableManager
         return $tableIndex;
     }
 
-    protected $columnDataFactories;
+    protected $tableFactories;
 
-    public function getColumnDataFactories()
+    public function getTableFactoryByTable($tableId, $schemaId)
     {
-        return $this->columnDataFactories;
-    }
-
-    /**
-     * @param  string                     $tableName
-     * @param  string                     $schemaId
-     * @return ColumnDataFactoryInterface
-     */
-    public function getColumnDataFactory($tableName, $schemaId = null)
-    {
-        if (is_null($schemaId)) {
-            $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
+        if (!is_numeric($tableId)) {
+            $tableId = $this->getTableIdByName($tableId);
         }
-        
+
         /* @var $databaseSchema DatabaseSchemaInterface */
         $databaseSchema = $this->schemaManager->getSchema($schemaId);
 
-        $tableIndex = $databaseSchema->getTableIndex($tableName);
-
         /* @var $databaseSchemaPage DatabaseSchemaPage */
-        $databaseSchemaPage = $databaseSchema->getTablePage($tableIndex, $schemaId);
-        
+        $databaseSchemaPage = $databaseSchema->getTablePage($tableId, $schemaId);
+
         /* @var $engine Engine */
         $engine = $databaseSchemaPage->getEngine();
 
-        /* @var $columnDataFactory  */
-        $columnDataFactory = $this->columnDataFactories[(string)$engine];
-
-        return $columnDataFactory;
+        return $this->getTableFactory($engine);
     }
 
-    protected $tableFactories;
+    public function getTableFactory(Engine $engine)
+    {
+        if (!isset($this->tableFactories[(string)$engine])) {
+            throw new ErrorException("Missing table-factory for table-engine '{$engine->getName()}'!");
+        }
+
+        return $this->tableFactories[(string)$engine];
+    }
 
     public function getTableFactories()
     {
         return $this->tableFactories;
     }
-    
-    public function registerFactories(
-        Engine $engine,
-        TableFactoryInterface $tableFactory,
-        ColumnDataFactoryInterface $columnDataFactory
-    ) {
+
+    public function registerFactory(Engine $engine, TableFactoryInterface $tableFactory)
+    {
         $this->tableFactories[(string)$engine] = $tableFactory;
-        $this->columnDataFactories[(string)$engine] = $columnDataFactory;
     }
 
     public function unregisterFactories(Engine $engine)

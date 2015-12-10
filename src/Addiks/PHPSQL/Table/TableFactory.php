@@ -16,22 +16,27 @@ use Addiks\PHPSQL\Column\ColumnDataFactoryInterface;
 use Addiks\PHPSQL\Index\IndexFactoryInterface;
 use Addiks\PHPSQL\Column\ColumnSchema;
 use Addiks\PHPSQL\Index\IndexSchema;
+use Addiks\PHPSQL\Table\TableInterface;
 
 class TableFactory implements TableFactoryInterface
 {
 
-    public function __construct(FilesystemInterface $filesystem)
-    {
+    public function __construct(
+        FilesystemInterface $filesystem,
+        ColumnDataFactoryInterface $columnDataFactory
+    ) {
         $this->filesystem = $filesystem;
+        $this->columnDataFactory = $columnDataFactory;
     }
 
     protected $filesystem;
-    
+
+    protected $columnDataFactory;
+
     public function createTable(
         $schemaId,
         $tableId,
         TableSchemaInterface $tableSchema,
-        ColumnDataFactoryInterface $columnDataFactory,
         IndexFactoryInterface $indexFactory
     ) {
 
@@ -49,15 +54,15 @@ class TableFactory implements TableFactoryInterface
 
         /* @var $autoincrementFile FileInterface */
         $autoincrementFile = $this->filesystem->getFile($autoincrementFilePath);
-    
+
         /* @var $deletedRowsFile FileInterface */
         $deletedRowsFile = $this->filesystem->getFile($deletedRowsFilepath);
 
         $columnDatas = array();
         foreach ($tableSchema->getColumnIterator() as $columnId => $columnSchema) {
             /* @var $columnSchema ColumnSchema */
-            
-            $columnDatas[$columnId] = $columnDataFactory->createColumnData(
+
+            $columnDatas[$columnId] = $this->columnDataFactory->createColumnData(
                 $schemaId,
                 $tableId,
                 $columnId,
@@ -89,6 +94,42 @@ class TableFactory implements TableFactoryInterface
         );
 
         return $table;
+    }
+
+    public function addColumnToTable(
+        $schemaId,
+        $tableId,
+        $columnId,
+        TableInterface $table,
+        ColumnSchema $columnSchema
+    ) {
+        /* @var $columnData ColumnDataInterface */
+        $columnData = $this->columnDataFactory->createColumnData(
+            $schemaId,
+            $tableId,
+            $columnId,
+            $columnSchema
+        );
+
+        $table->addColumn($columnSchema, $columnData);
+    }
+
+    public function modifyColumnOnTable(
+        $schemaId,
+        $tableId,
+        $columnId,
+        TableInterface $table,
+        ColumnSchema $columnSchema
+    ) {
+        /* @var $columnData ColumnDataInterface */
+        $columnData = $this->columnDataFactory->createColumnData(
+            $schemaId,
+            $tableId,
+            $columnId,
+            $columnSchema
+        );
+
+        $table->modifyColumn($columnSchema, $columnData);
     }
 
 }

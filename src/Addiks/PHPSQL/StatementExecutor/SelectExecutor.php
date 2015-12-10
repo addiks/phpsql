@@ -134,7 +134,7 @@ class SelectExecutor implements StatementExecutorInterface
                         $alias = $dataSource->getTable();
                     }
 
-                    $tableResource = $this->tableManager->getTable($dataSource->getTable());
+                    $tableResource = $this->tableManager->getTable($dataSource->getTable(), $dataSource->getDatabase());
                 }
 
                 $executionContext->setTable($tableResource, (string)$alias);

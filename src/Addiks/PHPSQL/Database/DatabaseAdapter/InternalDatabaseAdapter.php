@@ -14,18 +14,20 @@ namespace Addiks\PHPSQL\Database\DatabaseAdapter;
 use ErrorException;
 use InvalidArgumentException;
 use Addiks\PHPSQL\Table\TableSchema;
-use Addiks\PHPSQL\Entity\Schema;
-use Addiks\PHPSQL\Value\Database\Dsn\Internal;
-use Addiks\PHPSQL\Executor;
+use Addiks\PHPSQL\Table\TableManager;
+use Addiks\PHPSQL\Table\TableFactory;
 use Addiks\PHPSQL\Iterators\SQLTokenIterator;
 use Addiks\PHPSQL\ValueResolver\ValueResolver;
-use Addiks\PHPSQL\SqlParser\SqlParser;
 use Addiks\PHPSQL\Result\TemporaryResult;
 use Addiks\PHPSQL\Job\StatementJob;
+use Addiks\PHPSQL\Value\Database\Dsn\Internal;
 use Addiks\PHPSQL\Value\Text\Annotation;
+use Addiks\PHPSQL\Value\Enum\Page\Schema\Engine;
 use Addiks\PHPSQL\Database\AbstractDatabase;
+use Addiks\PHPSQL\Database\InformationSchemaSchema;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Filesystem\RealFilesystem;
+use Addiks\PHPSQL\SqlParser\SqlParser;
 use Addiks\PHPSQL\SqlParser\Part\ParenthesisParser;
 use Addiks\PHPSQL\SqlParser\SelectSqlParser;
 use Addiks\PHPSQL\SqlParser\InsertSqlParser;
@@ -43,11 +45,9 @@ use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\Specifier\ColumnParser;
 use Addiks\PHPSQL\SqlParser\Part\ColumnDefinitionParser;
 use Addiks\PHPSQL\StatementExecutor\StatementExecutorInterface;
-use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\StatementExecutor\StatementExecutor;
-use Addiks\PHPSQL\Value\Enum\Page\Schema\Engine;
 use Addiks\PHPSQL\Column\ColumnDataFactory;
-use Addiks\PHPSQL\Table\TableFactory;
+use Addiks\PHPSQL\Table\InformationSchemaTableFactory;
 
 class InternalDatabaseAdapter implements DatabaseAdapterInterface
 {
@@ -91,6 +91,16 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
             $this->schemaManager = new SchemaManager(
                 $this->getFilesystem()
             );
+
+            #$this->schemaManager->setSchema(
+            #    SchemaManager::DATABASE_ID_META_INDICES,
+            #    new Indicies($this->schemaManager)
+            #);
+
+            $this->schemaManager->setSchema(
+                SchemaManager::DATABASE_ID_META_INFORMATION_SCHEMA,
+                new InformationSchemaSchema($this->schemaManager)
+            );
         }
 
         return $this->schemaManager;
@@ -120,21 +130,25 @@ class InternalDatabaseAdapter implements DatabaseAdapterInterface
                 $this->getSchemaManager()
             );
 
-            $tableFactory = new TableFactory($this->getFilesystem());
-
             $columnDataFactory = new ColumnDataFactory($this->getFilesystem());
+
+            $tableFactory = new TableFactory($this->getFilesystem(), $columnDataFactory);
 
             foreach ([
                 Engine::MARIADB(),
                 Engine::MYISAM(),
                 Engine::INNODB()
             ] as $engine) {
-                $this->tableManager->registerFactories(
+                $this->tableManager->registerFactory(
                     $engine,
-                    $tableFactory,
-                    $columnDataFactory
+                    $tableFactory
                 );
             }
+
+            $this->tableManager->registerFactory(
+                Engine::INFORMATION_SCHEMA(),
+                new InformationSchemaTableFactory($this->schemaManager)
+            );
 
             # TODO: add factories for all the other table-engines out there
 

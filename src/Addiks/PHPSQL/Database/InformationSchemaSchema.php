@@ -9,84 +9,114 @@
  * @package Addiks
  */
 
-namespace Addiks\PHPSQL\Schema\Meta;
+namespace Addiks\PHPSQL\Database;
 
-use Addiks\PHPSQL\Index\IndexInterface;
+use Addiks\PHPSQL\Database\DatabaseSchemaInterface;
+use Addiks\PHPSQL\Database\DatabaseSchemaPage;
+use Addiks\PHPSQL\Schema\SchemaManager;
+use Addiks\PHPSQL\Value\Enum\Page\Schema\Engine;
+use Addiks\PHPSQL\Table\TableSchema;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Value\Enum\Page\Schema\Type;
 
-class InformationSchema implements IndexInterface
+class InformationSchemaSchema implements DatabaseSchemaInterface
 {
-    
+
+    public function __construct(
+        SchemaManager $schemaManager
+    ) {
+        $this->schemaManager = $schemaManager;
+    }
+
+    protected $schemaManager;
+
     ### TABLES
-    
+
     public function listTables()
     {
-    
         $tables = array();
-    
+
+        /* @var $schemaManager SchemaManager */
+        $schemaManager = $this->schemaManager;
+
+        $tables[] = "COLUMNS";
+        $tables[] = "ENGINES";
+        $tables[] = "SCHEMATA";
         $tables[] = "TABLES";
-        
+        $tables[] = "VIEWS";
+
         return $tables;
     }
-    
+
     public function tableExists($tableName)
     {
-    
         return in_array($tableName, $this->listTables());
     }
-    
+
     public function getTableIndex($tableName)
     {
-    
         return array_search($tableName, $this->listTables());
     }
-    
+
     public function registerTable($tableName)
     {
     }
-    
-    public function registerTableSchema(Schema $schemaPage)
+
+    public function registerTableSchema(DatabaseSchemaPage $schemaPage)
     {
     }
-    
+
     public function unregisterTable($tableName)
     {
     }
-    
+
     public function getTablePage($tableId)
     {
-        
-        $entity = new Schema();
+        $entity = new DatabaseSchemaPage();
         $entity->setName($tableId);
         $entity->setCollation("latin1_bin");
-        $entity->setEngine(Engine::MYISAM());
+        $entity->setEngine(Engine::INFORMATION_SCHEMA());
         $entity->setType(Type::TABLE());
-        
-        switch($tableId){
+
+        return $entity;
+    }
+
+    public function createTableSchema(
+        $tableSchemaFile,
+        $indexSchemaFile,
+        $tableName
+    ) {
+        $tableSchema = new TableSchema(
+            new FileResourceProxy(fopen("php://memory", "w")),
+            new FileResourceProxy(fopen("php://memory", "w"))
+        );
+
+        switch($tableName){
             case 'TABLES':
                 break;
         }
-        
-        return $entity;
+
+        return $tableSchema;
     }
-    
+
     ### VIEWS
-    
+
     public function listViews()
     {
     }
-    
+
     public function viewExists($viewName)
     {
     }
-    
+
     public function getViewIndex($viewName)
     {
     }
-    
+
     public function registerView($viewName)
     {
     }
-    
+
     public function unregisterView($viewName)
     {
     }

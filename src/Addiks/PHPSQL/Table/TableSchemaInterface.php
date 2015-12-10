@@ -17,17 +17,17 @@ use Addiks\PHPSQL\Database\DatabaseSchemaInterface;
 
 interface TableSchemaInterface
 {
-    
+
     public function setDatabaseSchema(DatabaseSchemaInterface $schema);
     public function getDatabaseSchema();
-    
+
     public function getIndexIterator();
     public function indexExist($name);
     public function getIndexIdByColumns($columnIds);
     public function addIndexSchema(IndexSchema $indexPage);
     public function getIndexSchema($index);
     public function getLastIndex();
-    
+
     public function addColumnSchema(ColumnSchema $column);
     public function getColumnIterator();
     public function getColumnIndex($columnName);

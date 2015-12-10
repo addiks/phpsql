@@ -34,6 +34,7 @@ use Addiks\PHPSQL\SqlParser\Part\ConditionParser;
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
 use Addiks\PHPSQL\Value\Enum\Sql\ForeignKey\ReferenceOption;
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Engine;
+use Addiks\PHPSQL\Value\Sql\Variable;
 
 class CreateSqlParser extends SqlParser
 {
@@ -143,6 +144,10 @@ class CreateSqlParser extends SqlParser
                 return $this->parseCreateIndex($tokens);
                 break;
 
+            case $tokens->seekTokenNum(SqlToken::T_VIEW(), TokenIterator::NEXT):
+                return $this->parseCreateView($tokens);
+                break;
+
             default:
                 throw new MalformedSqlException("Invalid type of create-statement!", $tokens);
         }
@@ -161,11 +166,24 @@ class CreateSqlParser extends SqlParser
             $ifNotExist = false;
         }
 
-        if (!$this->valueParser->canParseTokens($tokens)) {
+        if ($tokens->seekTokenNum(T_VARIABLE)) {
+            $databaseName = Variable::factory($tokens->getCurrentTokenString());
+
+        } elseif ($tokens->seekTokenNum(T_STRING)) {
+            $databaseName = $tokens->getCurrentTokenString();
+
+        } elseif ($tokens->seekTokenNum(T_CONSTANT_ENCAPSED_STRING)) {
+            $databaseName = $tokens->getCurrentTokenString();
+
+            if (($databaseName[0] === '"' || $databaseName[0] === "'")
+             && $databaseName[0] === $databaseName[strlen($databaseName)-1]) {
+                // remove quotes if needed
+                $databaseName = substr($databaseName, 1, strlen($databaseName)-2);
+            }
+
+        } else {
             throw new MalformedSqlException("Missing name of database to create!", $tokens);
         }
-
-        $databaseName = $this->valueParser->convertSqlToJob($tokens);
 
         $createJob = new CreateDatabaseStatement();
         $createJob->setIfNotExists($ifNotExist);
@@ -859,5 +877,10 @@ class CreateSqlParser extends SqlParser
         }
 
         return $entity;
+    }
+
+    protected function parseCreateView(SQLTokenIterator $tokens)
+    {
+        
     }
 }
