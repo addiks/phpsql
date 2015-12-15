@@ -17,7 +17,7 @@ use Addiks\PHPSQL\Column\ColumnSchema;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
-class TablesInformationSchemaTable extends InformationSchemaTable
+class SchemataInformationSchemaTable extends InformationSchemaTable
 {
 
     ### DATA-PROVIDER-INTERFACE

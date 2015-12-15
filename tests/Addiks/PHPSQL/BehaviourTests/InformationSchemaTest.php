@@ -61,42 +61,43 @@ class InformationSchemaTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @depends testTablesExisting
+     * @dep ends testTablesExisting
      * @group behaviour.information_schema
      * @group behaviour.information_schema.columns
      */
     public function testColumnsHasRightColumns()
     {
-        $result = $this->pdo->query("SELECT * FROM information_schema.COLUMNS");
+        $result = $this->pdo->query("DESCRIBE information_schema.COLUMNS");
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $actualHeaders = array_column($actualRows, 0);
 
-        $actualRow = $result->fetch(PDO::FETCH_ASSOC);
-        $actualHeaders = array_keys($actualRow);
+        $expectedHeaders = [
+            'TABLE_CATALOG',
+            'TABLE_SCHEMA',
+            'TABLE_NAME',
+            'COLUMN_NAME',
+            'ORDINAL_POSITION',
+            'COLUMN_DEFAULT',
+            'IS_NULLABLE',
+            'DATA_TYPE',
+            'CHARACTER_MAXIMUM_LENGTH',
+            'CHARACTER_OCTET_LENGTH',
+            'NUMERIC_PRECISION',
+            'NUMERIC_SCALE',
+            'DATETIME_PRECISION',
+            'CHARACTER_SET_NAME',
+            'COLLATION_NAME',
+            'COLUMN_TYPE',
+            'COLUMN_KEY',
+            'EXTRA',
+            'PRIVILEGES',
+            'COLUMN_COMMENT',
+        ];
 
-        $this->assertEmpty(array_intersect(
-            $actualHeaders,
-            [
-                'TABLE_CATALOG',
-                'TABLE_SCHEMA',
-                'TABLE_NAME',
-                'COLUMN_NAME',
-                'ORDINAL_POSITION',
-                'COLUMN_DEFAULT',
-                'IS_NULLABLE',
-                'DATA_TYPE',
-                'CHARACTER_MAXIMUM_LENGTH',
-                'CHARACTER_OCTET_LENGTH',
-                'NUMERIC_PRECISION',
-                'NUMERIC_SCALE',
-                'DATETIME_PRECISION',
-                'CHARACTER_SET_NAME',
-                'COLLATION_NAME',
-                'COLUMN_TYPE',
-                'COLUMN_KEY',
-                'EXTRA',
-                'PRIVILEGES',
-                'COLUMN_COMMENT',
-            ]
-        ));
+        $this->assertEquals(
+            $expectedHeaders,
+            $actualHeaders
+        );
     }
 
     /**
@@ -106,22 +107,23 @@ class InformationSchemaTest extends PHPUnit_Framework_TestCase
      */
     public function testEnginesHasRightColumns()
     {
-        $result = $this->pdo->query("SELECT * FROM information_schema.ENGINES");
+        $result = $this->pdo->query("DESCRIBE information_schema.ENGINES");
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $actualHeaders = array_column($actualRows, 0);
 
-        $actualRow = $result->fetch(PDO::FETCH_ASSOC);
-        $actualHeaders = array_keys($actualRow);
+        $expectedHeaders = [
+            'ENGINE',
+            'SUPPORT',
+            'COMMENT',
+            'TRANSACTIONS',
+            'XA',
+            'SAVEPOINTS',
+        ];
 
-        $this->assertEmpty(array_intersect(
-            $actualHeaders,
-            [
-                'ENGINE',
-                'SUPPORT',
-                'COMMENT',
-                'TRANSACTIONS',
-                'XA',
-                'SAVEPOINTS',
-            ]
-        ));
+        $this->assertEquals(
+            $expectedHeaders,
+            $actualHeaders
+        );
     }
 
     /**
@@ -131,21 +133,22 @@ class InformationSchemaTest extends PHPUnit_Framework_TestCase
      */
     public function testSchemataHasRightColumns()
     {
-        $result = $this->pdo->query("SELECT * FROM information_schema.SCHEMATA");
+        $result = $this->pdo->query("DESCRIBE information_schema.SCHEMATA");
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $actualHeaders = array_column($actualRows, 0);
 
-        $actualRow = $result->fetch(PDO::FETCH_ASSOC);
-        $actualHeaders = array_keys($actualRow);
+        $expectedHeaders = [
+            'CATALOG_NAME',
+            'SCHEMA_NAME',
+            'DEFAULT_CHARACTER_SET_NAME',
+            'DEFAULT_COLLATION_NAME',
+            'SQL_PATH',
+        ];
 
-        $this->assertEmpty(array_intersect(
-            $actualHeaders,
-            [
-                'CATALOG_NAME',
-                'SCHEMA_NAME',
-                'DEFAULT_CHARACTER_SET_NAME',
-                'DEFAULT_COLLATION_NAME',
-                'SQL_PATH',
-            ]
-        ));
+        $this->assertEquals(
+            $expectedHeaders,
+            $actualHeaders
+        );
     }
 
     /**
@@ -155,37 +158,38 @@ class InformationSchemaTest extends PHPUnit_Framework_TestCase
      */
     public function testTablesHasRightColumns()
     {
-        $result = $this->pdo->query("SELECT * FROM information_schema.TABLES");
+        $result = $this->pdo->query("DESCRIBE information_schema.TABLES");
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $actualHeaders = array_column($actualRows, 0);
 
-        $actualRow = $result->fetch(PDO::FETCH_ASSOC);
-        $actualHeaders = array_keys($actualRow);
+        $expectedHeaders = [
+            'TABLE_CATALOG',
+            'TABLE_SCHEMA',
+            'TABLE_NAME',
+            'TABLE_TYPE',
+            'ENGINE',
+            'VERSION',
+            'ROW_FORMAT',
+            'TABLE_ROWS',
+            'AVG_ROW_LENGTH',
+            'DATA_LENGTH',
+            'MAX_DATA_LENGTH',
+            'INDEX_LENGTH',
+            'DATA_FREE',
+            'AUTO_INCREMENT',
+            'CREATE_TIME',
+            'UPDATE_TIME',
+            'CHECK_TIME',
+            'TABLE_COLLATION',
+            'CHECKSUM',
+            'CREATE_OPTIONS',
+            'TABLE_COMMENT',
+        ];
 
-        $this->assertEmpty(array_intersect(
-            $actualHeaders,
-            [
-                'TABLE_CATALOG',
-                'TABLE_SCHEMA',
-                'TABLE_NAME',
-                'TABLE_TYPE',
-                'ENGINE',
-                'VERSION',
-                'ROW_FORMAT',
-                'TABLE_ROWS',
-                'AVG_ROW_LENGTH',
-                'DATA_LENGTH',
-                'MAX_DATA_LENGTH',
-                'INDEX_LENGTH',
-                'DATA_FREE',
-                'AUTO_INCREMENT',
-                'CREATE_TIME',
-                'UPDATE_TIME',
-                'CHECK_TIME',
-                'TABLE_COLLATION',
-                'CHECKSUM',
-                'CREATE_OPTIONS',
-                'TABLE_COMMENT',
-            ]
-        ));
+        $this->assertEquals(
+            $expectedHeaders,
+            $actualHeaders
+        );
     }
 
     /**
@@ -195,26 +199,27 @@ class InformationSchemaTest extends PHPUnit_Framework_TestCase
      */
     public function testViewsHasRightColumns()
     {
-        $result = $this->pdo->query("SELECT * FROM information_schema.VIEWS");
+        $result = $this->pdo->query("DESCRIBE information_schema.VIEWS");
+        $actualRows = $result->fetchAll(PDO::FETCH_NUM);
+        $actualHeaders = array_column($actualRows, 0);
 
-        $actualRow = $result->fetch(PDO::FETCH_ASSOC);
-        $actualHeaders = array_keys($actualRow);
+        $expectedHeaders = [
+            'TABLE_CATALOG',
+            'TABLE_SCHEMA',
+            'TABLE_NAME',
+            'VIEW_DEFINITION',
+            'CHECK_OPTION',
+            'IS_UPDATABLE',
+            'DEFINER',
+            'SECURITY_TYPE',
+            'CHARACTER_SET_CLIENT',
+            'COLLATION_CONNECTION',
+        ];
 
-        $this->assertEmpty(array_intersect(
-            $actualHeaders,
-            [
-                'TABLE_CATALOG',
-                'TABLE_SCHEMA',
-                'TABLE_NAME',
-                'VIEW_DEFINITION',
-                'CHECK_OPTION',
-                'IS_UPDATABLE',
-                'DEFINER',
-                'SECURITY_TYPE',
-                'CHARACTER_SET_CLIENT',
-                'COLLATION_CONNECTION',
-            ]
-        ));
+        $this->assertEquals(
+            $expectedHeaders,
+            $actualHeaders
+        );
     }
 
     /**

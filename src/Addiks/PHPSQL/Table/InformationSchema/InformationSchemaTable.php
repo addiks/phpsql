@@ -14,16 +14,27 @@ use Addiks\PHPSQL\Table\TableInterface;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Column\ColumnSchema;
 use Addiks\PHPSQL\Column\ColumnDataInterface;
+use Addiks\PHPSQL\Table\TableSchemaInterface;
 
 abstract class InformationSchemaTable implements TableInterface
 {
 
-    public function __construct(SchemaManager $schemaManager)
-    {
+    public function __construct(
+        SchemaManager $schemaManager,
+        TableSchemaInterface $tableSchema
+    ) {
         $this->schemaManager = $schemaManager;
+        $this->tableSchema = $tableSchema;
     }
 
     protected $schemaManager;
+
+    protected $tableSchema;
+
+    public function getTableSchema()
+    {
+        return $this->tableSchema;
+    }
 
     ### TABLE-INTERFACE
 

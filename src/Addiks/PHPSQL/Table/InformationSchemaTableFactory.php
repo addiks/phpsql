@@ -17,6 +17,10 @@ use Addiks\PHPSQL\Column\ColumnSchema;
 use Addiks\PHPSQL\Column\ColumnDataInterface;
 use Addiks\PHPSQL\Table\TableInterface;
 use Addiks\PHPSQL\Table\InformationSchema\TablesInformationSchemaTable;
+use Addiks\PHPSQL\Table\InformationSchema\ColumnsInformationSchemaTable;
+use Addiks\PHPSQL\Table\InformationSchema\EnginesInformationSchemaTable;
+use Addiks\PHPSQL\Table\InformationSchema\SchemataInformationSchemaTable;
+use Addiks\PHPSQL\Table\InformationSchema\ViewsInformationSchemaTable;
 
 class InformationSchemaTableFactory implements TableFactoryInterface
 {
@@ -42,8 +46,24 @@ class InformationSchemaTableFactory implements TableFactoryInterface
         $table = null;
 
         switch ($tableId) {
-            case 'TABLES':
-                $table = new TablesInformationSchemaTable($this->schemaManager);
+            case 0: # COLUMNS
+                $table = new ColumnsInformationSchemaTable($this->schemaManager, $tableSchema);
+                break;
+
+            case 1: # ENGINES
+                $table = new EnginesInformationSchemaTable($this->schemaManager, $tableSchema);
+                break;
+
+            case 2: # SCHEMATA
+                $table = new SchemataInformationSchemaTable($this->schemaManager, $tableSchema);
+                break;
+
+            case 3: # TABLES
+                $table = new TablesInformationSchemaTable($this->schemaManager, $tableSchema);
+                break;
+
+            case 4: # VIEWS
+                $table = new ViewsInformationSchemaTable($this->schemaManager, $tableSchema);
                 break;
         }
 
