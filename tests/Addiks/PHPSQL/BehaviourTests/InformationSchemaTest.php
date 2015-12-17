@@ -248,10 +248,10 @@ class InformationSchemaTest extends PHPUnit_Framework_TestCase
     {
         $result = $this->pdo->query("
             SELECT
-                TABLE_NAME,
-                ENGINE
+                `TABLE_NAME`,
+                `ENGINE`
             FROM
-                information_schema.TABLES
+                information_schema.`TABLES
             WHERE
                 TABLE_SCHEMA = 'phpunit_informationschema'
         ");
