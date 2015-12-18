@@ -21,56 +21,64 @@ use Addiks\PHPSQL\Database\DatabaseSchema;
 
 class ColumnsInformationSchemaTable extends InformationSchemaTable
 {
+    protected $allColumns;
+
+    public function clearCache()
+    {
+        $this->allColumns = null;
+    }
 
     protected function getAllColumns()
     {
-        /* @var $schemaManager SchemaManager */
-        $schemaManager = $this->schemaManager;
+        if (is_null($this->allColumns)) {
+            /* @var $schemaManager SchemaManager */
+            $schemaManager = $this->schemaManager;
 
-        $schemas = $schemaManager->listSchemas();
+            $schemas = $schemaManager->listSchemas();
 
-        $allColumns = array();
-        foreach ($schemas as $schemaId) {
-            /* @var $schema DatabaseSchema */
-            $schema = $schemaManager->getSchema($schemaId);
+            $this->allColumns = array();
+            foreach ($schemas as $schemaId) {
+                /* @var $schema DatabaseSchema */
+                $schema = $schemaManager->getSchema($schemaId);
 
-            foreach ($schema->listTables() as $tableId => $tableName) {
-                /* @var $tablePage DatabaseSchemaPage */
-                $tablePage = $schema->getTablePage($tableId);
+                foreach ($schema->listTables() as $tableId => $tableName) {
+                    /* @var $tablePage DatabaseSchemaPage */
+                    $tablePage = $schema->getTablePage($tableId);
 
-                /* @var $tableSchema TableSchema */
-                $tableSchema = $schemaManager->getTableSchema($tableId, $schemaId);
+                    /* @var $tableSchema TableSchema */
+                    $tableSchema = $schemaManager->getTableSchema($tableId, $schemaId);
 
-                foreach ($tableSchema->getColumnIterator() as $columnSchema) {
-                    /* @var $columnSchema ColumnSchema */
+                    foreach ($tableSchema->getColumnIterator() as $columnSchema) {
+                        /* @var $columnSchema ColumnSchema */
 
-                    $allColumns[] = [
-                        'TABLE_CATALOG'            => null,
-                        'TABLE_SCHEMA'             => $schemaId,
-                        'TABLE_NAME'               => $tableName,
-                        'COLUMN_NAME'              => $columnSchema->getName(),
-                        'ORDINAL_POSITION'         => $columnSchema->getIndex(),
-                        'COLUMN_DEFAULT'           => $columnSchema->getDefaultValue(),
-                        'IS_NULLABLE'              => $columnSchema->isNotNull() ?'0' :'1',
-                        'DATA_TYPE'                => $columnSchema->getDataType()->getName(),
-                        'CHARACTER_MAXIMUM_LENGTH' => null,
-                        'CHARACTER_OCTET_LENGTH'   => null,
-                        'NUMERIC_PRECISION'        => null,
-                        'NUMERIC_SCALE'            => null,
-                        'DATETIME_PRECISION'       => null,
-                        'CHARACTER_SET_NAME'       => null,
-                        'COLLATION_NAME'           => null,
-                        'COLUMN_TYPE'              => null,
-                        'COLUMN_KEY'               => null,
-                        'EXTRA'                    => null,
-                        'PRIVILEGES'               => null,
-                        'COLUMN_COMMENT'           => null,
-                    ];
+                        $this->allColumns[] = [
+                            'TABLE_CATALOG'            => null,
+                            'TABLE_SCHEMA'             => $schemaId,
+                            'TABLE_NAME'               => $tableName,
+                            'COLUMN_NAME'              => $columnSchema->getName(),
+                            'ORDINAL_POSITION'         => $columnSchema->getIndex(),
+                            'COLUMN_DEFAULT'           => $columnSchema->getDefaultValue(),
+                            'IS_NULLABLE'              => $columnSchema->isNotNull() ?'0' :'1',
+                            'DATA_TYPE'                => $columnSchema->getDataType()->getName(),
+                            'CHARACTER_MAXIMUM_LENGTH' => null,
+                            'CHARACTER_OCTET_LENGTH'   => null,
+                            'NUMERIC_PRECISION'        => null,
+                            'NUMERIC_SCALE'            => null,
+                            'DATETIME_PRECISION'       => null,
+                            'CHARACTER_SET_NAME'       => null,
+                            'COLLATION_NAME'           => null,
+                            'COLUMN_TYPE'              => null,
+                            'COLUMN_KEY'               => null,
+                            'EXTRA'                    => null,
+                            'PRIVILEGES'               => null,
+                            'COLUMN_COMMENT'           => null,
+                        ];
+                    }
                 }
             }
         }
 
-        return $allColumns;
+        return $this->allColumns;
     }
 
     ### DATA-PROVIDER-INTERFACE
@@ -82,11 +90,13 @@ class ColumnsInformationSchemaTable extends InformationSchemaTable
 
     public function getRowData($rowId = null)
     {
+        $rows = $this->getAllColumns();
+
         $row = null;
-        if ($this->doesRowExists($rowId)) {
-            $rows = $this->getAllColumns();
+        if (isset($rows[$rowId])) {
             $row = $rows[$rowId];
         }
+
         return $row;
     }
 

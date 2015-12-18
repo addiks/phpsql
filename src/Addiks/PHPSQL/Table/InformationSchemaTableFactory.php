@@ -32,6 +32,26 @@ class InformationSchemaTableFactory implements TableFactoryInterface
 
     protected $schemaManager;
 
+    protected $columnsTable;
+
+    protected $enginesTable;
+
+    protected $schemataTable;
+
+    protected $tablesTable;
+
+    protected $viewTable;
+
+    public function clearCache()
+    {
+        if (!is_null($this->columnsTable)) {
+            $this->columnsTable->clearCache();
+        }
+        if (!is_null($this->tablesTable)) {
+            $this->tablesTable->clearCache();
+        }
+    }
+
     /**
      *
      * @param  integer        $tableId
@@ -47,23 +67,38 @@ class InformationSchemaTableFactory implements TableFactoryInterface
 
         switch ($tableId) {
             case 0: # COLUMNS
-                $table = new ColumnsInformationSchemaTable($this->schemaManager, $tableSchema);
+                if (is_null($this->columnsTable)) {
+                    $this->columnsTable = new ColumnsInformationSchemaTable($this->schemaManager, $tableSchema);
+                }
+                $table = $this->columnsTable;
                 break;
 
             case 1: # ENGINES
-                $table = new EnginesInformationSchemaTable($this->schemaManager, $tableSchema);
+                if (is_null($this->enginesTable)) {
+                    $this->enginesTable = new EnginesInformationSchemaTable($this->schemaManager, $tableSchema);
+                }
+                $table = $this->enginesTable;
                 break;
 
             case 2: # SCHEMATA
-                $table = new SchemataInformationSchemaTable($this->schemaManager, $tableSchema);
+                if (is_null($this->schemataTable)) {
+                    $this->schemataTable = new SchemataInformationSchemaTable($this->schemaManager, $tableSchema);
+                }
+                $table = $this->schemataTable;
                 break;
 
             case 3: # TABLES
-                $table = new TablesInformationSchemaTable($this->schemaManager, $tableSchema);
+                if (is_null($this->tablesTable)) {
+                    $this->tablesTable = new TablesInformationSchemaTable($this->schemaManager, $tableSchema);
+                }
+                $table = $this->tablesTable;
                 break;
 
             case 4: # VIEWS
-                $table = new ViewsInformationSchemaTable($this->schemaManager, $tableSchema);
+                if (is_null($this->viewTable)) {
+                    $this->viewTable = new ViewsInformationSchemaTable($this->schemaManager, $tableSchema);
+                }
+                $table = $this->viewTable;
                 break;
         }
 

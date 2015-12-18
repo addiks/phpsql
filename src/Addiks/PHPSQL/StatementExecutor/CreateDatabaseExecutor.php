@@ -20,26 +20,26 @@ use Addiks\PHPSQL\ValueResolver\ValueResolver;
 use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Result\TemporaryResult;
 use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
+use Addiks\PHPSQL\Table\TableManager;
 
 class CreateDatabaseExecutor implements StatementExecutorInterface
 {
 
     public function __construct(
         ValueResolver $valueResolver,
-        SchemaManager $schemaManager
+        SchemaManager $schemaManager,
+        TableManager $tableManager
     ) {
         $this->schemaManager = $schemaManager;
         $this->valueResolver = $valueResolver;
+        $this->tableManager = $tableManager;
     }
 
     protected $schemaManager;
 
-    public function getSchemaManager()
-    {
-        return $this->schemaManager;
-    }
-
     protected $valueResolver;
+
+    protected $tableManager;
 
     public function getValueResolver()
     {
@@ -64,6 +64,14 @@ class CreateDatabaseExecutor implements StatementExecutorInterface
         $name = $this->valueResolver->resolveValue($statement->getName(), $executionContext);
 
         $this->schemaManager->createSchema($name);
+
+        foreach ($this->tableManager->getTableFactories() as $tableFactory) {
+            /* @var $tableFactory TableFactoryInterface */
+
+            if ($tableFactory instanceof InformationSchemaTableFactory) {
+                $tableFactory->clearCache();
+            }
+        }
 
         ### CREATE RESULTSET
 

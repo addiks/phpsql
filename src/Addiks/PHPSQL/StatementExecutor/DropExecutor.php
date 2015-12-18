@@ -21,27 +21,27 @@ use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Job\Statement\DropStatement;
 use Addiks\PHPSQL\StatementExecutor\ExecutionContext;
 use Addiks\PHPSQL\Result\TemporaryResult;
+use Addiks\PHPSQL\Table\TableManager;
 
 class DropExecutor implements StatementExecutorInterface
 {
-    
+
     public function __construct(
         SchemaManager $schemaManager,
-        ValueResolver $valueResolver
+        ValueResolver $valueResolver,
+        TableManager $tableManager
     ) {
         $this->schemaManager = $schemaManager;
         $this->valueResolver = $valueResolver;
+        $this->tableManager = $tableManager;
     }
 
     protected $schemaManager;
 
-    public function getSchemaManager()
-    {
-        return $this->schemaManager;
-    }
-
     protected $valueResolver;
-    
+
+    protected $tableManager;
+
     public function canExecuteJob(StatementJob $statement)
     {
         return $statement instanceof DropStatement;
@@ -56,36 +56,44 @@ class DropExecutor implements StatementExecutorInterface
             $statement,
             $parameters
         );
-        
+
         switch($statement->getType()){
             case DropStatement::TYPE_DATABASE:
                 return $this->executeDropDatabase($statement, $context);
-                
+
             case DropStatement::TYPE_TABLE:
                 return $this->executeDropTable($statement, $context);
-                
+
             case DropStatement::TYPE_VIEW:
                 return $this->executeDropView($statement, $context);
         }
-        
+
+        foreach ($this->tableManager->getTableFactories() as $tableFactory) {
+            /* @var $tableFactory TableFactoryInterface */
+
+            if ($tableFactory instanceof InformationSchemaTableFactory) {
+                $tableFactory->clearCache();
+            }
+        }
+
     }
-    
+
     protected function executeDropDatabase(DropStatement $statement, ExecutionContext $context)
     {
-        
+
         /* @var $databaseSchema Schema */
         $databaseSchema = $this->schemaManager->getSchema();
-        
+
         foreach ($statement->getSubjects() as $subjectValue) {
             $subject = $this->valueResolver->resolveValue($subjectValue, $context);
             $this->schemaManager->removeSchema($subject);
         }
-        
+
         ### RESULT
-        
+
         $result = new TemporaryResult();
         $result->setIsSuccess(true);
-        
+
         foreach ($statement->getSubjects() as $subjectValue) {
             $subject = $this->valueResolver->resolveValue($subjectValue, $context);
             if ($this->schemaManager->schemaExists($subject)) {
@@ -93,10 +101,10 @@ class DropExecutor implements StatementExecutorInterface
                 break;
             }
         }
-        
+
         return $result;
     }
-    
+
     protected function executeDropTable(DropStatement $statement, ExecutionContext $context)
     {
 
@@ -104,18 +112,18 @@ class DropExecutor implements StatementExecutorInterface
             $tableName = $this->valueResolver->resolveValue($tableNameValue, $context);
             $this->schemaManager->dropTable($tableName);
         }
-        
+
         $databaseSchema = $this->schemaManager->getSchema();
-        
+
         $result = new TemporaryResult();
         $result->setIsSuccess(!$databaseSchema->tableExists($tableName));
-        
+
         return $result;
     }
-    
+
     protected function executeDropView(DropStatement $statement, ExecutionContext $context)
     {
-        
+
         $result = new TemporaryResult();
         return $result;
     }

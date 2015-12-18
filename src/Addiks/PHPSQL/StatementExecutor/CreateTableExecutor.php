@@ -46,7 +46,7 @@ use Addiks\PHPSQL\Column\ColumnSchema;
 
 class CreateTableExecutor implements StatementExecutorInterface
 {
-    
+
     public function __construct(
         SchemaManager $schemaManager,
         TableManager $tableManager,
@@ -72,7 +72,7 @@ class CreateTableExecutor implements StatementExecutorInterface
     }
 
     protected $valueResolver;
-    
+
     public function canExecuteJob(StatementJob $statement)
     {
         return $statement instanceof CreateTableStatement;
@@ -81,18 +81,18 @@ class CreateTableExecutor implements StatementExecutorInterface
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
         /* @var $statement CreateTableStatement */
-        
+
         $context = new ExecutionContext(
             $this->schemaManager,
             $statement,
             $parameters
         );
-        
+
         /* @var $databaseSchema Schema */
         $databaseSchema = $this->schemaManager->getSchema();
 
         $schemaId = $this->schemaManager->getCurrentlyUsedDatabaseId();
-        
+
         $tableName = $this->valueResolver->resolveValue($statement->getName(), $context);
 
         $schemaPage = new DatabaseSchemaPage();
@@ -107,29 +107,29 @@ class CreateTableExecutor implements StatementExecutorInterface
         $schemaPage->setDelayKeyWrite(($statement->getDelayKeyWrite()));
         $schemaPage->setRowFormat(RowFormat::factory($statement->getRowFormat()));
         $schemaPage->setInsertMethod(InsertMethod::factory($statement->getInsertMethod()));
-        
+
         $databaseSchema->registerTableSchema($schemaPage);
-        
+
         /* @var $tableSchema TableSchema */
         $tableSchema = $this->schemaManager->getTableSchema($tableName);
-        
+
         ### WRITE COLUMNS
-        
+
         switch(true){
-        
+
             case (is_array($statement->getColumnDefinition())):
                 foreach ($statement->getColumnDefinition() as $name => $column) {
                     /* @var $column ColumnDefinition */
-                    
+
                     $columnPage = new ColumnSchema();
                     $columnPage->setName($name);
                     $columnPage->setDataType(DataType::factory($column->getDataType()->getName()));
-                    
+
                     /* @var $dataType DataType */
                     $dataType = $columnPage->getDataType();
-                    
+
                     $flags = 0;
-                    
+
                     if ($column->getIsPrimaryKey()) {
                         $flags = $flags ^ ColumnSchema::EXTRA_PRIMARY_KEY;
                     }
@@ -142,9 +142,9 @@ class CreateTableExecutor implements StatementExecutorInterface
                     if ($column->getIsAutoIncrement()) {
                         $flags = $flags ^ ColumnSchema::EXTRA_AUTO_INCREMENT;
                     }
-                    
+
                     $columnPage->setExtraFlags($flags);
-                    
+
                     $dataType = $column->getDataType();
 
                     $columnPage->setLength($dataType->getByteLength());
@@ -153,7 +153,7 @@ class CreateTableExecutor implements StatementExecutorInterface
                     if (!is_null($column->getDataTypeLength())) {
                         $columnPage->setLength($column->getDataTypeLength());
                     }
-                    
+
                     if (!is_null($column->getDataTypeSecondLength())) {
                         $columnPage->setSecondLength($column->getDataTypeSecondLength());
                     }
@@ -178,44 +178,44 @@ class CreateTableExecutor implements StatementExecutorInterface
                             $column->getDefaultValue()
                         );
                     }
-                    
+
                 }
                 break;
-                    
+
             case ($statement->getColumnDefinition() instanceof Select):
                 break;
-                
+
             case ($statement->getColumnDefinition() instanceof TableInterface):
                 break;
         }
-        
+
         foreach ($statement->getIndexes() as $indexName => $index) {
             /* @var $index Index */
-            
+
             $indexSchemaPage = new IndexSchema();
             $indexSchemaPage->setName($indexName);
             $indexSchemaPage->setEngine(IndexEngine::BTREE());
-            
+
             switch(true){
                 case $index->getIsPrimary():
                     $indexSchemaPage->setType(IndexType::PRIMARY());
                     break;
-                    
+
                 case $index->getIsUnique():
                     $indexSchemaPage->setType(IndexType::UNIQUE());
                     break;
-                    
+
                 default:
                     $indexSchemaPage->setType(IndexType::INDEX());
                     break;
             }
-            
+
             $method = ForeignKeyMethod::factory($index->getForeignKeyOnDeleteReferenceOption()->getName());
             $indexSchemaPage->setForeignKeyOnDeleteMethod($method);
-            
+
             $method = ForeignKeyMethod::factory($index->getForeignKeyOnUpdateReferenceOption()->getName());
             $indexSchemaPage->setForeignKeyOnUpdateMethod($method);
-            
+
             $keyLength = 0;
             $columns = array();
             foreach ($index->getColumns() as $indexColumnName) {
@@ -226,19 +226,27 @@ class CreateTableExecutor implements StatementExecutorInterface
                 $columns[] = $indexColumnId;
                 $keyLength += $statement->getColumnDefinition()[(string)$indexColumnName]->getDataSize();
             }
-            
+
             $indexSchemaPage->setColumns($columns);
             $indexSchemaPage->setKeyLength($keyLength);
 
             $tableSchema->addIndexSchema($indexSchemaPage);
-            
+
         }
-    
+
+        foreach ($this->tableManager->getTableFactories() as $tableFactory) {
+            /* @var $tableFactory TableFactoryInterface */
+
+            if ($tableFactory instanceof InformationSchemaTableFactory) {
+                $tableFactory->clearCache();
+            }
+        }
+
         ### RESULT
-        
+
         $result = new TemporaryResult();
         $result->setIsSuccess(true);
-        
+
         return $result;
     }
 }

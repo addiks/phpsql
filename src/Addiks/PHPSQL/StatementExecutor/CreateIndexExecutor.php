@@ -27,7 +27,7 @@ use Addiks\PHPSQL\Table\TableManager;
 
 class CreateIndexExecutor implements StatementExecutorInterface
 {
-    
+
     public function __construct(
         TableManager $tableManager
     ) {
@@ -40,7 +40,7 @@ class CreateIndexExecutor implements StatementExecutorInterface
     {
         return $this->tableManager;
     }
-    
+
     public function canExecuteJob(StatementJob $statement)
     {
         return $statement instanceof CreateIndexStatement;
@@ -49,12 +49,12 @@ class CreateIndexExecutor implements StatementExecutorInterface
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
         /* @var $statement CreateIndexStatement */
-        
+
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTable();
-        
+
         ### WRITE INDEX PAGE
-        
+
         /* @var $tableResource TableInterface */
         $tableResource = $this->tableManager->getTable(
             $tableSpecifier->getTable(),
@@ -63,49 +63,49 @@ class CreateIndexExecutor implements StatementExecutorInterface
 
         /* @var $tableSchema TableSchema */
         $tableSchema = $tableResource->getTableSchema();
-        
+
         $indexPage = new Index();
         $indexPage->setName($statement->getName());
         $indexPage->setEngine(IndexEngine::factory($statement->getIndexType()->getName()));
-        
+
         $columnIds = array();
         $keyLength = 0;
         foreach ($statement->getColumns() as $columnDataset) {
             $columnSpecifier = $columnDataset['column'];
             /* @var $columnSpecifier Column */
-            
+
             $columnId = $tableSchema->getColumnIndex($columnSpecifier->getColumn());
-            
+
             if (is_null($columnId)) {
                 throw new InvalidArgumentException("Cannot create index for unknown column '{$columnSpecifier->getColumn()}'!");
             }
-            
+
             if (!is_null($columnDataset['length'])) {
                 $keyLength += (int)$columnDataset['length'];
             } else {
                 $keyLength += $tableSchema->getColumn($columnId)->getLength();
             }
-            
+
             $columnIds[] = $columnId;
         }
-        
+
         $indexPage->setColumns($columnIds);
         $indexPage->setKeyLength($keyLength);
-        
+
         if ($statement->getIsPrimary()) {
             $indexPage->setType(Type::PRIMARY());
-            
+
         } elseif ($statement->getIsUnique()) {
             $indexPage->setType(Type::UNIQUE());
-            
+
         } else {
             $indexPage->setType(Type::INDEX());
         }
-        
+
         $tableSchema->addIndexSchema($indexPage);
-        
+
         ### PHSICALLY BUILD INDEX
-        
+
         /* @var $tableResource TableInterface */
         $tableResource = $this->tableManager->getIndex(
             $indexPage->getName(),
@@ -116,5 +116,14 @@ class CreateIndexExecutor implements StatementExecutorInterface
         foreach ($tableResource->getIterator() as $rowId => $row) {
             $indexResource->insert($row, $rowId);
         }
+
+        foreach ($this->tableManager->getTableFactories() as $tableFactory) {
+            /* @var $tableFactory TableFactoryInterface */
+
+            if ($tableFactory instanceof InformationSchemaTableFactory) {
+                $tableFactory->clearCache();
+            }
+        }
+
     }
 }

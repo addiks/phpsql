@@ -31,6 +31,7 @@ use Addiks\PHPSQL\Column\ColumnDataFactoryInterface;
 use Addiks\PHPSQL\Column\ColumnDataInterface;
 use Addiks\PHPSQL\Table\TableSchema;
 use Addiks\PHPSQL\Table\TableFactoryInterface;
+use Addiks\PHPSQL\Table\InformationSchemaTableFactory;
 
 class AlterExecutor implements StatementExecutorInterface
 {
@@ -264,6 +265,14 @@ class AlterExecutor implements StatementExecutorInterface
                 case AlterAttributeType::ORDER_BY_DESC():
                     break;
 
+            }
+        }
+
+        foreach ($this->tableManager->getTableFactories() as $tableFactory) {
+            /* @var $tableFactory TableFactoryInterface */
+
+            if ($tableFactory instanceof InformationSchemaTableFactory) {
+                $tableFactory->clearCache();
             }
         }
 

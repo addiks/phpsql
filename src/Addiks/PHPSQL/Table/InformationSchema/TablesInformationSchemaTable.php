@@ -17,51 +17,58 @@ use Addiks\PHPSQL\Database\DatabaseSchema;
 
 class TablesInformationSchemaTable extends InformationSchemaTable
 {
+    protected $allTables;
+
+    public function clearCache()
+    {
+        $this->allTables = null;
+    }
 
     protected function getAllTables()
     {
-        /* @var $schemaManager SchemaManager */
-        $schemaManager = $this->schemaManager;
+        if (is_null($this->allTables)) {
+            /* @var $schemaManager SchemaManager */
+            $schemaManager = $this->schemaManager;
 
-        $schemas = $schemaManager->listSchemas();
+            $schemas = $schemaManager->listSchemas();
 
-        $allTables = array();
+            $this->allTables = array();
+            foreach ($schemas as $schemaId) {
+                /* @var $schema DatabaseSchema */
+                $schema = $schemaManager->getSchema($schemaId);
 
-        foreach ($schemas as $schemaId) {
-            /* @var $schema DatabaseSchema */
-            $schema = $schemaManager->getSchema($schemaId);
+                foreach ($schema->listTables() as $tableId => $tableName) {
+                    /* @var $tablePage DatabaseSchemaPage */
+                    $tablePage = $schema->getTablePage($tableId);
 
-            foreach ($schema->listTables() as $tableId => $tableName) {
-                /* @var $tablePage DatabaseSchemaPage */
-                $tablePage = $schema->getTablePage($tableId);
-
-                $allTables[] = [
-                    'TABLE_CATALOG' => null,
-                    'TABLE_SCHEMA' => $schemaId,
-                    'TABLE_NAME' => $tableName,
-                    'TABLE_TYPE' => null,
-                    'ENGINE' => $tablePage->getEngine()->getName(),
-                    'VERSION' => null,
-                    'ROW_FORMAT' => null,
-                    'TABLE_ROWS' => null,
-                    'AVG_ROW_LENGTH' => null,
-                    'DATA_LENGTH' => null,
-                    'MAX_DATA_LENGTH' => null,
-                    'INDEX_LENGTH' => null,
-                    'DATA_FREE' => null,
-                    'AUTO_INCREMENT' => null,
-                    'CREATE_TIME' => null,
-                    'UPDATE_TIME' => null,
-                    'CHECK_TIME' => null,
-                    'TABLE_COLLATION' => null,
-                    'CHECKSUM' => null,
-                    'CREATE_OPTIONS' => null,
-                    'TABLE_COMMENT' => null,
-                ];
+                    $this->allTables[] = [
+                        'TABLE_CATALOG' => null,
+                        'TABLE_SCHEMA' => $schemaId,
+                        'TABLE_NAME' => $tableName,
+                        'TABLE_TYPE' => null,
+                        'ENGINE' => $tablePage->getEngine()->getName(),
+                        'VERSION' => null,
+                        'ROW_FORMAT' => null,
+                        'TABLE_ROWS' => null,
+                        'AVG_ROW_LENGTH' => null,
+                        'DATA_LENGTH' => null,
+                        'MAX_DATA_LENGTH' => null,
+                        'INDEX_LENGTH' => null,
+                        'DATA_FREE' => null,
+                        'AUTO_INCREMENT' => null,
+                        'CREATE_TIME' => null,
+                        'UPDATE_TIME' => null,
+                        'CHECK_TIME' => null,
+                        'TABLE_COLLATION' => null,
+                        'CHECKSUM' => null,
+                        'CREATE_OPTIONS' => null,
+                        'TABLE_COMMENT' => null,
+                    ];
+                }
             }
         }
 
-        return $allTables;
+        return $this->allTables;
     }
 
     ### DATA-PROVIDER-INTERFACE
