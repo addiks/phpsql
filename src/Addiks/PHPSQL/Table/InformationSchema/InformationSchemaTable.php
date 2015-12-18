@@ -62,4 +62,51 @@ abstract class InformationSchemaTable implements TableInterface
     {
     }
 
+    ### ITERATOR
+
+    protected $index;
+
+    public function tell()
+    {
+        return $this->index;
+    }
+
+    public function seek($position)
+    {
+        if ($position >= 0 && $position < $this->count()) {
+            $this->index = $position;
+        }
+    }
+
+    public function rewind()
+    {
+        if ($this->count() > 0) {
+            $this->index = 0;
+        } else {
+            $this->index = null;
+        }
+    }
+
+    public function valid()
+    {
+        return !is_null($this->index);
+    }
+
+    public function key()
+    {
+        return $this->index;
+    }
+
+    public function next()
+    {
+        if ($this->valid() && $this->index < $this->count()) {
+            $this->index += 1;
+
+            if ($this->index >= $this->count()) {
+                $this->index = null;
+            }
+        }
+    }
+
+
 }

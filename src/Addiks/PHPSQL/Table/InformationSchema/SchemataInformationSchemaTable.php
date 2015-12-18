@@ -55,22 +55,21 @@ class SchemataInformationSchemaTable extends InformationSchemaTable
 
     public function getCellData($rowId, $columnId)
     {
-        /* @var $schemaManager SchemaManager */
-        $schemaManager = $this->schemaManager;
+        $cell = null;
 
-        $schemas = $schemaManager->listSchemas();
+        if ($this->doesRowExists($rowId)) {
+            $row = $this->getRowData($rowId);
 
-        $schema = null;
-        if (isset($schemas[$rowId])) {
-            $schema = $schemas[$rowId];
+            $keys = array_keys($row);
+
+            if (isset($keys[$columnId])) {
+                $key = $keys[$columnId];
+
+                $cell = $row[$key];
+            }
         }
 
-        return $schema;
-    }
-
-    public function tell()
-    {
-        return $this->index;
+        return $cell;
     }
 
     ### COUNTABLE
@@ -86,29 +85,6 @@ class SchemataInformationSchemaTable extends InformationSchemaTable
     }
 
     ### SEEKABLE ITERATOR
-
-    protected $index;
-
-    public function seek($position)
-    {
-        if ($position >= 0 && $position < $this->count()) {
-            $this->index = $position;
-        }
-    }
-
-    public function rewind()
-    {
-        if ($this->count() > 0) {
-            $this->index = 0;
-        } else {
-            $this->index = null;
-        }
-    }
-
-    public function valid()
-    {
-        return !is_null($this->index);
-    }
 
     public function current()
     {
@@ -132,22 +108,6 @@ class SchemataInformationSchemaTable extends InformationSchemaTable
         }
 
         return $row;
-    }
-
-    public function key()
-    {
-        return $this->index;
-    }
-
-    public function next()
-    {
-        if ($this->valid() && $this->index < $this->count()) {
-            $this->index += 1;
-
-            if ($this->index >= $this->count()) {
-                $this->index = null;
-            }
-        }
     }
 
 }

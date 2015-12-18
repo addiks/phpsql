@@ -251,13 +251,13 @@ class InformationSchemaTest extends PHPUnit_Framework_TestCase
                 `TABLE_NAME`,
                 `ENGINE`
             FROM
-                information_schema.`TABLES
+                information_schema.`TABLES`
             WHERE
                 TABLE_SCHEMA = 'phpunit_informationschema'
         ");
 
         $this->assertEquals([
-            ['phpunit_informationschema_test', 'InnoDB'],
+            ['phpunit_informationschema_test', 'MYISAM'],
         ], $result->fetchAll(PDO::FETCH_NUM));
 
         $result = $this->pdo->query("
@@ -275,8 +275,8 @@ class InformationSchemaTest extends PHPUnit_Framework_TestCase
         ");
 
         $this->assertEquals([
-            ['phpunit_informationschema_test', 'id',  '0', NULL,    '0', 'INTEGER'],
-            ['phpunit_informationschema_test', 'foo', '1', NULL,    '1', 'INTEGER'],
+            ['phpunit_informationschema_test', 'id',  '0', NULL,    '0', 'INT'],
+            ['phpunit_informationschema_test', 'foo', '1', NULL,    '1', 'INT'],
             ['phpunit_informationschema_test', 'bar', '2', 'Lorem', '1', 'VARCHAR'],
             ['phpunit_informationschema_test', 'baz', '3', NULL,    '0', 'DATETIME'],
         ], $result->fetchAll(PDO::FETCH_NUM));

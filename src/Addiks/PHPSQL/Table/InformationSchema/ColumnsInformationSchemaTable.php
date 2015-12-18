@@ -16,58 +16,104 @@ use Addiks\PHPSQL\Table\TableSchema;
 use Addiks\PHPSQL\Column\ColumnSchema;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Database\DatabaseSchemaPage;
+use Addiks\PHPSQL\Database\DatabaseSchema;
 
 class ColumnsInformationSchemaTable extends InformationSchemaTable
 {
+
+    protected function getAllColumns()
+    {
+        /* @var $schemaManager SchemaManager */
+        $schemaManager = $this->schemaManager;
+
+        $schemas = $schemaManager->listSchemas();
+
+        $allColumns = array();
+        foreach ($schemas as $schemaId) {
+            /* @var $schema DatabaseSchema */
+            $schema = $schemaManager->getSchema($schemaId);
+
+            foreach ($schema->listTables() as $tableId => $tableName) {
+                /* @var $tablePage DatabaseSchemaPage */
+                $tablePage = $schema->getTablePage($tableId);
+
+                /* @var $tableSchema TableSchema */
+                $tableSchema = $schemaManager->getTableSchema($tableId, $schemaId);
+
+                foreach ($tableSchema->getColumnIterator() as $columnSchema) {
+                    /* @var $columnSchema ColumnSchema */
+
+                    $allColumns[] = [
+                        'TABLE_CATALOG'            => null,
+                        'TABLE_SCHEMA'             => $schemaId,
+                        'TABLE_NAME'               => $tableName,
+                        'COLUMN_NAME'              => $columnSchema->getName(),
+                        'ORDINAL_POSITION'         => $columnSchema->getIndex(),
+                        'COLUMN_DEFAULT'           => $columnSchema->getDefaultValue(),
+                        'IS_NULLABLE'              => $columnSchema->isNotNull() ?'0' :'1',
+                        'DATA_TYPE'                => $columnSchema->getDataType()->getName(),
+                        'CHARACTER_MAXIMUM_LENGTH' => null,
+                        'CHARACTER_OCTET_LENGTH'   => null,
+                        'NUMERIC_PRECISION'        => null,
+                        'NUMERIC_SCALE'            => null,
+                        'DATETIME_PRECISION'       => null,
+                        'CHARACTER_SET_NAME'       => null,
+                        'COLLATION_NAME'           => null,
+                        'COLUMN_TYPE'              => null,
+                        'COLUMN_KEY'               => null,
+                        'EXTRA'                    => null,
+                        'PRIVILEGES'               => null,
+                        'COLUMN_COMMENT'           => null,
+                    ];
+                }
+            }
+        }
+
+        return $allColumns;
+    }
 
     ### DATA-PROVIDER-INTERFACE
 
     public function doesRowExists($rowId = null)
     {
+        return $rowId < $this->count();
     }
 
     public function getRowData($rowId = null)
     {
+        $row = null;
+        if ($this->doesRowExists($rowId)) {
+            $rows = $this->getAllColumns();
+            $row = $rows[$rowId];
+        }
+        return $row;
     }
 
     public function getCellData($rowId, $columnId)
     {
-    }
-
-    public function tell()
-    {
+        $cell = null;
+        if ($this->valid() && $columnId < 19) {
+            $cell = $this->getRowData($rowId)[$columnId];
+        }
+        return $cell;
     }
 
     ### COUNTABLE
 
     public function count()
     {
-    }
-
-    ### SEEKABLE ITERATOR
-
-    public function seek($position)
-    {
-    }
-
-    public function rewind()
-    {
-    }
-
-    public function valid()
-    {
+        return count($this->getAllColumns());
     }
 
     public function current()
     {
-    }
+        $row = null;
+        if ($this->valid()) {
+            $row = $this->getRowData($this->key());
+        }
 
-    public function key()
-    {
-    }
-
-    public function next()
-    {
+        return $row;
     }
 
 }
