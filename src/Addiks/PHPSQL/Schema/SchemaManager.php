@@ -214,8 +214,9 @@ class SchemaManager
         /* @var $databaseSchema DatabaseSchemaInterface */
         $databaseSchema = $this->getSchema($schemaId);
 
-        if (is_int($tableName)) {
+        if (is_numeric($tableName)) {
             $tableIndex = $tableName;
+            $tableName = $databaseSchema->getTablePage($tableIndex)->getName();
 
         } else {
             $tableIndex = $databaseSchema->getTableIndex((string)$tableName);

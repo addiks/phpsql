@@ -31,6 +31,9 @@ interface DatabaseSchemaInterface
 
     public function unregisterTable($tableName);
 
+    /**
+     * @return DatabaseSchemaPage
+     */
     public function getTablePage($tableId);
 
     public function createTableSchema(

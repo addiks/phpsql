@@ -23,7 +23,7 @@ use Addiks\PHPSQL\Value\Enum\Page\Schema\Type;
  */
 class DatabaseSchemaPage
 {
-    
+
     /**
      * name:          64 byte
      * engine:         2 byte
@@ -44,23 +44,23 @@ class DatabaseSchemaPage
      * @var int
      */
     const PAGE_SIZE = 128;
-    
+
     private $name;
-    
+
     public function getName()
     {
         return $this->name;
     }
-    
+
     public function setName($name)
     {
-        
+
         if (!preg_match("/^[a-zA-Z0-9_]{1,64}$/is", $name)) {
             throw new InvalidArgumentException("Invalid database name '{$name}' given!");
         }
         $this->name = $name;
     }
-    
+
     public function getType()
     {
         if ($this->getEngine()===Engine::VIEW()) {
@@ -69,14 +69,14 @@ class DatabaseSchemaPage
             return Type::TABLE();
         }
     }
-    
+
     public function setType(Type $type)
     {
         switch($type){
             case Type::VIEW():
                 $this->setEngine(Engine::VIEW());
                 break;
-                
+
             case Type::TABLE():
                 if ($this->getEngine() === Engine::VIEW()) {
                     $this->setEngine(Engine::INNODB());
@@ -84,14 +84,14 @@ class DatabaseSchemaPage
                 break;
         }
     }
-    
+
     private $engine;
-    
+
     public function setEngine(Engine $engine)
     {
         $this->engine = $engine;
     }
-    
+
     public function getEngine()
     {
         if (is_null($this->engine)) {
@@ -99,9 +99,9 @@ class DatabaseSchemaPage
         }
         return $this->engine;
     }
-    
+
     private $collation;
-    
+
     public function setCollation($collation)
     {
         $this->collation = (string)$collation;
@@ -109,79 +109,79 @@ class DatabaseSchemaPage
             $this->collation = substr($this->collation, 0, 8);
         }
     }
-    
+
     public function getCollation()
     {
         return $this->collation;
     }
-    
+
     private $useChecksum = false;
-    
+
     public function setUseChecksum($bool)
     {
         $this->useChecksum = (bool)$bool;
     }
-    
+
     public function getUseChecksum()
     {
         return $this->useChecksum;
     }
-    
+
     private $maxRows;
-    
+
     public function getMaxRows()
     {
         return $this->maxRows;
     }
-    
+
     public function setMaxRows($maxRows)
     {
         $this->maxRows = (int)$maxRows;
     }
-    
+
     private $minRows;
-    
+
     public function getMinRows()
     {
         return $this->minRows;
     }
-    
+
     public function setMinRows($minRows)
     {
         $this->minRows = (int)$minRows;
     }
-    
+
     private $packKeys = false;
-    
+
     public function setPackKeys($bool)
     {
         $this->packKeys = (bool)$bool;
     }
-    
+
     public function getPackKeys()
     {
         return $this->packKeys;
     }
-    
+
     private $delayKeyWrite = false;
-    
+
     public function setDelayKeyWrite($bool)
     {
         $this->delayKeyWrite = (bool)$bool;
     }
-    
+
     public function getDelayKeyWrite()
     {
         return $this->delayKeyWrite;
     }
-    
+
     private $rowFormat;
-    
+
     public function setRowFormat(RowFormat $format)
     {
         $this->rowFormat = $format;
     }
-    
+
     public function getRowFormat()
     {
         if (is_null($this->rowFormat)) {
@@ -189,14 +189,14 @@ class DatabaseSchemaPage
         }
         return $this->rowFormat;
     }
-    
+
     private $insertMethod;
-    
+
     public function setInsertMethod(InsertMethod $method)
     {
         $this->insertMethod = $method;
     }
-    
+
     public function getInsertMethod()
     {
         if (is_null($this->insertMethod)) {
@@ -204,14 +204,14 @@ class DatabaseSchemaPage
         }
         return $this->insertMethod;
     }
-    
+
     public function setData($data)
     {
-        
+
         if (!is_string($data) || strlen($data)!==self::PAGE_SIZE) {
             throw new InvalidArgumentException("Invalid page-data '{$data}' given!");
         }
-        
+
         $rawName          = substr($data, 0, 64);
         $rawType          = substr($data, 64, 2);
         $rawCollate       = substr($data, 66, 8);
@@ -222,7 +222,7 @@ class DatabaseSchemaPage
         $rawDelayKeyWrite = $data[92];
         $rawRowFormat     = substr($data, 93, 2);
         $rawInsertMethod  = substr($data, 95, 2);
-        
+
         $name          = rtrim($rawName, "\0");
         $type          = unpack("n", $rawType)[1];
         $collate       = rtrim($rawCollate, "\0");
@@ -233,17 +233,17 @@ class DatabaseSchemaPage
         $delayKeyWrite = (ord($rawDelayKeyWrite) === 0x00) ?false :true;
         $rowFormat     = unpack("n", $rawRowFormat)[1];
         $insertMethod  = unpack("n", $rawInsertMethod)[1];
-        
+
         // convert any binary to integer
         $maxRows = hexdec(implode("", array_map(function ($chr) {
             return dechex(ord($chr));
         }, str_split($rawMaxRows))));
-        
+
         // convert any binary to integer
         $minRows = hexdec(implode("", array_map(function ($chr) {
             return dechex(ord($chr));
         }, str_split($rawMinRows))));
-        
+
         $this->setName($name);
         $this->setEngine(Engine::getByValue($type));
         $this->setCollation($collate);
@@ -255,10 +255,10 @@ class DatabaseSchemaPage
         $this->setRowFormat(RowFormat::getByValue($rowFormat));
         $this->setInsertMethod(InsertMethod::getByValue($insertMethod));
     }
-    
+
     public function getData()
     {
-        
+
         $name          = $this->getName();
         $engine        = $this->getEngine()->getValue();
         $collate       = $this->getCollation();
@@ -269,7 +269,7 @@ class DatabaseSchemaPage
         $delayKeyWrite = $this->getDelayKeyWrite();
         $rowFormat     = $this->getRowFormat()->getValue();
         $insertMethod  = $this->getInsertMethod()->getValue();
-        
+
         $rawName          = str_pad($name, 64, "\0", STR_PAD_RIGHT);
         $rawEngine        = pack("n", $engine);
         $rawCollate       = str_pad($collate, 8, "\0", STR_PAD_RIGHT);
@@ -278,24 +278,24 @@ class DatabaseSchemaPage
         $rawDelayKeyWrite = $delayKeyWrite ?0x01 :0x00;
         $rawRowFormat     = pack("n", $rowFormat);
         $rawInsertMethod  = pack("n", $insertMethod);
-        
+
         // convert any integer to binary
         $rawMaxRows = implode("", array_map(function ($hex) {
             return chr(hexdec($hex));
         }, str_split(dechex((string)$maxRows), 2)));
         $rawMaxRows = str_pad($rawMaxRows, 8, "\0", STR_PAD_LEFT);
-        
+
         // convert any integer to binary
         $rawMinRows = implode("", array_map(function ($hex) {
             return chr(hexdec($hex));
         }, str_split(dechex((string)$minRows), 2)));
         $rawMinRows = str_pad($rawMinRows, 8, "\0", STR_PAD_LEFT);
-        
+
         $data = "{$rawName}{$rawEngine}{$rawCollate}{$rawUseChecksum}{$rawMaxRows}{$rawMinRows}{$rawPackKeys}{$rawDelayKeyWrite}{$rawRowFormat}{$rawInsertMethod}";
-        
+
         // fill reserved space with null-bytes
         $data = str_pad($data, self::PAGE_SIZE, "\0", STR_PAD_RIGHT);
-        
+
         return $data;
     }
 }

@@ -12,6 +12,7 @@ namespace Addiks\PHPSQL\BehaviourTests;
 
 use Addiks\PHPSQL\PDO\PDO;
 use PHPUnit_Framework_TestCase;
+use Addiks\PHPSQL\Result\ResultWriter;
 
 class InformationSchemaTest extends PHPUnit_Framework_TestCase
 {
@@ -310,6 +311,20 @@ class InformationSchemaTest extends PHPUnit_Framework_TestCase
         $this->assertEquals([
             ['phpunit_informationschema_view', $expectedSql],
         ], $result->fetchAll(PDO::FETCH_NUM));
+    }
+
+    /**
+     * @depe nds testCreatedTableInTables testColumnsHasRightColumns
+     * @group behaviour.information_schema
+     * @group behaviour.information_schema.select
+     */
+    public function testSelectFromColumnsThenTables()
+    {
+        $result = $this->pdo->query("SELECT * FROM information_schema.COLUMNS");
+        $result = $this->pdo->query("SELECT * FROM information_schema.TABLES");
+
+        # just test that this does not produce an error. (Happened once)
+        new ResultWriter($result->getResult());
     }
 
 }
