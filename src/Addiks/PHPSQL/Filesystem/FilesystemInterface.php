@@ -15,31 +15,31 @@ use Addiks\PHPSQL\Filesystem;
 
 interface FilesystemInterface
 {
-    
+
     public function getFileContents($filePath);
-    
+
     public function putFileContents($filePath, $content, $flags = 0);
-    
+
     public function getFile($filePath, $mode);
 
     public function fileOpen($filePath, $mode);
-    
+
     public function fileClose($handle);
-    
+
     public function fileWrite($handle, $data);
-    
+
     public function fileRead($handle, $length);
-    
+
     public function fileTruncate($handle, $size);
-    
+
     public function fileSeek($handle, $offset, $seekMode = SEEK_SET);
-    
+
     public function fileTell($handle);
-    
+
     public function fileEOF($handle);
-    
+
     public function fileReadLine($handle);
-    
+
     public function fileUnlink($filePath);
 
     public function fileSize($filePath);

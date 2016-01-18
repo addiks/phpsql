@@ -26,7 +26,7 @@ interface FileInterface
     public function tell();
 
     public function eof();
-    
+
     public function lock($mode);
 
     public function flush();
