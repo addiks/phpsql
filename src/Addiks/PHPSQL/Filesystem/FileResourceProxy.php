@@ -20,7 +20,7 @@ class FileResourceProxy implements FileInterface
     protected $mode;
     protected $index = 0;
     protected $isOpen = true;
-    
+
     public function __construct($resource, $mode = "a+")
     {
 
@@ -33,7 +33,7 @@ class FileResourceProxy implements FileInterface
 
         $this->resource = $resource;
         $this->mode = $mode;
-       
+
         # TODO: set index depending on mode
     }
 
@@ -69,7 +69,10 @@ class FileResourceProxy implements FileInterface
     {
         $this->checkUsable();
         fseek($this->resource, $this->index, SEEK_SET);
-        $data = fread($this->resource, $length);
+        $data = "";
+        if ($length > 0) {
+            $data = fread($this->resource, $length);
+        }
         $this->index += strlen($data);
         return $data;
     }

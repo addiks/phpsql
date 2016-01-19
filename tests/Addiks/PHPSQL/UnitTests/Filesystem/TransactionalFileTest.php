@@ -34,7 +34,39 @@ class TransactionalFileTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @ depends testWriteRead
+     * @group unittests.transaction.file
+     * @dataProvider dataProviderWriteRead
+     */
+    public function testWriteRead($expectedText)
+    {
+        ### PREPARE
+
+        /* @var $file TransactionalFile */
+        $file = $this->file;
+
+        ### EXECUTE
+
+        $file->write($expectedText);
+
+        $file->seek(0, SEEK_SET);
+
+        $actualText = $file->read(strlen($expectedText));
+
+        $this->assertEquals($expectedText, $actualText);
+    }
+
+    public function dataProviderWriteRead()
+    {
+        return array(
+            ["Lorem ipsum"],
+            ["1"],
+            [""],
+            ["ABC\0DEF\nGHI\rJKL"],
+        );
+    }
+
+    /**
+     * @depends testWriteRead
      * @group unittests.transaction.file
      * @group unittests.transaction.file.write_commit
      * @dataProvider dataProviderWriteCommitAndRollback
@@ -124,39 +156,6 @@ class TransactionalFileTest extends PHPUnit_Framework_TestCase
             ["A", ""],
             ["", ""],
             ["ABC\0\n\rDEF", "GHI\0\n\rJKL"],
-        #    [str_pad("", 32*1024, "A"), str_pad("", 32*1024, "A")],
-        );
-    }
-
-    /**
-     * @group unittests.transaction.file
-     * @dataProvider dataProviderWriteRead
-     */
-    public function testWriteRead($expectedText)
-    {
-        ### PREPARE
-
-        /* @var $file TransactionalFile */
-        $file = $this->file;
-
-        ### EXECUTE
-
-        $file->write($expectedText);
-
-        $file->seek(0, SEEK_SET);
-
-        $actualText = $file->read();
-
-        $this->assertEquals($expectedText, $actualText);
-    }
-
-    public function dataProviderWriteRead()
-    {
-        return array(
-            ["Lorem ipsum"],
-            ["1"],
-            [""],
-            ["ABC\0DEF\nGHI\rJKL"],
         );
     }
 
