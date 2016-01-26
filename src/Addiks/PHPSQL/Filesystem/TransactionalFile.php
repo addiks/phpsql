@@ -17,7 +17,7 @@ use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 class TransactionalFile implements FileInterface, TransactionalInterface
 {
 
-    const PAGE_SIZE_MINIMUM = 64;
+    const PAGE_SIZE_MINIMUM = 4;
 
     public function __construct(
         FileInterface $file,
@@ -53,6 +53,8 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
     protected $isInTransaction = false;
 
+    protected $fileSeekBeforeTransaction = 0;
+
     protected $isLocked = false;
 
     protected function loadPage($pageIndex)
@@ -63,9 +65,15 @@ class TransactionalFile implements FileInterface, TransactionalInterface
         /* @var $transactionStorage FileInterface */
         $transactionStorage = $this->transactionStorage;
 
-        $file->seek($pageIndex * $this->pageSize);
+        $fileSeek = min($file->getLength(), $pageIndex * $this->pageSize);
 
-        $pageData = $file->read($this->pageSize);
+        $pageData = "";
+        if ($file->getLength() > $fileSeek) {
+            $file->seek($fileSeek);
+            $readLength = min($this->pageSize, $file->getLength() - $file->tell());
+            $pageData = $file->read($readLength);
+        }
+
         $pageData = str_pad($pageData, $this->pageSize, "\0", STR_PAD_RIGHT);
 
         $transactionStorage->seek(0, SEEK_END);
@@ -119,8 +127,8 @@ class TransactionalFile implements FileInterface, TransactionalInterface
             $pageIndex = ($this->seekPosition-$positionInPage) / $this->pageSize;
 
             do {
-                $pageData = substr($data, 0, $this->pageSize);
-                $data = substr($data, $this->pageSize);
+                $pageData = substr($data, 0, $this->pageSize - $positionInPage);
+                $data = substr($data, $this->pageSize - $positionInPage);
 
                 $this->seekToPage($pageIndex);
 
@@ -154,51 +162,57 @@ class TransactionalFile implements FileInterface, TransactionalInterface
             /* @var $transactionStorage FileInterface */
             $transactionStorage = $this->transactionStorage;
 
-            $positionInPage = $this->seekPosition % $this->pageSize;
-            $firstPageIndex = ($this->seekPosition-$positionInPage) / $this->pageSize;
+            $length = min($length, $this->fileSize - $this->seekPosition);
 
-            $endSeekPosition = $this->seekPosition += $length;
+            if ($length > 0) {
+                $positionInPage = $this->seekPosition % $this->pageSize;
+                $firstPageIndex = ($this->seekPosition-$positionInPage) / $this->pageSize;
 
-            $positionInLastPage = $endSeekPosition % $this->pageSize;
-            $lastPageIndex = ($endSeekPosition-$positionInLastPage) / $this->pageSize;
+                $endSeekPosition = $this->seekPosition + $length;
 
-            # first page
-            if (isset($this->pageMap[$firstPageIndex])) {
-                $this->seekToPage($firstPageIndex);
-                $transactionStorage->seek($positionInPage, SEEK_CUR);
-                $result .= $transactionStorage->read($this->pageSize - $positionInPage);
+                $positionInLastPage = $endSeekPosition % $this->pageSize;
+                $lastPageIndex = ($endSeekPosition-$positionInLastPage) / $this->pageSize;
 
-            } else {
-                $file->seek($firstPageIndex * $this->pageSize);
-                $result .= $file->read($this->pageSize - $positionInPage);
-            }
-
-            # middle pages
-            for ($pageIndex = $firstPageIndex+1; $pageIndex < $lastPageIndex; $pageIndex++) {
-                if (isset($this->pageMap[$pageIndex])) {
-                    $this->seekToPage($pageIndex);
-                    $result .= $transactionStorage->read($this->pageSize);
+                # first page
+                if (isset($this->pageMap[$firstPageIndex])) {
+                    $this->seekToPage($firstPageIndex);
+                    $transactionStorage->seek($positionInPage, SEEK_CUR);
+                    $result .= $transactionStorage->read($this->pageSize - $positionInPage);
 
                 } else {
-                    $file->seek($pageIndex * $this->pageSize);
-                    $result .= $file->read($this->pageSize);
-                }
-            }
-
-            # last page
-            if ($lastPageIndex > $firstPageIndex) {
-                if (isset($this->pageMap[$lastPageIndex])) {
-                    $this->seekToPage($lastPageIndex);
-                    $transactionStorage->seek($positionInLastPage, SEEK_CUR);
-                    $result .= $transactionStorage->read($this->pageSize - $positionInLastPage);
-
-                } else {
-                    $file->seek($lastPageIndex * $this->pageSize);
+                    $file->seek($firstPageIndex * $this->pageSize);
                     $result .= $file->read($this->pageSize - $positionInPage);
                 }
-            }
 
-            $this->seekPosition += strlen($result);
+                # middle pages
+                for ($pageIndex = $firstPageIndex+1; $pageIndex < $lastPageIndex; $pageIndex++) {
+                    if (isset($this->pageMap[$pageIndex])) {
+                        $this->seekToPage($pageIndex);
+                        $result .= $transactionStorage->read($this->pageSize);
+
+                    } else {
+                        $file->seek($pageIndex * $this->pageSize);
+                        $result .= $file->read($this->pageSize);
+                    }
+                }
+
+                # last page
+                if ($lastPageIndex > $firstPageIndex) {
+                    if (isset($this->pageMap[$lastPageIndex])) {
+                        $this->seekToPage($lastPageIndex);
+                        #$transactionStorage->seek($positionInLastPage, SEEK_CUR);
+                        $result .= $transactionStorage->read($positionInLastPage);
+
+                    } else {
+                        $file->seek($lastPageIndex * $this->pageSize);
+                        $result .= $file->read($this->pageSize - $positionInPage);
+                    }
+                }
+
+                $result = substr($result, 0, $length);
+
+                $this->seekPosition += strlen($result);
+            }
 
         } else {
             $result = $file->read($length);
@@ -227,6 +241,10 @@ class TransactionalFile implements FileInterface, TransactionalInterface
             $this->fileSize = $size;
             $transactionStorage->truncate(($lastTransitionStorageIndex+1) * $this->pageSize);
 
+            if ($this->seekPosition > $this->fileSize) {
+                $this->seekPosition = $this->fileSize;
+            }
+
         } else {
             /* @var $file FileInterface */
             $file = $this->file;
@@ -238,7 +256,15 @@ class TransactionalFile implements FileInterface, TransactionalInterface
     public function seek($offset, $seekMode = SEEK_SET)
     {
         if ($this->isInTransaction) {
-            $this->seekPosition = $offset;
+            if ($seekMode === SEEK_SET) {
+                $this->seekPosition = $offset;
+
+            } elseif ($seekMode === SEEK_CUR) {
+                $this->seekPosition += $offset;
+
+            } elseif ($seekMode === SEEK_END) {
+                $this->seekPosition = $this->fileSize + $offset;
+            }
 
         } else {
             /* @var $file FileInterface */
@@ -270,7 +296,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
         $result = null;
 
         if ($this->isInTransaction) {
-            $result = $this->seekPosition >= $this->fileSize;
+            $result = $this->seekPosition > $this->fileSize;
 
         } else {
             /* @var $file FileInterface */
@@ -343,19 +369,38 @@ class TransactionalFile implements FileInterface, TransactionalInterface
             /* @var $transactionStorage FileInterface */
             $transactionStorage = $this->transactionStorage;
 
+            /* @var $file FileInterface */
+            $file = $this->file;
+
             $positionInPage = $this->seekPosition % $this->pageSize;
             $pageIndex = ($this->seekPosition-$positionInPage) / $this->pageSize;
 
-            $this->seekToPage($pageIndex);
-
-            $transactionStorage->seek($positionInPage);
-
             do {
-                $line = $transactionStorage->readLine();
-                $line = substr($line, 0, $this->pageSize);
+                if (isset($this->pageMap[$pageIndex])) {
+                    $this->seekToPage($pageIndex);
+
+                    $transactionStorage->seek($positionInPage);
+
+                    $line = $transactionStorage->readLine();
+                    $line = substr($line, 0, $this->pageSize);
+
+                } else {
+                    $file->seek($this->seekPosition);
+
+                    $line = $file->readLine();
+                    $line = substr($line, 0, $this->pageSize);
+
+                    $file->seek($this->fileSeekBeforeTransaction);
+                }
+
+                $this->seekPosition += strlen($line);
 
                 $result .= $line;
-            } while (strpos($result, "\n") === false && strlen($line)>0);
+
+                $pageIndex += 1;
+                $positionInPage = 0;
+            } while (strpos($result, "\n") === false && strlen($line)>0 && $this->seekPosition < $this->fileSize);
+
 
         } else {
             /* @var $file FileInterface */
@@ -405,6 +450,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
             $pageIndex = 0;
             while (strlen($data) > 0) {
                 $pageData = substr($data, 0, $this->pageSize);
+                $data = substr($data, strlen($pageData));
                 $this->pageMap[$pageIndex] = $pageIndex;
                 $transactionStorage->write($pageData);
                 $pageIndex++;
@@ -427,7 +473,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
         $result = null;
 
         if ($this->isInTransaction) {
-            $this->seekPosition = $this->fileSize;
+            $this->seek(0, SEEK_END);
             $this->write($data);
 
         } else {
@@ -467,6 +513,8 @@ class TransactionalFile implements FileInterface, TransactionalInterface
         /* @var $transactionStorage FileInterface */
         $transactionStorage = $this->transactionStorage;
 
+        $this->fileSeekBeforeTransaction = $file->tell();
+
         $this->rollback();
         $this->isInTransaction = true;
 
@@ -497,6 +545,8 @@ class TransactionalFile implements FileInterface, TransactionalInterface
         $file->seek($this->seekPosition);
         $file->flush();
 
+        $this->fileSeekBeforeTransaction = $this->seekPosition;
+
         $this->rollback();
     }
 
@@ -508,6 +558,8 @@ class TransactionalFile implements FileInterface, TransactionalInterface
         /* @var $transactionStorage FileInterface */
         $transactionStorage = $this->transactionStorage;
         $transactionStorage->truncate(0);
+
+        $file->seek($this->fileSeekBeforeTransaction);
 
         $this->pageMap = array();
         $this->seekPosition = $file->tell();
