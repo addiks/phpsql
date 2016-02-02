@@ -80,6 +80,9 @@ class FileResourceProxy implements FileInterface
     public function truncate($size)
     {
         $this->checkUsable();
+        if (ftell($this->resource) >= $size) {
+            fseek($this->resource, $size);
+        }
         ftruncate($this->resource, $size);
         $this->index = ftell($this->resource);
     }

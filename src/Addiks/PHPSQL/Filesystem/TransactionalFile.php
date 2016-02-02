@@ -10,6 +10,7 @@
 
 namespace Addiks\PHPSQL\Filesystem;
 
+use ErrorException;
 use Addiks\PHPSQL\Filesystem\FileInterface;
 use Addiks\PHPSQL\Iterators\TransactionalInterface;
 use Addiks\PHPSQL\Filesystem\FileResourceProxy;
@@ -21,15 +22,9 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
     public function __construct(
         FileInterface $file,
-        FileInterface $transactionStorage = null,
         $pageSize = 16384
     ) {
-        if (is_null($transactionStorage)) {
-            $transactionStorage = new FileResourceProxy(fopen("php://memory", "w"));
-        }
-
         $this->file = $file;
-        $this->transactionStorage = $transactionStorage;
         $this->pageSize = (int)$pageSize;
 
         if ($this->pageSize < self::PAGE_SIZE_MINIMUM) {
@@ -39,7 +34,9 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
     protected $file;
 
-    protected $transactionStorage;
+    protected $transactionStorageStack = array();
+
+    protected $fileSeekBeforeTransactionStack = array();
 
     protected $wasClosed = false;
 
@@ -49,11 +46,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
     protected $fileSize;
 
-    protected $pageMap = array();
-
-    protected $isInTransaction = false;
-
-    protected $fileSeekBeforeTransaction = 0;
+    protected $pageMapStack = array();
 
     protected $isLocked = false;
 
@@ -63,7 +56,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
         $file = $this->file;
 
         /* @var $transactionStorage FileInterface */
-        $transactionStorage = $this->transactionStorage;
+        $transactionStorage = end($this->transactionStorageStack);
 
         $fileSeek = min($file->getLength(), $pageIndex * $this->pageSize);
 
@@ -82,19 +75,21 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
         $transactionStorage->write($pageData);
 
-        $this->pageMap[$pageIndex] = $transactionStorageIndex;
+        end($this->pageMapStack);
+        $this->pageMapStack[key($this->pageMapStack)][$pageIndex] = $transactionStorageIndex;
     }
 
     protected function seekToPage($pageIndex)
     {
-        if (!isset($this->pageMap[$pageIndex])) {
+        end($this->pageMapStack);
+        if (!isset($this->pageMapStack[key($this->pageMapStack)][$pageIndex])) {
             $this->loadPage($pageIndex);
         }
 
         /* @var $transactionStorage FileInterface */
-        $transactionStorage = $this->transactionStorage;
+        $transactionStorage = end($this->transactionStorageStack);
 
-        $transactionStorageIndex = $this->pageMap[$pageIndex];
+        $transactionStorageIndex = $this->pageMapStack[key($this->pageMapStack)][$pageIndex];
 
         $transactionStorage->seek($transactionStorageIndex * $this->pageSize);
     }
@@ -103,7 +98,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
     public function close()
     {
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             $this->wasClosed = true;
 
         } else {
@@ -119,9 +114,9 @@ class TransactionalFile implements FileInterface, TransactionalInterface
         /* @var $file FileInterface */
         $file = $this->file;
 
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             /* @var $transactionStorage FileInterface */
-            $transactionStorage = $this->transactionStorage;
+            $transactionStorage = end($this->transactionStorageStack);
 
             $positionInPage = $this->seekPosition % $this->pageSize;
             $pageIndex = ($this->seekPosition-$positionInPage) / $this->pageSize;
@@ -158,9 +153,9 @@ class TransactionalFile implements FileInterface, TransactionalInterface
         /* @var $file FileInterface */
         $file = $this->file;
 
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             /* @var $transactionStorage FileInterface */
-            $transactionStorage = $this->transactionStorage;
+            $transactionStorage = end($this->transactionStorageStack);
 
             $length = min($length, $this->fileSize - $this->seekPosition);
 
@@ -173,8 +168,10 @@ class TransactionalFile implements FileInterface, TransactionalInterface
                 $positionInLastPage = $endSeekPosition % $this->pageSize;
                 $lastPageIndex = ($endSeekPosition-$positionInLastPage) / $this->pageSize;
 
+                end($this->pageMapStack);
+
                 # first page
-                if (isset($this->pageMap[$firstPageIndex])) {
+                if (isset($this->pageMapStack[key($this->pageMapStack)][$firstPageIndex])) {
                     $this->seekToPage($firstPageIndex);
                     $transactionStorage->seek($positionInPage, SEEK_CUR);
                     $result .= $transactionStorage->read($this->pageSize - $positionInPage);
@@ -186,7 +183,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
                 # middle pages
                 for ($pageIndex = $firstPageIndex+1; $pageIndex < $lastPageIndex; $pageIndex++) {
-                    if (isset($this->pageMap[$pageIndex])) {
+                    if (isset($this->pageMapStack[key($this->pageMapStack)][$pageIndex])) {
                         $this->seekToPage($pageIndex);
                         $result .= $transactionStorage->read($this->pageSize);
 
@@ -198,7 +195,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
                 # last page
                 if ($lastPageIndex > $firstPageIndex) {
-                    if (isset($this->pageMap[$lastPageIndex])) {
+                    if (isset($this->pageMapStack[key($this->pageMapStack)][$lastPageIndex])) {
                         $this->seekToPage($lastPageIndex);
                         #$transactionStorage->seek($positionInLastPage, SEEK_CUR);
                         $result .= $transactionStorage->read($positionInLastPage);
@@ -212,6 +209,8 @@ class TransactionalFile implements FileInterface, TransactionalInterface
                 $result = substr($result, 0, $length);
 
                 $this->seekPosition += strlen($result);
+
+                $file->seek(end($this->fileSeekBeforeTransactionStack));
             }
 
         } else {
@@ -223,15 +222,17 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
     public function truncate($size)
     {
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             /* @var $transactionStorage FileInterface */
-            $transactionStorage = $this->transactionStorage;
+            $transactionStorage = end($this->transactionStorageStack);
+
+            end($this->pageMapStack);
 
             $lastPageIndex = floor($size / $this->pageSize);
             $lastTransitionStorageIndex = 0;
-            foreach ($this->pageMap as $pageIndex => $transactionStorageIndex) {
+            foreach ($this->pageMapStack[key($this->pageMapStack)] as $pageIndex => $transactionStorageIndex) {
                 if ($pageIndex > $lastPageIndex) {
-                    unset($this->pageMap[$pageIndex]);
+                    unset($this->pageMapStack[key($this->pageMapStack)][$pageIndex]);
                     if ($lastTransitionStorageIndex < $transactionStorageIndex) {
                         $lastTransitionStorageIndex = $transactionStorageIndex;
                     }
@@ -255,7 +256,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
     public function seek($offset, $seekMode = SEEK_SET)
     {
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             if ($seekMode === SEEK_SET) {
                 $this->seekPosition = $offset;
 
@@ -278,7 +279,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
     {
         $result = null;
 
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             $result = $this->seekPosition;
 
         } else {
@@ -295,7 +296,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
     {
         $result = null;
 
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             $result = $this->seekPosition > $this->fileSize;
 
         } else {
@@ -312,9 +313,9 @@ class TransactionalFile implements FileInterface, TransactionalInterface
     {
         $result = null;
 
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             /* @var $transactionStorage FileInterface */
-            $transactionStorage = $this->transactionStorage;
+            $transactionStorage = end($this->transactionStorageStack);
 
             $transactionStorage->lock($mode);
 
@@ -336,7 +337,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
     public function flush()
     {
-        if (!$this->isInTransaction) {
+        if (!count($this->transactionStorageStack) > 0) {
             /* @var $file FileInterface */
             $file = $this->file;
 
@@ -348,7 +349,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
     {
         $result = null;
 
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             $result = $this->fileSize;
 
         } else {
@@ -365,9 +366,9 @@ class TransactionalFile implements FileInterface, TransactionalInterface
     {
         $result = "";
 
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             /* @var $transactionStorage FileInterface */
-            $transactionStorage = $this->transactionStorage;
+            $transactionStorage = end($this->transactionStorageStack);
 
             /* @var $file FileInterface */
             $file = $this->file;
@@ -375,8 +376,10 @@ class TransactionalFile implements FileInterface, TransactionalInterface
             $positionInPage = $this->seekPosition % $this->pageSize;
             $pageIndex = ($this->seekPosition-$positionInPage) / $this->pageSize;
 
+            end($this->pageMapStack);
+
             do {
-                if (isset($this->pageMap[$pageIndex])) {
+                if (isset($this->pageMapStack[key($this->pageMapStack)][$pageIndex])) {
                     $this->seekToPage($pageIndex);
 
                     $transactionStorage->seek($positionInPage);
@@ -386,11 +389,9 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
                 } else {
                     $file->seek($this->seekPosition);
-
                     $line = $file->readLine();
                     $line = substr($line, 0, $this->pageSize);
 
-                    $file->seek($this->fileSeekBeforeTransaction);
                 }
 
                 $this->seekPosition += strlen($line);
@@ -401,6 +402,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
                 $positionInPage = 0;
             } while (strpos($result, "\n") === false && strlen($line)>0 && $this->seekPosition < $this->fileSize);
 
+            $file->seek(end($this->fileSeekBeforeTransactionStack));
 
         } else {
             /* @var $file FileInterface */
@@ -416,7 +418,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
     {
         $result = null;
 
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             $beforeSeekPosition = $this->seekPosition;
 
             $this->seekPosition = 0;
@@ -438,11 +440,13 @@ class TransactionalFile implements FileInterface, TransactionalInterface
     {
         $result = null;
 
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             /* @var $transactionStorage FileInterface */
-            $transactionStorage = $this->transactionStorage;
+            $transactionStorage = end($this->transactionStorageStack);
 
-            $this->pageMap = array();
+            end($this->pageMapStack);
+
+            $this->pageMapStack[key($this->pageMapStack)] = array();
             $this->fileSize = strlen($data);
             $this->seekPosition = 0;
             $transactionStorage->truncate(0);
@@ -451,7 +455,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
             while (strlen($data) > 0) {
                 $pageData = substr($data, 0, $this->pageSize);
                 $data = substr($data, strlen($pageData));
-                $this->pageMap[$pageIndex] = $pageIndex;
+                $this->pageMapStack[key($this->pageMapStack)][$pageIndex] = $pageIndex;
                 $transactionStorage->write($pageData);
                 $pageIndex++;
             }
@@ -472,7 +476,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
     {
         $result = null;
 
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             $this->seek(0, SEEK_END);
             $this->write($data);
 
@@ -490,7 +494,7 @@ class TransactionalFile implements FileInterface, TransactionalInterface
     {
         $result = null;
 
-        if ($this->isInTransaction) {
+        if (count($this->transactionStorageStack) > 0) {
             $result = $this->fileSize;
 
         } else {
@@ -505,18 +509,26 @@ class TransactionalFile implements FileInterface, TransactionalInterface
 
     ### TRANSACTION-INTERFACE
 
-    public function beginTransaction($withConsistentSnapshot = false, $readOnly = false)
-    {
+    public function beginTransaction(
+        $withConsistentSnapshot = false,
+        $readOnly = false,
+        FileInterface $transactionStorage = null
+    ) {
         /* @var $file FileInterface */
         $file = $this->file;
 
-        /* @var $transactionStorage FileInterface */
-        $transactionStorage = $this->transactionStorage;
+        if (is_null($transactionStorage)) {
+            $transactionStorage = new FileResourceProxy(fopen("php://memory", "w"));
+        }
 
-        $this->fileSeekBeforeTransaction = $file->tell();
+        $this->transactionStorageStack[] = $transactionStorage;
 
-        $this->rollback();
-        $this->isInTransaction = true;
+        $this->fileSeekBeforeTransactionStack[] = $file->tell();
+        $this->seekPosition = $file->tell();
+        $this->fileSize = $file->getLength();
+        $this->pageMapStack[] = array();
+
+        $transactionStorage->truncate(0);
 
         $file->lock(LOCK_EX);
 
@@ -530,10 +542,16 @@ class TransactionalFile implements FileInterface, TransactionalInterface
         /* @var $file FileInterface */
         $file = $this->file;
 
-        /* @var $transactionStorage FileInterface */
-        $transactionStorage = $this->transactionStorage;
+        if (count($this->pageMapStack) <= 0) {
+            throw new ErrorException("Tried to commit without transaction!");
+        }
 
-        foreach ($this->pageMap as $pageIndex => $transactionStorageIndex) {
+        end($this->pageMapStack);
+
+        /* @var $transactionStorage FileInterface */
+        $transactionStorage = end($this->transactionStorageStack);
+
+        foreach ($this->pageMapStack[key($this->pageMapStack)] as $pageIndex => $transactionStorageIndex) {
             $this->seekToPage($pageIndex);
             $pageData = $transactionStorage->read($this->pageSize);
 
@@ -541,13 +559,24 @@ class TransactionalFile implements FileInterface, TransactionalInterface
             $file->write($pageData);
         }
 
+        array_pop($this->transactionStorageStack);
+        array_pop($this->fileSeekBeforeTransactionStack);
+
         $file->truncate($this->fileSize);
-        $file->seek($this->seekPosition);
         $file->flush();
 
-        $this->fileSeekBeforeTransaction = $this->seekPosition;
+        $file->seek($this->seekPosition);
 
-        $this->rollback();
+        array_pop($this->pageMapStack);
+
+        $this->seekPosition = $file->tell();
+        $this->fileSize = $file->getLength();
+
+        if (!$this->isLocked) {
+            $file->lock(LOCK_UN);
+        }
+
+        $transactionStorage->close();
     }
 
     public function rollback()
@@ -556,22 +585,20 @@ class TransactionalFile implements FileInterface, TransactionalInterface
         $file = $this->file;
 
         /* @var $transactionStorage FileInterface */
-        $transactionStorage = $this->transactionStorage;
-        $transactionStorage->truncate(0);
+        $transactionStorage = array_pop($this->transactionStorageStack);
 
-        $file->seek($this->fileSeekBeforeTransaction);
+        $file->seek(array_pop($this->fileSeekBeforeTransactionStack));
 
-        $this->pageMap = array();
+        array_pop($this->pageMapStack);
+
         $this->seekPosition = $file->tell();
         $this->fileSize = $file->getLength();
-        $this->isInTransaction = false;
 
-        if ($this->isLocked) {
-            $transactionStorage->lock(LOCK_UN);
-
-        } else {
+        if (!$this->isLocked) {
             $file->lock(LOCK_UN);
         }
+
+        $transactionStorage->close();
     }
 
 }
