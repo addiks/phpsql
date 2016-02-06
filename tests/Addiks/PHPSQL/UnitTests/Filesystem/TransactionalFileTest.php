@@ -30,6 +30,7 @@ class TransactionalFileTest extends PHPUnit_Framework_TestCase
 
     /**
      * @group unittests.transaction.file
+     * @group unittests.transaction.file.write_read
      * @dataProvider dataProviderWriteRead
      */
     public function testWriteRead($expectedText)
@@ -505,6 +506,123 @@ class TransactionalFileTest extends PHPUnit_Framework_TestCase
             ["a\0b", "", 3, false],
             ["", "c\0d", 3, true],
             ["", "c\0d", 0, false],
+        );
+    }
+
+    /**
+     * @group unittests.transaction.file
+     * @group unittests.transaction.file.cascaded_transactions
+     * @dataProvider dataProviderCascadedTransactions
+     */
+    public function testCascadedTransactions(
+        $fixtureData,
+        $firstSeek,
+        $firstData,
+        $secondSeek,
+        $secondData,
+        $doFirstCommit,
+        $firstExpectedData,
+        $doSecondCommit,
+        $secondExpectedData
+    ) {
+        /* @var $file TransactionalFile */
+        $file = $this->file;
+
+        /* @var $realFile FileResourceProxy */
+        $realFile = $this->realFile;
+
+        $file->setData($fixtureData);
+
+        $this->assertEquals($fixtureData, $file->getData());
+        $this->assertEquals($fixtureData, $realFile->getData());
+
+        $file->beginTransaction();
+
+        $file->seek($firstSeek);
+        $file->write($firstData);
+
+        $this->assertEquals($fixtureData, $realFile->getData());
+
+        $file->beginTransaction();
+
+        $file->getData();
+
+        $file->seek($secondSeek);
+        $file->write($secondData);
+
+        $this->assertEquals($fixtureData, $realFile->getData());
+
+        $file->getData();
+
+        if ($doFirstCommit) {
+            $file->commit();
+
+        } else {
+            $file->rollback();
+        }
+
+        $this->assertEquals($firstExpectedData, $file->getData());
+        $this->assertEquals($fixtureData, $realFile->getData());
+
+        if ($doSecondCommit) {
+            $file->commit();
+
+        } else {
+            $file->rollback();
+        }
+
+        $this->assertEquals($secondExpectedData, $file->getData());
+        $this->assertEquals($secondExpectedData, $realFile->getData());
+
+    }
+
+    public function dataProviderCascadedTransactions()
+    {
+        return array(
+            [
+                "Lorem ipsum",
+                2,
+                "foo",
+                6,
+                "bar",
+                true,
+                "Lofoo barum",
+                true,
+                "Lofoo barum"
+            ],
+            [
+                "Lorem ipsum",
+                2,
+                "foo",
+                6,
+                "bar",
+                true,
+                "Lofoo barum",
+                false,
+                "Lorem ipsum"
+            ],
+            [
+                "Lorem ipsum",
+                2,
+                "foo",
+                6,
+                "bar",
+                false,
+                "Lofoo ipsum",
+                true,
+                "Lofoo ipsum"
+            ],
+            [
+                "Lorem ipsum",
+                2,
+                "foo",
+                6,
+                "bar",
+                false,
+                "Lofoo ipsum",
+                false,
+                "Lorem ipsum"
+            ],
         );
     }
 
