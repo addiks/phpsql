@@ -423,9 +423,6 @@ end($this->seekPositionStack);
         $result = "";
 
         if (count($this->transactionStorageStack) > 0) {
-            /* @var $transactionStorage FileInterface */
-            $transactionStorage = end($this->transactionStorageStack);
-
             /* @var $file FileInterface */
             $file = $this->file;
 
@@ -435,19 +432,29 @@ end($this->seekPositionStack);
             end($this->pageMapStack);
 
             do {
-                if (isset($this->pageMapStack[key($this->pageMapStack)][$pageIndex])) {
-                    $this->seekToPage($pageIndex);
+                $foundInTransaction = false;
+                foreach (array_reverse($this->pageMapStack, true) as $transactionNr => $pageMap) {
+                    if (isset($pageMap[$pageIndex])) {
+                        $this->seekToPage($pageIndex, $transactionNr);
 
-                    $transactionStorage->seek($positionInPage);
+                        /* @var $transactionStorage FileInterface */
+                        $transactionStorage = $this->transactionStorageStack[$transactionNr];
+                        $transactionStorage->seek($positionInPage, SEEK_CUR);
 
-                    $line = $transactionStorage->readLine();
-                    $line = substr($line, 0, $this->pageSize);
-
-                } else {
+                        $line = $transactionStorage->readLine();
+                        $line = substr($line, 0, $this->pageSize - $positionInPage);
+                        $foundInTransaction = true;
+                        break;
+                    }
+                }
+                if (!$foundInTransaction) {
                     $file->seek(end($this->seekPositionStack));
                     $line = $file->readLine();
                     $line = substr($line, 0, $this->pageSize);
+                }
 
+                if (strlen($line) + end($this->seekPositionStack) > end($this->fileSizeStack)) {
+                    $line = substr($line, 0, end($this->fileSizeStack) - end($this->seekPositionStack));
                 }
 
                 $this->seekPositionStack[key($this->seekPositionStack)] += strlen($line);

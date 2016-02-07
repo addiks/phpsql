@@ -7,6 +7,7 @@ This projects's goal is to create an SQL-compliant database completely written i
 It's purposes are wide ranged:
 
  - It can be used to mock a temporary in-memory database for unit-tests.
+ - A developer can debug directly from the application into the database to see why the db behaves like it does.
  - The SQL-Parser can be used to extract valuable information from external SQL-queries.
  - This database does not depend on php-modules or a seperate server, it just works.
  - The obligatory learning-by-doing purpose

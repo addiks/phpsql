@@ -520,10 +520,16 @@ class TransactionalFileTest extends PHPUnit_Framework_TestCase
         $firstData,
         $secondSeek,
         $secondData,
+        $firstReadLineSeek,
+        $expectedFirstReadLine,
         $doFirstCommit,
+        $secondReadLineSeek,
+        $expectedSecondReadLine,
         $firstExpectedData,
         $doSecondCommit,
-        $secondExpectedData
+        $secondExpectedData,
+        $thirdReadLineSeek,
+        $expectedThirdReadLine
     ) {
         /* @var $file TransactionalFile */
         $file = $this->file;
@@ -550,6 +556,10 @@ class TransactionalFileTest extends PHPUnit_Framework_TestCase
         $file->seek($secondSeek);
         $file->write($secondData);
 
+        $file->seek($firstReadLineSeek);
+        $actualFirstReadLine = $file->readLine();
+
+        $this->assertEquals($expectedFirstReadLine, $actualFirstReadLine);
         $this->assertEquals($fixtureData, $realFile->getData());
 
         $file->getData();
@@ -564,6 +574,11 @@ class TransactionalFileTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($firstExpectedData, $file->getData());
         $this->assertEquals($fixtureData, $realFile->getData());
 
+        $file->seek($secondReadLineSeek);
+        $actualSecondReadLine = $file->readLine();
+
+        $this->assertEquals($expectedSecondReadLine, $actualSecondReadLine);
+
         if ($doSecondCommit) {
             $file->commit();
 
@@ -573,6 +588,11 @@ class TransactionalFileTest extends PHPUnit_Framework_TestCase
 
         $this->assertEquals($secondExpectedData, $file->getData());
         $this->assertEquals($secondExpectedData, $realFile->getData());
+
+        $file->seek($thirdReadLineSeek);
+        $actualThirdReadLine = $file->readLine();
+
+        $this->assertEquals($expectedThirdReadLine, $actualThirdReadLine);
 
     }
 
@@ -585,21 +605,16 @@ class TransactionalFileTest extends PHPUnit_Framework_TestCase
                 "foo",
                 6,
                 "bar",
-                true,
+                0,
                 "Lofoo barum",
                 true,
-                "Lofoo barum"
-            ],
-            [
-                "Lorem ipsum",
-                2,
-                "foo",
                 6,
-                "bar",
+                "barum",
+                "Lofoo barum",
                 true,
                 "Lofoo barum",
-                false,
-                "Lorem ipsum"
+                0,
+                "Lofoo barum",
             ],
             [
                 "Lorem ipsum",
@@ -607,10 +622,33 @@ class TransactionalFileTest extends PHPUnit_Framework_TestCase
                 "foo",
                 6,
                 "bar",
+                0,
+                "Lofoo barum",
+                true,
+                6,
+                "barum",
+                "Lofoo barum",
                 false,
+                "Lorem ipsum",
+                0,
+                "Lorem ipsum",
+            ],
+            [
+                "Lorem ipsum",
+                2,
+                "foo",
+                6,
+                "bar",
+                0,
+                "Lofoo barum",
+                false,
+                6,
+                "ipsum",
                 "Lofoo ipsum",
                 true,
-                "Lofoo ipsum"
+                "Lofoo ipsum",
+                0,
+                "Lofoo ipsum",
             ],
             [
                 "Lorem ipsum",
@@ -618,10 +656,16 @@ class TransactionalFileTest extends PHPUnit_Framework_TestCase
                 "foo",
                 6,
                 "bar",
+                0,
+                "Lofoo barum",
                 false,
+                6,
+                "ipsum",
                 "Lofoo ipsum",
                 false,
-                "Lorem ipsum"
+                "Lorem ipsum",
+                0,
+                "Lorem ipsum",
             ],
         );
     }
