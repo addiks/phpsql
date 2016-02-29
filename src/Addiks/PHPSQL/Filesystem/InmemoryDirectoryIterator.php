@@ -12,11 +12,11 @@
 namespace Addiks\PHPSQL\Filesystem;
 
 use DirectoryIterator;
-use Addiks\PHPSQL\Filesystem\InmemoryFilesystem;
+use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 
 class InmemoryDirectoryIterator extends DirectoryIterator
 {
-    public function __construct($path, InmemoryFilesystem $filesystem = null)
+    public function __construct($path, FilesystemInterface $filesystem = null)
     {
         $this->path = $path;
         $this->filesystem = $filesystem;

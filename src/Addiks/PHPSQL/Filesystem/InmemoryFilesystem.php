@@ -20,7 +20,7 @@ use Addiks\PHPSQL\Filesystem\FilesystemInterface;
  */
 class InmemoryFilesystem implements FilesystemInterface
 {
-    
+
     /**
      * Holds all file resources to inmemory files.
      *
@@ -69,7 +69,7 @@ class InmemoryFilesystem implements FilesystemInterface
         $content = fread($fileHandle, $byteCount);
         return $content;
     }
-    
+
     public function putFileContents($filePath, $content, $flags = 0)
     {
         $fileHandle = $this->getInternalFileHandle($filePath);
@@ -78,7 +78,7 @@ class InmemoryFilesystem implements FilesystemInterface
         fseek($fileHandle, 0);
         fwrite($fileHandle, $content);
     }
-    
+
     public function getFile($filePath, $mode = "a+")
     {
         $resourceProxy = null;
@@ -89,51 +89,6 @@ class InmemoryFilesystem implements FilesystemInterface
         }
 
         return $resourceProxy;
-    }
-
-    public function fileOpen($filePath, $mode)
-    {
-        return $this->getFileProxy($filePath, $mode);
-    }
-    
-    public function fileClose($handle)
-    {
-        $handle->close();
-    }
-    
-    public function fileWrite($handle, $data)
-    {
-        $handle->write($data);
-    }
-    
-    public function fileRead($handle, $length)
-    {
-        return $handle->read($length);
-    }
-    
-    public function fileTruncate($handle, $size)
-    {
-        $handle->truncate($size);
-    }
-    
-    public function fileSeek($handle, $offset, $seekMode = SEEK_SET)
-    {
-        $handle->seek($offset, $seekMode);
-    }
-    
-    public function fileTell($handle)
-    {
-        return $handle->tell();
-    }
-    
-    public function fileEOF($handle)
-    {
-        return $handle->eof();
-    }
-    
-    public function fileReadLine($handle)
-    {
-        return $handle->readLine();
     }
 
     public function fileUnlink($filePath)
@@ -153,7 +108,7 @@ class InmemoryFilesystem implements FilesystemInterface
             unset($this->fileResources[$folderPath][$fileName]);
         }
     }
-    
+
     public function fileSize($filePath)
     {
         $size = 0;
@@ -172,7 +127,7 @@ class InmemoryFilesystem implements FilesystemInterface
         return isset($this->fileResources[$filePath]);
     }
 
-    public function fileIsDir($path)
+    protected function fileIsDir($path)
     {
         return isset($this->fileResources[$path]) && is_array($this->fileResources[$path]);
     }
@@ -194,13 +149,4 @@ class InmemoryFilesystem implements FilesystemInterface
         return new InmemoryDirectoryIterator($path, $this);
     }
 
-    /**
-     * removes recursive a whole directory
-     *
-     * @param string $dir
-     */
-    public static function rrmdir($dir)
-    {
-        
-    }
 }

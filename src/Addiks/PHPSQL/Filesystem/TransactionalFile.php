@@ -625,6 +625,7 @@ end($this->seekPositionStack);
         /* @var $targetTransactionStorage FileInterface */
         $targetTransactionStorage = null;
 
+        $targetTransactionNr = null;
         if (count($this->transactionStorageStack) > 1) {
             $targetTransactionNr = count($this->transactionStorageStack) - 2;
             $targetTransactionStorage = $this->transactionStorageStack[$targetTransactionNr];
@@ -634,6 +635,7 @@ end($this->seekPositionStack);
         foreach ($this->pageMapStack[key($this->pageMapStack)] as $pageIndex => $transactionStorageIndex) {
             $this->seekToPage($pageIndex);
             $pageData = $transactionStorage->read($this->pageSize);
+            $pageData = str_pad($pageData, $this->pageSize, "\0", STR_PAD_RIGHT);
 
             if (count($this->transactionStorageStack) === 1) {
                 $file->seek($pageIndex * $this->pageSize);
@@ -658,10 +660,16 @@ end($this->seekPositionStack);
             }
         }
 
-        array_pop($this->fileSizeStack);
+        $fileSize = array_pop($this->fileSizeStack);
+        $fileSeek = array_pop($this->seekPositionStack);
         array_pop($this->transactionStorageStack);
         array_pop($this->pageMapStack);
-        array_pop($this->seekPositionStack);
+
+        end($this->fileSizeStack);
+        $this->fileSizeStack[key($this->fileSizeStack)] = $fileSize;
+
+        end($this->seekPositionStack);
+        $this->seekPositionStack[key($this->seekPositionStack)] = $fileSeek;
 
         $transactionStorage->close();
     }
