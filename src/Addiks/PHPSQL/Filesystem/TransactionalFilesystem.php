@@ -14,8 +14,8 @@ use ErrorException;
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
 use Addiks\PHPSQL\Iterators\TransactionalInterface;
 use Addiks\PHPSQL\Filesystem\TransactionalFile;
-use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 use Addiks\PHPSQL\Filesystem\FileInterface;
+use Addiks\PHPSQL\Filesystem\FileResourceProxy;
 
 /**
  * Provides transctional access to another filesystem.
@@ -70,7 +70,7 @@ class TransactionalFilesystem implements FilesystemInterface, TransactionalInter
         $file->setData($content);
     }
 
-    public function getFile($filePath, $mode)
+    public function getFile($filePath, $mode = "a+")
     {
         /* @var $result TransactionalFile */
         $result = null;
@@ -112,7 +112,7 @@ class TransactionalFilesystem implements FilesystemInterface, TransactionalInter
                 $this->directoriesStack[key($this->filesStack)][$folderPath] = $folderPath;
             } while (count($filePathParts) > 0);
 
-            for ($index=0; $index < count($this->createdFilepathsStack); $index++) {
+            for ($index=1; $index < count($this->createdFilepathsStack); $index++) {
                 $result->beginTransaction();
             }
         }
@@ -206,7 +206,11 @@ class TransactionalFilesystem implements FilesystemInterface, TransactionalInter
         foreach ($this->filesStack as $transactionNr => $files) {
             foreach (array_keys($files) as $filePath) {
                 if (substr($filePath, 0, strlen($path)) === $path) {
-                    $result[] = substr($filePath, strlen($path));
+                    $fileName = substr($filePath, strlen($path));
+                    if (false !== strpos($fileName, "/")) {
+                        $fileName = substr($fileName, 0, strpos($fileName, "/"));
+                    }
+                    $result[] = $fileName;
                 }
             }
             $deletedNames = array();
@@ -219,7 +223,7 @@ class TransactionalFilesystem implements FilesystemInterface, TransactionalInter
             $result = array_diff($result, $deletedNames);
         }
 
-        return array_unique($result);
+        return array_values(array_unique($result));
     }
 
     /**

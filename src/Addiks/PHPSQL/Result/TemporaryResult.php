@@ -59,9 +59,9 @@ class TemporaryResult implements ResultInterface
     {
         return count($this->rows)>0;
     }
-    
+
     private $lastInsertId = array();
-    
+
     /**
      * @return array
      */
@@ -69,12 +69,12 @@ class TemporaryResult implements ResultInterface
     {
         return $this->lastInsertId;
     }
-    
+
     public function setLastInsertId(array $row)
     {
         $this->lastInsertId = $row;
     }
-    
+
     private $columnNames;
 
     public function getColumnNames()
@@ -108,7 +108,7 @@ class TemporaryResult implements ResultInterface
         $this->rows[] = $newRow;
         $this->iterator = null;
     }
-    
+
     /**
      * Alias of fetchArray
      * @return array
@@ -117,7 +117,7 @@ class TemporaryResult implements ResultInterface
     {
         return $this->fetchArray();
     }
-    
+
     /**
      * @return array
      */
@@ -125,20 +125,20 @@ class TemporaryResult implements ResultInterface
     {
         $row = $this->current();
         $this->next();
-    
+
         if (!is_array($row)) {
             return $row;
         }
-        
+
         $number = 0;
         foreach ($row as $value) {
             $row[$number] = $value;
             $number++;
         }
-    
+
         return $row;
     }
-    
+
     /**
      * @return array
      */
@@ -146,10 +146,10 @@ class TemporaryResult implements ResultInterface
     {
         $row = $this->current();
         $this->next();
-        
+
         return $row;
     }
-    
+
     /**
      * @return array
      */
@@ -157,28 +157,28 @@ class TemporaryResult implements ResultInterface
     {
         $row = $this->current();
         $this->next();
-        
+
         if (!is_array($row)) {
             return $row;
         }
-        
+
         $returnRow = array();
         $number = 0;
         foreach ($row as $value) {
             $returnRow[$number] = $value;
             $number++;
         }
-    
+
         return $returnRow;
     }
-    
+
     private $columnMetaData = array();
-    
+
     public function setColumnMetaData($columnName, array $data)
     {
         $this->columnMetaData[$columnName] = $data;
     }
-    
+
     public function getColumnMetaData($columnName)
     {
         return $this->columnMetaData[$columnName];
@@ -187,21 +187,21 @@ class TemporaryResult implements ResultInterface
     public function getDBSchemaId()
     {
     }
-    
+
     public function getDBSchema()
     {
     }
-    
+
     public function getTableName()
     {
     }
-    
+
     public function getTableId()
     {
     }
 
     protected $tableSchema;
-    
+
     /**
      *
      * @return TableSchema
@@ -223,11 +223,11 @@ class TemporaryResult implements ResultInterface
         }
         return $this->tableSchema;
     }
-    
+
     public function addColumn(ColumnSchema $columnDefinition, ColumnDataInterface $columnData)
     {
     }
-    
+
     public function modifyColumn(ColumnSchema $columnDefinition, ColumnDataInterface $columnData)
     {
     }
@@ -235,27 +235,27 @@ class TemporaryResult implements ResultInterface
     public function getCellData($rowId, $columnId)
     {
     }
-    
+
     public function setCellData($rowId, $columnId, $data)
     {
     }
-    
+
     public function getRowData($rowId = null)
     {
     }
-    
+
     public function setRowData($rowId, array $rowData)
     {
     }
-    
+
     public function addRowData(array $rowData)
     {
     }
-    
+
     public function removeRow($rowId)
     {
     }
-    
+
     public function doesRowExists($rowId = null)
     {
         return $this->count() >= $rowId;
@@ -269,7 +269,7 @@ class TemporaryResult implements ResultInterface
     {
         $this->index = 0;
     }
-    
+
     public function valid()
     {
         return $this->index < count($this->rows);
@@ -291,17 +291,17 @@ class TemporaryResult implements ResultInterface
     {
         $this->index++;
     }
-    
+
     public function tell()
     {
         return $this->index;
     }
-    
+
     public function count()
     {
         return count($this->rows);
     }
-    
+
     public function seek($rowId)
     {
         $this->index = (int)$rowId;

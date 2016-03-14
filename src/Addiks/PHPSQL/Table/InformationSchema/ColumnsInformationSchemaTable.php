@@ -15,7 +15,7 @@ use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Table\TableSchema;
 use Addiks\PHPSQL\Column\ColumnSchema;
 use Addiks\PHPSQL\Value\Enum\Page\Column\DataType;
-use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Filesystem\FileInterface;
 use Addiks\PHPSQL\Database\DatabaseSchemaPage;
 use Addiks\PHPSQL\Database\DatabaseSchema;
 

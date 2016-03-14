@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Table;
 
 use ArrayIterator;
 use Addiks\PHPSQL\Iterators\CustomIterator;
-use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Filesystem\FileInterface;
 use Addiks\PHPSQL\Column\ColumnSchema;
 use Addiks\PHPSQL\Index\IndexSchema;
 use Addiks\PHPSQL\Database\DatabaseSchemaInterface;
@@ -33,7 +33,7 @@ class TableSchema implements TableSchemaInterface
         return $this->databaseSchema;
     }
 
-    public function __construct(FileResourceProxy $columnFile, FileResourceProxy $indexFile)
+    public function __construct(FileInterface $columnFile, FileInterface $indexFile)
     {
 
         $this->columnFile = $columnFile;
@@ -42,12 +42,12 @@ class TableSchema implements TableSchemaInterface
 
     /**
      * File containing information about the columns.
-     * @var FileResourceProxy
+     * @var FileInterface
      */
     private $columnFile;
 
     /**
-     * @return FileResourceProxy
+     * @return FileInterface
      */
     public function getColumnFile()
     {
@@ -56,19 +56,19 @@ class TableSchema implements TableSchemaInterface
 
     /**
      * File containing information about the indicies.
-     * @var FileResourceProxy
+     * @var FileInterface
      */
     private $indexFile;
 
     /**
-     * @return FileResourceProxy
+     * @return FileInterface
      */
     public function getIndexFile()
     {
         return $this->indexFile;
     }
 
-    public function setindexFile(FileResourceProxy $indexFile)
+    public function setindexFile(FileInterface $indexFile)
     {
         $this->indexFile = $indexFile;
     }

@@ -15,12 +15,15 @@ use Addiks\PHPSQL\PDO\PDO;
 
 class DropDatabaseTest extends PHPUnit_Framework_TestCase
 {
-    
+
     public function setUp()
     {
         $this->pdo = new PDO("inmemory:phpunit");
     }
 
+    /**
+     * @group behaviour.drop_database
+     */
     public function testDropDatabase()
     {
 

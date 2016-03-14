@@ -53,7 +53,7 @@ use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
  */
 class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinaryDataInterface
 {
-    
+
     /**
      * constructor.
      * @param array $array
@@ -61,15 +61,15 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
      */
     public function __construct($iterator = null, $lambdas = array())
     {
-        
+
         if (is_null($iterator)) {
             $iterator = new \ArrayIterator(array());
         } elseif (is_array($iterator)) {
             $iterator = new \ArrayIterator($iterator);
         }
-        
+
         parent::__construct($iterator);
-        
+
         foreach ($lambdas as $key => $lambda) {
             switch($key){
                 case 'rewind':  $this->setRewindCallback($lambda);
@@ -94,38 +94,38 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
                     break;
             }
         }
-        
+
         // for debugging, can consume high memory
         if (false) {
             $this->constructorTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         }
     }
-    
+
     private $constructorTrace = array();
 
     public function getConstructorTrace()
     {
         return $this->constructorTrace;
     }
-    
+
     public function __call($name, $arguments)
     {
-        
+
         if (is_null($this->getInnerIterator())) {
             $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
             $methodString = __CLASS__."::{$name}()";
             $positionString = "in {$trace['file']} on line {$trace['line']}";
             throw new ErrorException("Call to undefined method {$methodString} {$positionString}");
         }
-        
+
         return call_user_func_array([$this->getInnerIterator(), $name], $arguments);
     }
-    
+
     ### CURRENT ###
-    
+
     /** @var \Closure */
     private $currentCallback;
-    
+
     /**
      * sets callback for current
      * @see self::current
@@ -135,7 +135,7 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
     {
         $this->currentCallback = $lambda;
     }
-    
+
     /**
      * gets callback for current
      * @see self::current
@@ -145,7 +145,7 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
     {
         return $this->currentCallback;
     }
-    
+
     /**
      * gets current value
      * @return mixed
@@ -160,12 +160,12 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
             return parent::current();
         }
     }
-    
+
     ### KEY ###
-    
+
     /** @var \Closure */
     private $keyCallback;
-    
+
     /**
      * sets callback for key
      * @see self::key
@@ -175,7 +175,7 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
     {
         $this->keyCallback = $lambda;
     }
-    
+
     /**
      * gets callback for key
      * @see self::key
@@ -185,7 +185,7 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
     {
         return $this->keyCallback;
     }
-    
+
     /**
      * @return mixed
      * @see ArrayIterator::key()
@@ -198,12 +198,12 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
             return parent::key();
         }
     }
-    
+
     ### NEXT ###
-    
+
     /** @var \Closure */
     private $nextCallback;
-    
+
     /**
      * sets callback for next
      * @see self::next
@@ -213,7 +213,7 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
     {
         $this->nextCallback = $lambda;
     }
-    
+
     /**
      * gets callback for next
      * @see self::next
@@ -223,7 +223,7 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
     {
         return $this->nextCallback;
     }
-    
+
     /**
      * @return mixed
      * @see ArrayIterator::next()
@@ -239,9 +239,9 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
             return parent::next();
         }
     }
-    
+
     ### VALID ###
-    
+
     /** @var \Closure */
     private $validCallback;
 
@@ -254,7 +254,7 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
     {
         $this->validCallback = $lambda;
     }
-    
+
     /**
      * gets callback for valid
      * @see self::valid
@@ -264,7 +264,7 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
     {
         return $this->validCallback;
     }
-    
+
     /**
      * @return mixed
      * @see ArrayIterator::valid()
@@ -277,12 +277,12 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
             return parent::valid();
         }
     }
-    
+
     ### REWIND ###
-    
+
     /** @var \Closure */
     private $rewindCallback;
-    
+
     /**
      * sets callback for rewind
      * @see self::rewind
@@ -292,7 +292,7 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
     {
         $this->rewindCallback = $lambda;
     }
-    
+
     /**
      * gets callback for rewind
      * @see self::rewind
@@ -302,7 +302,7 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
     {
         return $this->rewindCallback;
     }
-    
+
     /**
      * @return mixed
      * @see ArrayIterator::rewind()
@@ -318,24 +318,24 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
             return parent::rewind();
         }
     }
-    
+
     ### SEEK ###
-    
+
     /**
      * @var \Closure
      */
     private $seekCallback;
-    
+
     public function setSeekCallback(\Closure $closure)
     {
         $this->seekCallback = $closure;
     }
-    
+
     public function getSeekCallback()
     {
         return $this->seekCallback;
     }
-    
+
     public function seek($rowId)
     {
         if (is_callable($this->seekCallback)) {
@@ -348,24 +348,24 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
             return $this->getInnerIterator()->seek($rowId);
         }
     }
-    
+
     ### SET ###
-    
+
     /**
      * @var \Closure
      */
     private $setCallback;
-    
+
     public function setSetCallback(\Closure $callback)
     {
         $this->setCallback = $callback;
     }
-    
+
     public function getSetCallback()
     {
         return $this->setCallback;
     }
-    
+
     public function __set($key, $value)
     {
         if (is_callable($this->setCallback)) {
@@ -374,29 +374,29 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
             return $this->getInnerIterator()->$key = $value;
         }
     }
-    
+
     public function offsetSet($offset, $value)
     {
         $this->__set($offset, $value);
     }
-    
+
     ### GET ###
-    
+
     /**
      * @var \Closure
      */
     private $getCallback;
-    
+
     public function setGetCallback(\Closure $callback)
     {
         $this->getCallback = $callback;
     }
-    
+
     public function getGetCallback()
     {
         return $this->getCallback;
     }
-    
+
     public function __get($key)
     {
         if (is_callable($this->getCallback)) {
@@ -405,29 +405,29 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
             return $this->getInnerIterator()->$key;
         }
     }
-    
+
     public function offsetGet($offset)
     {
         return $this->__get($offset);
     }
-    
+
     ### ISSET ###
-    
+
     /**
      * @var \Closure
      */
     private $issetCallback;
-    
+
     public function setIssetCallback(\Closure $callback)
     {
         $this->issetCallback = $callback;
     }
-    
+
     public function getIssetCallback()
     {
         return $this->issetCallback;
     }
-    
+
     public function __isset($key)
     {
         if (is_callable($this->issetCallback)) {
@@ -436,29 +436,29 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
             return isset($this->getInnerIterator()->$key);
         }
     }
-    
+
     public function offsetExists($offset)
     {
         return $this->__isset($offset);
     }
-    
+
     ### UNSET ###
-    
+
     /**
      * @var \Closure
      */
     private $unsetCallback;
-    
+
     public function setUnsetCallback(\Closure $callback)
     {
         $this->unsetCallback = $callback;
     }
-    
+
     public function getUnsetCallback()
     {
         return $this->unsetCallback;
     }
-    
+
     public function __unset($key)
     {
         if (is_callable($this->unsetCallback)) {
@@ -467,7 +467,7 @@ class CustomIterator extends IteratorIterator implements ArrayAccess, UsesBinary
             unset($this->getInnerIterator()->$key);
         }
     }
-    
+
     public function offsetUnset($offset)
     {
         return $this->__unset($offset);

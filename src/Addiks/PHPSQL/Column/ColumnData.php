@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Column;
 
 use ErrorException;
 use Addiks\PHPSQL\Iterators\CustomIterator;
-use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Filesystem\FileInterface;
 use Addiks\PHPSQL\BinaryConverterTrait;
 
 class ColumnData implements ColumnDataInterface
@@ -21,7 +21,7 @@ class ColumnData implements ColumnDataInterface
 
     use BinaryConverterTrait;
 
-    public function __construct(FileResourceProxy $file, ColumnSchema $columnPage)
+    public function __construct(FileInterface $file, ColumnSchema $columnPage)
     {
         $this->file = $file;
         $this->columnSchema = $columnPage;
@@ -41,7 +41,7 @@ class ColumnData implements ColumnDataInterface
     private $cellLengthSize;
 
     /**
-     * @return FileResourceProxy
+     * @return FileInterface
      */
     protected function getFile()
     {

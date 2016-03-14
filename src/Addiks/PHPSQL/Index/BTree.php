@@ -16,7 +16,7 @@ use Addiks\PHPSQL\Iterators\CustomIterator;
 use Addiks\PHPSQL\Index\IndexInterface;
 use Addiks\PHPSQL\Index\BTreeNodePage;
 use Addiks\PHPSQL\BinaryConverterTrait;
-use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Filesystem\FileInterface;
 use Addiks\PHPSQL\Entity\Page\ColumnSchema;
 use Addiks\PHPSQL\Index\IndexSchema;
 use Addiks\PHPSQL\Table\TableSchemaInterface;
@@ -30,7 +30,7 @@ class BTree implements \IteratorAggregate, IndexInterface
     }
 
     public function __construct(
-        FileResourceProxy $file,
+        FileInterface $file,
         TableSchemaInterface $tableSchema,
         IndexSchema $indexPage = null,
         $forkRate = 33
@@ -865,7 +865,7 @@ class BTree implements \IteratorAggregate, IndexInterface
 
     /**
      *
-     * @return FileResourceProxy
+     * @return FileInterface
      */
     public function getFile()
     {
@@ -879,7 +879,7 @@ class BTree implements \IteratorAggregate, IndexInterface
         return $this->doublesFile;
     }
 
-    public function setDoublesFile(FileResourceProxy $file)
+    public function setDoublesFile(FileInterface $file)
     {
         $this->doublesFile = $file;
 

@@ -14,6 +14,7 @@ namespace Addiks\PHPSQL\Database\DatabaseAdapter;
 use Addiks\PHPSQL\Database\DatabaseAdapter\InternalDatabaseAdapter;
 use Addiks\PHPSQL\Filesystem\InmemoryFilesystem;
 use Addiks\PHPSQL\SqlParser\SqlParser;
+use Addiks\PHPSQL\Filesystem\TransactionalFilesystem;
 
 class InmemoryDatabaseAdapter extends InternalDatabaseAdapter
 {
@@ -21,7 +22,7 @@ class InmemoryDatabaseAdapter extends InternalDatabaseAdapter
     public function getFilesystem()
     {
         if (is_null($this->filesystem)) {
-            $this->filesystem = new InmemoryFilesystem();
+            $this->filesystem = new TransactionalFilesystem(new InmemoryFilesystem());
         }
 
         return $this->filesystem;

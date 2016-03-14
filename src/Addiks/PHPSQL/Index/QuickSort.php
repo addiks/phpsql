@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Index;
 
 use ErrorException;
 use Addiks\PHPSQL\BinaryConverterTrait;
-use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Filesystem\FileInterface;
 use Addiks\PHPSQL\Column\ColumnSchema;
 
 class QuickSort implements \Iterator
@@ -23,11 +23,11 @@ class QuickSort implements \Iterator
 
     /**
      *
-     * @param FileResourceProxy $file
+     * @param FileInterface $file
      * @param array $columnPages [[(ColumnSchema)$columnPage, 'ASC'], [$columnPage2, 'DESC'], $columnPage3, ...]
      * @throws ErrorException
      */
-    public function __construct(FileResourceProxy $file, array $columnPages)
+    public function __construct(FileInterface $file, array $columnPages)
     {
 
         // rebuild array to have usable keys

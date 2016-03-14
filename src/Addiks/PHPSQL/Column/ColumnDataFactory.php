@@ -11,7 +11,7 @@
 namespace Addiks\PHPSQL\Column;
 
 use Addiks\PHPSQL\Filesystem\FilesystemInterface;
-use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Filesystem\FileInterface;
 use Addiks\PHPSQL\Filesystem\FilePathes;
 use Addiks\PHPSQL\Table\TableSchemaInterface;
 use Addiks\PHPSQL\Column\ColumnData;
@@ -27,7 +27,7 @@ class ColumnDataFactory implements ColumnDataFactoryInterface
     }
 
     protected $filesystem;
-    
+
     /**
      * Creates a new column-data-object.
      *
@@ -50,7 +50,7 @@ class ColumnDataFactory implements ColumnDataFactoryInterface
             0
         );
 
-        /* @var $columnDataFile FileResourceProxy */
+        /* @var $columnDataFile FileInterface */
         $columnDataFile = $this->filesystem->getFile($columnDataFilePath);
 
         /* @var $columnData ColumnData */

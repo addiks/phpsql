@@ -13,7 +13,7 @@ namespace Addiks\PHPSQL\Database;
 
 use Addiks\PHPSQL\Value\Enum\Page\Schema\Type;
 use Addiks\PHPSQL\Iterators\CustomIterator;
-use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Filesystem\FileInterface;
 use Addiks\PHPSQL\Database\DatabaseSchemaPage;
 use Addiks\PHPSQL\Table\TableSchema;
 
@@ -29,7 +29,7 @@ use Addiks\PHPSQL\Table\TableSchema;
 class DatabaseSchema implements DatabaseSchemaInterface
 {
 
-    public function __construct(FileResourceProxy $file)
+    public function __construct(FileInterface $file)
     {
         $this->schemaIndexFile = $file;
     }
@@ -50,12 +50,12 @@ class DatabaseSchema implements DatabaseSchemaInterface
      * The file containing the schema-index.
      * (Array of Schema-Pages describing views/tables/... )
      *
-     * @var FileResourceProxy
+     * @var FileInterface
      */
     private $schemaIndexFile;
 
     /**
-     * @return FileResourceProxy
+     * @return FileInterface
      */
     protected function getSchemaIndexFile()
     {

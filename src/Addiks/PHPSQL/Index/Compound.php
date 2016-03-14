@@ -12,66 +12,66 @@
 namespace Addiks\PHPSQL\Index;
 
 use Addiks\PHPSQL\Index\IndexInterface;
-use Addiks\PHPSQL\Filesystem\FileResourceProxy;
+use Addiks\PHPSQL\Filesystem\FileInterface;
 
 class Compound implements IndexInterface
 {
-    
+
     ### INDEX
-    
+
     public function getDoublesFile()
     {
     }
-    
-    public function setDoublesFile(FileResourceProxy $file)
+
+    public function setDoublesFile(FileInterface $file)
     {
     }
-    
+
     public function search($value)
     {
         $result = array();
-        
+
         foreach ($this->getIndexes() as $index) {
             /* @var $index Interface */
-            
+
             $result = array_merge($result, $index->search($value));
         }
-        
+
         return $result;
     }
-    
+
     public function insert($value, $rowId)
     {
         foreach ($this->getIndexes() as $index) {
             /* @var $index Interface */
-            
+
             $index->insert($value, $rowId);
         }
     }
-    
+
     public function remove($value, $rowId)
     {
         foreach ($this->getIndexes() as $index) {
             /* @var $index Interface */
-            
+
             $index->remove($value, $rowId);
         }
     }
-    
+
     ### COMPOUND
-    
+
     private $indexes = array();
-    
+
     public function getIndexes()
     {
         return $this->indexes;
     }
-    
+
     public function clearIndexes()
     {
         $this->indexes = array();
     }
-    
+
     public function addIndex(IndexInterface $index)
     {
         $this->indexes[] = $index;
