@@ -79,7 +79,7 @@ class TransactionalFilesystem implements FilesystemInterface, TransactionalInter
             if (isset($files[$filePath])) {
                 $result = $files[$filePath];
                 for ($index = $transactionNr+1; $index < count($this->filesStack); $index++) {
-                    $result->beginTransaction();
+                #    $result->beginTransaction();
                     $this->filesStack[$index][$filePath] = $result;
                 }
                 break;
@@ -238,6 +238,21 @@ class TransactionalFilesystem implements FilesystemInterface, TransactionalInter
 
     public function beginTransaction($withConsistentSnapshot = false, $readOnly = false)
     {
+        $filesToBegin = array();
+        foreach ($this->filesStack as $files) {
+            foreach ($files as $filePath => $file) {
+                /* @var $file TransactionalFile */
+
+                $filesToBegin[$filePath] = $file;
+            }
+        }
+
+        foreach ($filesToBegin as $filePath => $file) {
+            /* @var $file TransactionalFile */
+
+            $file->beginTransaction();
+        }
+
         $this->createdFilepathsStack[] = array();
         $this->deletedFilepathsStack[] = array();
         $this->filesStack[] = array();
@@ -280,13 +295,26 @@ class TransactionalFilesystem implements FilesystemInterface, TransactionalInter
             }
         }
 
+        $filesToCommit = array();
+        foreach ($this->filesStack as $files) {
+            foreach ($files as $filePath => $file) {
+                /* @var $file TransactionalFile */
+
+                $filesToCommit[$filePath] = $file;
+            }
+        }
+
+        foreach ($filesToCommit as $filePath => $file) {
+            /* @var $file TransactionalFile */
+
+            $file->commit();
+        }
+
         $files = array_pop($this->filesStack);
         end($this->filesStack);
 
         foreach ($files as $filePath => $file) {
             /* @var $file TransactionalFile */
-
-            $file->commit();
 
             $this->filesStack[key($this->filesStack)][$filePath] = $file;
         }
@@ -312,15 +340,26 @@ class TransactionalFilesystem implements FilesystemInterface, TransactionalInter
             throw new ErrorException("Tried to rollback without transaction!");
         }
 
-        array_pop($this->directoriesStack);
-        array_pop($this->createdFilepathsStack);
-        array_pop($this->deletedFilepathsStack);
+        $filesToRollback = array();
+        foreach ($this->filesStack as $files) {
+            foreach ($files as $filePath => $file) {
+                /* @var $file TransactionalFile */
 
-        foreach (array_pop($this->filesStack) as $filePath => $file) {
+                $filesToRollback[$filePath] = $file;
+            }
+        }
+
+        foreach ($filesToRollback as $filePath => $file) {
             /* @var $file TransactionalFile */
 
             $file->rollback();
         }
+
+        array_pop($this->directoriesStack);
+        array_pop($this->createdFilepathsStack);
+        array_pop($this->deletedFilepathsStack);
+
+        $files = array_pop($this->filesStack);
     }
 
 }

@@ -40,6 +40,9 @@ use Addiks\PHPSQL\SqlParser\Part\Specifier\TableParser;
 use Addiks\PHPSQL\SqlParser\Part\Condition\EnumConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\Condition\LikeConditionParser;
 use Addiks\PHPSQL\SqlParser\Part\FlowControl\CaseParser;
+use Addiks\PHPSQL\SqlParser\StartTransactionSqlParser;
+use Addiks\PHPSQL\SqlParser\CommitSqlParser;
+use Addiks\PHPSQL\SqlParser\RollbackSqlParser;
 
 /**
  * This is a parser for SQL statements.
@@ -54,17 +57,17 @@ use Addiks\PHPSQL\SqlParser\Part\FlowControl\CaseParser;
  */
 class SqlParser
 {
-    
+
     private $wasInitialized = false;
 
     public function canParseTokens(SQLTokenIterator $tokens)
     {
         return true;
     }
-    
+
     public function convertSqlToJob(SQLTokenIterator $tokens)
     {
-        
+
         if (get_class($this) !== __CLASS__) {
             throw new ErrorException("Class '".get_class($this)."' needs to declare an own method '".__FUNCTION__."'!");
         }
@@ -72,16 +75,16 @@ class SqlParser
         if (!$this->wasInitialized) {
             $this->initSqlSubParsers();
         }
-        
+
         /* @var $jobEntity Job */
         $jobEntities = array();
-        
+
     #   $tokens->seekIndex(-1);
-        
+
         do {
             while ($tokens->seekTokenText(';')) {
             }
-        
+
             $parserFound = false;
             foreach ($this->sqlParser as $sqlParser) {
                 /* @var $sqlParser SqlParser */
@@ -108,22 +111,22 @@ class SqlParser
                     );
                 }
             }
-        
+
         } while ($tokens->isTokenText(';'));
-        
+
         if (!$tokens->isAtEnd() && $tokens->getExclusiveTokenIndex() !== $tokens->getIndex()) {
             throw new MalformedSqlException("Overlapping unparsed SQL at the end of statement!", $tokens);
         }
-        
+
         foreach ($jobEntities as $job) {
             $job->checkPlausibility();
         }
-        
+
         return $jobEntities;
     }
 
     protected $sqlParser = array();
-    
+
     public function addSqlParser(self $sqlParser)
     {
         $this->sqlParser[get_class($sqlParser)] = $sqlParser;
@@ -147,6 +150,9 @@ class SqlParser
         $showParser = new ShowSqlParser();
         $updateParser = new UpdateSqlParser();
         $useParser = new UseSqlParser();
+        $startTransactionParser = new StartTransactionSqlParser();
+        $commitParser = new CommitSqlParser();
+        $rollbackParser = new RollbackSqlParser();
 
         // SQL-Part Parsers (Column-Definitions, Joins, Function, Conditions, ...)
         $columnDefinitionParser = new ColumnDefinitionParser();
@@ -220,21 +226,20 @@ class SqlParser
 
         ### REGISTER TOP LEVEL PARSERS
 
-        foreach ([
-            $alterParser,
-            $createParser,
-            $deleteParser,
-            $describeParser,
-            $dropParser,
-            $insertParser,
-            $selectParser,
-            $setParser,
-            $showParser,
-            $updateParser,
-            $useParser,
-        ] as $sqlParser) {
-            $this->addSqlParser($sqlParser);
-        }
+        $this->addSqlParser($alterParser);
+        $this->addSqlParser($createParser);
+        $this->addSqlParser($deleteParser);
+        $this->addSqlParser($describeParser);
+        $this->addSqlParser($dropParser);
+        $this->addSqlParser($insertParser);
+        $this->addSqlParser($selectParser);
+        $this->addSqlParser($setParser);
+        $this->addSqlParser($showParser);
+        $this->addSqlParser($updateParser);
+        $this->addSqlParser($useParser);
+        $this->addSqlParser($startTransactionParser);
+        $this->addSqlParser($commitParser);
+        $this->addSqlParser($rollbackParser);
 
     }
 }

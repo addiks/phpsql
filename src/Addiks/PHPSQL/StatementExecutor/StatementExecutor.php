@@ -29,6 +29,7 @@ use Addiks\PHPSQL\Schema\SchemaManager;
 use Addiks\PHPSQL\Table\TableManager;
 use Addiks\PHPSQL\ValueResolver\ValueResolver;
 use Addiks\PHPSQL\Job\StatementJob;
+use Addiks\PHPSQL\StatementExecutor\TransactionExecutor;
 
 class StatementExecutor implements StatementExecutorInterface
 {
@@ -112,9 +113,10 @@ class StatementExecutor implements StatementExecutorInterface
         $schemaManager = $this->schemaManager;
         $tableManager = $this->tableManager;
         $valueResolver = $this->valueResolver;
+        $filesystem = $tableManager->getFilesystem();
 
         $selectExecutor = new SelectExecutor(
-            $tableManager->getFilesystem(),
+            $filesystem,
             $schemaManager,
             $tableManager,
             $valueResolver
@@ -133,5 +135,6 @@ class StatementExecutor implements StatementExecutorInterface
         $this->addStatementExecutor(new UpdateExecutor($valueResolver, $schemaManager, $tableManager));
         $this->addStatementExecutor(new CreateTableExecutor($schemaManager, $tableManager, $valueResolver));
         $this->addStatementExecutor(new InsertExecutor($valueResolver, $tableManager, $selectExecutor, $schemaManager));
+        $this->addStatementExecutor(new TransactionExecutor($filesystem));
     }
 }

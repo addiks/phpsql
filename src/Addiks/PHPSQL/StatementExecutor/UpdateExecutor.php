@@ -26,7 +26,7 @@ use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
 
 class UpdateExecutor implements StatementExecutorInterface
 {
-    
+
     public function __construct(
         ValueResolver $valueResolver,
         SchemaManager $schemaManager,
@@ -52,7 +52,7 @@ class UpdateExecutor implements StatementExecutorInterface
     }
 
     protected $schemaManager;
-    
+
     public function canExecuteJob(StatementJob $statement)
     {
         return $statement instanceof UpdateStatement;
@@ -61,10 +61,10 @@ class UpdateExecutor implements StatementExecutorInterface
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
         /* @var $statement UpdateStatement */
-        
+
         $result = new TemporaryResult();
         // TODO: multiple tables or not?
-        
+
         $executionContext = new ExecutionContext(
             $this->schemaManager,
             $statement,
@@ -74,7 +74,7 @@ class UpdateExecutor implements StatementExecutorInterface
 
         /* @var $tableSpecifier TableSpecifier */
         $tableSpecifier = $statement->getTables()[0];
-        
+
         /* @var $tableResource Table */
         $tableResource = $this->tableManager->getTable(
             $tableSpecifier->getTable(),
@@ -83,11 +83,11 @@ class UpdateExecutor implements StatementExecutorInterface
 
         /* @var $tableSchema TableSchema */
         $tableSchema = $tableResource->getTableSchema();
-        
+
         $indicies = array();
         foreach ($tableSchema->getIndexIterator() as $indexId => $indexPage) {
             /* @var $indexPage Index */
-            
+
             /* @var $index Index */
             $index = $tableResource->getIndex(
                 $indexPage->getName()
@@ -95,10 +95,10 @@ class UpdateExecutor implements StatementExecutorInterface
 
             $indicies[] = $index;
         }
-        
+
         /* @var $condition Value */
         $condition = $statement->getCondition();
-        
+
         foreach ($tableResource as $rowId => $row) {
             if ($tableResource instanceof UsesBinaryDataInterface
             &&  $tableResource->usesBinaryData()) {
@@ -106,35 +106,35 @@ class UpdateExecutor implements StatementExecutorInterface
             }
 
             $executionContext->setCurrentSourceRow($row);
-            
+
             $conditionResult = $this->valueResolver->resolveValue($condition, $executionContext);
-            
+
             if ($conditionResult) {
                 $newRow = $row;
                 foreach ($statement->getDataChanges() as $dataChange) {
                     /* @var $dataChange DataChange */
-                    
+
                     $columnName = (string)$dataChange->getColumn();
-                    
+
                     $newValue = $dataChange->getValue();
                     $newValue = $this->valueResolver->resolveValue($newValue, $executionContext);
-                    
+
                     $newRow[$columnName] = $newValue;
                 }
-                
+
                 $row    = $tableResource->convertStringRowToDataRow($row);
                 $newRow = $tableResource->convertStringRowToDataRow($newRow);
-                
+
                 foreach ($indicies as $index) {
                     /* @var $index Index */
-                    
+
                     $index->updateRow($row, $newRow, $rowId);
                 }
-                
+
                 $tableResource->setRowData($rowId, $newRow);
             }
         }
-        
+
         return $result;
     }
 }

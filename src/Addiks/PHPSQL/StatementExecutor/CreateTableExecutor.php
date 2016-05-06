@@ -113,6 +113,8 @@ class CreateTableExecutor implements StatementExecutorInterface
         /* @var $tableSchema TableSchema */
         $tableSchema = $this->schemaManager->getTableSchema($tableName);
 
+        assert($tableSchema instanceof TableSchema);
+
         ### WRITE COLUMNS
 
         switch(true){

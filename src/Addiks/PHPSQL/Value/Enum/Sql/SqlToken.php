@@ -102,7 +102,6 @@ class SqlToken extends Enum
 	const T_COMMAND_FUNCTION = 79;
 	const T_COMMAND_FUNCTION_CODE = 80;
 	const T_COMMENT = 81;
-	const T_COMMIT = 82;
 	const T_COMMITTED = 83;
 	const T_COMPLETION = 84;
 	const T_CONDITION_NUMBER = 85;
@@ -402,7 +401,6 @@ class SqlToken extends Enum
 	const T_REVOKE = 380;
 	const T_RIGHT = 381;
 	const T_ROLE = 382;
-	const T_ROLLBACK = 383;
 	const T_ROLLUP = 384;
 	const T_ROUTINE = 385;
 	const T_ROUTINE_CATALOG = 386;
@@ -412,7 +410,6 @@ class SqlToken extends Enum
 	const T_ROWS = 390;
 	const T_ROW_COUNT = 391;
 	const T_RULE = 392;
-	const T_SAVEPOINT = 393;
 	const T_SCALE = 394;
 	const T_SCHEMA = 395;
 	const T_SCHEMA_NAME = 396;
@@ -452,7 +449,6 @@ class SqlToken extends Enum
 	const T_SQLSTATE = 430;
 	const T_SQLWARNING = 431;
 	const T_STABLE = 432;
-	const T_START = 433;
 	const T_STATE = 434;
 	const T_STATEMENT = 435;
 	const T_STATIC = 436;
@@ -485,7 +481,6 @@ class SqlToken extends Enum
 	const T_TO = 463;
 	const T_TOAST = 464;
 	const T_TRAILING = 465;
-	const T_TRANSACTION = 466;
 	const T_TRANSACTIONS_COMMITTED = 467;
 	const T_TRANSACTIONS_ROLLED_BACK = 468;
 	const T_TRANSACTION_ACTIVE = 469;
@@ -591,7 +586,7 @@ class SqlToken extends Enum
 #	const T_CHANGE = 549;
 	const T_DISABLE = 550;
 	const T_ENABLE = 551;
-#	const T_DISCARD = 552;
+	const T_DISCARD = 552;
 #	const T_IMPORT = 553;
 #	const T_REORGANIZE = 554;
 #	const T_OPTIMIZE = 555;
@@ -607,6 +602,13 @@ class SqlToken extends Enum
 #	const T_LOW_PRIORITY = 559;
 #	const T_DELAYED = 560;
     const T_DUPLICATE = 561;
+
+# FOR TRANSACTIONS
+	const T_START = 433;
+	const T_TRANSACTION = 466;
+	const T_ROLLBACK = 383;
+	const T_COMMIT = 82;
+	const T_SAVEPOINT = 393;
 
 # ADDITIONAL
     const T_SECURITY = 569;

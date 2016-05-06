@@ -48,6 +48,7 @@ class Statement
 
     public function setStatementJobs(array $statementJobs)
     {
+        $this->clearStatementJobs();
         foreach ($statementJobs as $statementJob) {
             $this->addStatementJob($statementJob);
         }
@@ -56,7 +57,7 @@ class Statement
     public function addStatementJob(StatementJob $statementJob)
     {
         if (is_null($this->statementJobs)) {
-            $this->statementJobs = array();
+            $this->clearStatementJobs();
         }
         $this->statementJobs[] = $statementJob;
     }
@@ -67,6 +68,11 @@ class Statement
             $this->setStatementJobs($this->pdo->getDatabaseResource()->prepare($this->statementString));
         }
         return $this->statementJobs;
+    }
+
+    public function clearStatementJobs()
+    {
+        $this->statementJobs = array();
     }
 
     public function getDatabase()

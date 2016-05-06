@@ -272,7 +272,7 @@ class Table implements Iterator, TableInterface, UsesBinaryDataInterface
         }
 
         if (isset($this->rowCache[$rowId])) {
-            return $this->rowCache[$rowId];
+#            return $this->rowCache[$rowId];
         }
 
         /* @var $tableSchema TableSchema */

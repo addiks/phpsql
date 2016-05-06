@@ -26,7 +26,7 @@ use Addiks\PHPSQL\Result\TemporaryResult;
 
 class ShowExecutor implements StatementExecutorInterface
 {
-    
+
     public function __construct(
         SchemaManager $schemaManager
     ) {
@@ -39,7 +39,7 @@ class ShowExecutor implements StatementExecutorInterface
     {
         return $this->schemaManager;
     }
-    
+
     public function canExecuteJob(StatementJob $statement)
     {
         return $statement instanceof ShowStatement;
@@ -48,59 +48,64 @@ class ShowExecutor implements StatementExecutorInterface
     public function executeJob(StatementJob $statement, array $parameters = array())
     {
         /* @var $statement ShowStatement */
-        
+
         switch($statement->getType()){
             case ShowType::DATABASES():
                 return $this->executeShowDatabases($statement, $parameters);
-                
+
             case ShowType::TABLES():
                 return $this->executeShowTables($statement, $parameters);
-                
+
             case ShowType::VIEWS():
                 return $this->executeShowViews($statement, $parameters);
-                
+
             case ShowType::COLUMNS():
                 return $this->executeShowColumns($statement, $parameters);
         }
     }
-    
+
     protected function executeShowColumns(ShowJob $statement, array $parameters = array())
     {
-    
+
     }
-    
+
     protected function executeShowViews(ShowJob $statement, array $parameters = array())
     {
-    
+
     }
-    
+
     protected function executeShowTables(ShowJob $statement, array $parameters = array())
     {
-            
+
         $result = new TemporaryResult(['TABLE']);
-        $list = $this->schemaManager->getSchema($statement->getDatabase())->listTables();
+
+        $schemaId = $statement->getDatabase();
+
+        $schema = $this->schemaManager->getSchema($schemaId);
+
+        $list = $schema->listTables();
         sort($list);
-        
+
         foreach ($list as $tableName) {
             $result->addRow([$tableName]);
         }
-        
+
         return $result;
     }
-    
+
     ### DATABASE ###
-    
+
     protected function executeShowDatabases(ShowJob $statement, array $parameters = array())
     {
         $result = new TemporaryResult(['DATABASE']);
 
         $list = $this->schemaManager->listSchemas();
         sort($list);
-        
+
         foreach ($list as $schemaId) {
             $result->addRow([$schemaId]);
         }
-        
+
         return $result;
     }
 }

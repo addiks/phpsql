@@ -163,7 +163,8 @@ class TransactionalFile implements FileInterface, TransactionalInterface
                 $transactionStorage->write($pageData);
 
                 $lastWrittenPosition = ($pageIndex * $this->pageSize) + strlen($pageData) + $positionInPage;
-end($this->seekPositionStack);
+
+                end($this->seekPositionStack);
                 $this->seekPositionStack[key($this->seekPositionStack)] = $lastWrittenPosition;
                 if ($lastWrittenPosition > end($this->fileSizeStack)) {
                     $this->fileSizeStack[key($this->fileSizeStack)] = $lastWrittenPosition;
@@ -210,13 +211,14 @@ end($this->seekPositionStack);
 
                         /* @var $transactionStorage FileInterface */
                         $transactionStorage = $this->transactionStorageStack[$transactionNr];
+                        $transactionStorage->seek($positionInPage, SEEK_CUR);
                         $result .= $transactionStorage->read($this->pageSize - $positionInPage);
                         $pageFound = true;
                         break;
                     }
                 }
                 if (!$pageFound) {
-                    $file->seek($firstPageIndex * $this->pageSize);
+                    $file->seek(($firstPageIndex * $this->pageSize) + $positionInPage);
                     $result .= $file->read($this->pageSize - $positionInPage);
                 }
 
@@ -678,6 +680,10 @@ end($this->seekPositionStack);
     {
         /* @var $file FileInterface */
         $file = $this->file;
+
+        if (count($this->pageMapStack) <= 0) {
+            throw new ErrorException("Tried to rollback without transaction!");
+        }
 
         /* @var $transactionStorage FileInterface */
         $transactionStorage = array_pop($this->transactionStorageStack);

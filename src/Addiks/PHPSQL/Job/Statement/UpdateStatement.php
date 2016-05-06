@@ -32,55 +32,55 @@ class UpdateStatement extends StatementJob
     const EXECUTOR_CLASS = UpdateExecutor::class;
 
     private $tables = array();
-    
+
     public function addTable(TableSpecifier $table)
     {
         $this->tables[] = $table;
     }
-    
+
     public function getTables()
     {
         return $this->tables;
     }
-    
+
     private $dataChanges = array();
-    
+
     public function addDataChange(UpdateDataChange $change)
     {
         $this->dataChanges[] = $change;
     }
-    
+
     public function getDataChanges()
     {
         return $this->dataChanges;
     }
-    
+
     private $condition;
-    
+
     public function setCondition(ValuePart $condition)
     {
         $this->condition = $condition;
     }
-    
+
     public function getCondition()
     {
         return $this->condition;
     }
-    
+
     private $orderColumn;
-    
+
     public function setOrderColumn(ColumnSpecifier $column)
     {
         $this->orderColumn = $column;
     }
-    
+
     public function getOrderColumn()
     {
         return $this->orderColumn;
     }
-    
+
     private $orderDirection;
-    
+
     public function setOrderDirection($direction)
     {
         switch($direction){
@@ -88,12 +88,12 @@ class UpdateStatement extends StatementJob
             case SqlToken::T_DESC():
                 $this->orderDirection = $direction;
                 break;
-                
+
             default:
                 throw new MalformedSqlException("Invalid order-direction given to update job!", tokens);
         }
     }
-    
+
     public function getOrderDirection()
     {
         if (is_null($this->orderDirection)) {
@@ -101,55 +101,55 @@ class UpdateStatement extends StatementJob
         }
         return $this->orderDirection;
     }
-    
+
     private $limitOffset = 0;
-    
+
     public function setLimitOffset($offset)
     {
         $this->limitOffset = $offset;
     }
-    
+
     public function getLimitOffset()
     {
         return $this->limitOffset;
     }
-    
+
     private $limitRowCount;
-    
+
     public function setLimitRowCount($count)
     {
         $this->limitRowCount = (int)$count;
     }
-    
+
     public function getLimitRowCount()
     {
         return $this->limitRowCount;
     }
-    
+
     private $isLowPriority = false;
-    
+
     public function setIsLowPriority($bool)
     {
         $this->isLowPriority = (bool)$bool;
     }
-    
+
     public function getIsLowPriority()
     {
         return $this->isLowPriority;
     }
-    
+
     private $doIgnoreErrors = false;
-    
+
     public function setDoIgnoreErrors($bool)
     {
         $this->doIgnoreErrors = (bool)$bool;
     }
-    
+
     public function getDoIgnoreErrors()
     {
         return $this->doIgnoreErrors;
     }
-    
+
     public function getResultSpecifier()
     {
     }
