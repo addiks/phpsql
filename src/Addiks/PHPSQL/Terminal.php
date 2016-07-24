@@ -25,6 +25,11 @@ class Terminal
         $this->database = $database;
     }
 
+    /**
+     * @var Database
+     */
+    protected $database;
+
     public static function newFromPDO(PDO $pdo)
     {
         return new static($pdo->getDatabaseResource());
