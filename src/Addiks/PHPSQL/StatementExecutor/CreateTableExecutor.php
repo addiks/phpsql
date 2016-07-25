@@ -147,6 +147,7 @@ class CreateTableExecutor implements StatementExecutorInterface
 
                     $columnPage->setExtraFlags($flags);
 
+                    /* @var $dataType DataType */
                     $dataType = $column->getDataType();
 
                     $columnPage->setLength($dataType->getByteLength());
