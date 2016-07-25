@@ -46,6 +46,7 @@ use Addiks\PHPSQL\Job\Part\ConditionJob;
 use Addiks\PHPSQL\Value\Specifier\ColumnSpecifier;
 use Addiks\PHPSQL\Index\IndexSchema;
 use Addiks\PHPSQL\Iterators\UsesBinaryDataInterface;
+use Addiks\PHPSQL\Iterators\AliasedResourceIterator;
 
 class SelectExecutor implements StatementExecutorInterface
 {
@@ -266,6 +267,8 @@ class SelectExecutor implements StatementExecutorInterface
                 } else {
                     throw new ErrorException("Unexpected object given as source for join!");
                 }
+
+                $iterator = new AliasedResourceIterator($iterator, $alias);
             }
 
             ### FILTER RESULT

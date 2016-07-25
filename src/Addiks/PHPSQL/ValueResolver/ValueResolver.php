@@ -292,11 +292,11 @@ class ValueResolver
     public function resolveCondition(ConditionJob $conditionJob, ExecutionContext $context)
     {
 
-        $firstValue = $conditionJob->getFirstParameter();
-        $lastValue  = $conditionJob->getLastParameter();
+        $firstValueUnresolved = $conditionJob->getFirstParameter();
+        $lastValueUnresolved  = $conditionJob->getLastParameter();
 
-        $firstValue = $this->resolveValue($firstValue, $context);
-        $lastValue  = $this->resolveValue($lastValue, $context);
+        $firstValue = $this->resolveValue($firstValueUnresolved, $context);
+        $lastValue  = $this->resolveValue($lastValueUnresolved, $context);
 
         switch($conditionJob->getOperator()){
             case Operator::OP_ADDITION():

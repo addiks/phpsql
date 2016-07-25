@@ -104,37 +104,37 @@ class TableSchema implements TableSchemaInterface
             }
         ]);
     }
-    
+
     public function getIndexIdByColumns($columnIds)
     {
         $indexId = null;
-        
+
         foreach ($this->getIndexIterator() as $currentIndexId => $indexSchema) {
             /* @var $indexSchema IndexSchema */
-            
+
             if (count($indexSchema->getColumns()) !== count($columnIds)) {
                 continue;
             }
-            
+
             foreach ($indexSchema->getColumns() as $columnId) {
                 if (!in_array($columnId, $columnIds)) {
                     continue 2;
                 }
             }
-            
+
             $indexId = $currentIndexId;
         }
-            
+
         return $indexId;
     }
 
     public function getIndexIdByName($name)
     {
         $indexId = null;
-        
+
         foreach ($this->getIndexIterator() as $currentIndexId => $indexSchema) {
             /* @var $indexSchema IndexSchema */
-            
+
             if ($indexSchema->getName() === $name) {
                 $indexId = $currentIndexId;
             }
@@ -142,18 +142,18 @@ class TableSchema implements TableSchemaInterface
 
         return $indexId;
     }
-    
+
     public function indexExist($name)
     {
-        
+
         foreach ($this->getIndexIterator() as $indexId => $indexSchema) {
             /* @var $indexSchema IndexSchema */
-            
+
             if ($indexSchema->getName()) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -166,11 +166,11 @@ class TableSchema implements TableSchemaInterface
         } else {
             $writeIndex = $this->getLastIndex()+1;
         }
-        
+
         $column->setIndex($writeIndex);
 
         $this->writeColumn($writeIndex, $column);
-        
+
         return $writeIndex;
     }
 
@@ -294,7 +294,7 @@ class TableSchema implements TableSchemaInterface
             $columns[$index] = clone $columnPage;
 
             assert(is_int($index) && $index >= 0);
-            
+
             $this->columnCache[$index] = $columns[$index];
         }
 
@@ -332,45 +332,45 @@ class TableSchema implements TableSchemaInterface
     }
 
     private $columnCache = array();
-    
+
     public function getColumnCache()
     {
         return $this->columnCache;
     }
-    
+
     public function dropColumnCache()
     {
         $this->columnCache = array();
     }
-    
+
     public function getColumn($index)
     {
         if (!is_numeric($index)) {
             $index = $this->getColumnIndex($index);
         }
-        
+
         assert(is_numeric($index) && $index >= 0);
         $index = (int)$index;
 
         if (!isset($this->columnCache[$index])) {
             $file = $this->getColumnFile();
-            
+
             $position = $index * ColumnSchema::PAGE_SIZE;
-            
+
             $file->seek($position, SEEK_SET);
             $data = $file->read(ColumnSchema::PAGE_SIZE);
-            
+
             if (strlen($data) !== ColumnSchema::PAGE_SIZE) {
                 return null;
             }
-            
+
             $column = new ColumnSchema();
             $column->setData($data);
             $column->setId($index);
-            
+
             $this->columnCache[$index] = $column;
         }
-        
+
         return $this->columnCache[$index];
     }
 
@@ -389,7 +389,7 @@ class TableSchema implements TableSchemaInterface
                 return $index;
             }
         }
-        
+
         foreach ($this->getColumnIterator() as $index => $columnPage) {
             /* @var $columnPage ColumnSchema */
 
@@ -415,11 +415,11 @@ class TableSchema implements TableSchemaInterface
             $columnId = $this->getColumnIndex($column->getName());
             assert(is_null($columnId) || ($columnId === $index));
         }
-            
+
         assert(is_int($index) && $index >= 0);
 
         $this->columnCache[$index] = $column;
-        
+
         $file = $this->getColumnFile();
 
         $file->lock(LOCK_EX);
@@ -431,17 +431,17 @@ class TableSchema implements TableSchemaInterface
 
         return $index;
     }
-    
+
     public function removeColumn($index)
     {
-        
+
         $file = $this->getColumnFile();
-        
+
         $file->lock(LOCK_EX);
         $file->seek(ColumnSchema::PAGE_SIZE * $index, SEEK_SET);
-        
+
         $file->write(str_pad("", ColumnSchema::PAGE_SIZE, "\0"));
-        
+
         $file->lock(LOCK_UN);
     }
 
