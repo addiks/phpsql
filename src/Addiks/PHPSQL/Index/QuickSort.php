@@ -92,8 +92,7 @@ class QuickSort implements \Iterator
         if (is_null($this->pageSize)) {
             $this->pageSize = 8;
 
-            foreach ($this->getColumnSchemas() as $index => $columnDataset) {
-                list($columnPage, $direction) = $columnDataset;
+            foreach ($this->getColumnSchemas() as list($columnPage, )) {
                 /* @var $columnPage ColumnSchema */
 
                 $this->pageSize += $columnPage->getCellSize();
