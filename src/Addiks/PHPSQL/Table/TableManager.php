@@ -29,6 +29,7 @@ use Addiks\PHPSQL\Column\ColumnDataInterface;
 use Addiks\PHPSQL\Table\TableFactoryInterface;
 use Addiks\PHPSQL\Column\ColumnDataFactoryInterface;
 use Addiks\PHPSQL\Index\IndexFactory;
+use InvalidArgumentException;
 
 class TableManager
 {
@@ -72,6 +73,10 @@ class TableManager
             $tableSchema = $this->schemaManager->getTableSchema($tableName, $schemaId);
 
             $tableIndex = $databaseSchema->getTableIndex($tableName);
+
+            if (is_null($tableIndex)) {
+                throw new InvalidArgumentException("Table '{$tableName}' does not exist!");
+            }
 
             /* @var $databaseSchemaPage DatabaseSchemaPage */
             $databaseSchemaPage = $databaseSchema->getTablePage($tableIndex, $schemaId);

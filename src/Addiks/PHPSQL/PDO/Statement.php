@@ -426,7 +426,7 @@ class Statement
     public function fetchColumn($columnIndex = 0)
     {
 
-        $row = $this->fetch(Code::FETCH_NUM);
+        $row = $this->fetch(\PDO::FETCH_NUM);
 
         return $row[(int)$columnIndex];
     }
