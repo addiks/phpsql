@@ -15,8 +15,8 @@ use Addiks\PHPSQL\Value\Enum;
 
 class SqlToken extends Enum
 {
-    
-/*  
+
+/*
 # PostgreSql keywords:
 	const T_ABORT = 1;
 	const T_ABS = 2;
@@ -538,7 +538,7 @@ class SqlToken extends Enum
 	const T_YEAR = 521;
 	const T_ZONE = 522;
 */
-    
+
 # FOR (MYSQL) SELECT
 #	const T_DISTINCTROW = 523;
 #	const T_HIGH_PRIORITY = 524;
@@ -554,6 +554,7 @@ class SqlToken extends Enum
 #	const T_DATABASES = 532;
     const T_TABLES = 533;
     const T_VIEWS = 534;
+    const T_FULL = 585;
 
 # FOR DROP
 #	const T_IF = 535;

@@ -335,8 +335,8 @@ class CreateSqlParser extends SqlParser
                     case $tokens->seekTokenNum(SqlToken::T_FULLTEXT(), TokenIterator::NEXT, [SqlToken::T_CONSTRAINT(), T_STRING]):
                     case $tokens->seekTokenNum(SqlToken::T_SPATIAL(), TokenIterator::NEXT, [SqlToken::T_CONSTRAINT(), T_STRING]):
 
-                        /* @var $indexJob Index */
-                        $indexJob = new Index();
+                        /* @var $indexJob IndexPart */
+                        $indexJob = new IndexPart();
 
                         switch($tokens->getCurrentTokenNumber()){
                             case SqlToken::T_UNIQUE():
@@ -881,6 +881,6 @@ class CreateSqlParser extends SqlParser
 
     protected function parseCreateView(SQLTokenIterator $tokens)
     {
-        
+
     }
 }

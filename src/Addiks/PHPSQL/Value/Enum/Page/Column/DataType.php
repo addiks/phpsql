@@ -15,9 +15,9 @@ use Addiks\PHPSQL\Value\Enum;
 
 class DataType extends Enum
 {
-    
+
     ### NUMBERS
-    
+
     const BIT              = 0x01;
     const BOOL             = 0x02;
     const BOOLEAN          = 0x02;
@@ -32,7 +32,7 @@ class DataType extends Enum
     const FLOAT            = 0x09;
     const DOUBLE           = 0x0A;
     const DOUBLE_PRECISION = 0x0A;
-    
+
     ### DATE / TIME
 
     const DATE      = 0x0B;
@@ -40,7 +40,7 @@ class DataType extends Enum
     const TIMESTAMP = 0x0D;
     const TIME      = 0x0E;
     const YEAR      = 0x0F;
-    
+
     ### STRING
 
     const CHAR       = 0x10;
@@ -118,6 +118,7 @@ class DataType extends Enum
             self::MEDIUMBLOB       => 4294967296,
             self::MEDIUMTEXT       => 4294967296,
             self::LONGBLOB         => 4294967296,
+            self::LONGTEXT         => 4294967296,
         );
 
         $flag = $this->getValue();

@@ -198,6 +198,7 @@ class SqlParser
         $selectParser->setJoinParser($joinParser);
         $selectParser->setFunctionParser($functionParser);
         $selectParser->setParenthesisParser($parenthesisParser);
+        $showParser->setValueParser($valueParser);
         $setParser->setValueParser($valueParser);
         $updateParser->setTableParser($tableParser);
         $updateParser->setColumnParser($columnParser);
