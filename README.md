@@ -158,6 +158,3 @@ There are many ways to contribute to this project:
  - Implement feature that are yet missing. (Remember to open an issue before making changes to let others know you are currently implementing it)
  
  - Write tests. (Tests for yet missing features or failing tests should be committed in a different branch. Remeber to create an issue for that.)
- 
-Also, i still need a precise and complete reference to the SQL standards. If someone can provide or link me **legally** to documents describing the SQL standards, that would be extremely helpful. Currently i just look at the MySQL manual and practically build a MySQL-clone. If i were rich i would just buy the complete [ISO/IEC 9075(1-4,9-11,13,14):2011](http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=53681) for a few hundred bucks, but sadly i am not. That reminds me, [donations](https://paypal.me/addiks) are also helpful.
-
